@@ -1,0 +1,31 @@
+# Ignore VCS
+.git
+.gitignore
+
+# Environment and configs
+.env
+.env.*
+*.py[cod]
+__pycache__/
+*.pytest_cache/
+.pytest_cache/
+
+# Python build artifacts
+*.egg-info/
+dist/
+build/
+
+# Node artifacts
+node_modules/
+frontend/node_modules/
+frontend/.npm/
+frontend/.cache/
+bun.lockb
+
+# Editor/OS files
+.DS_Store
+.idea
+.vscode
+
+# Docker leftovers
+**/.dockerignore
