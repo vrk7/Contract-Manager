@@ -1,0 +1,700 @@
+GENERAL CONSTRUCTION CONTRACT
+
+Contract Reference: GCC-2024-1156
+Project Name: Stuttgart Innovation Campus — Phase 1
+Execution Date: September 1, 2024
+
+---
+
+PARTIES TO THIS AGREEMENT
+
+THE OWNER:
+Baden-Württemberg Technology Foundation (Stiftung)
+Königstraße 46, 70173 Stuttgart, Germany
+Represented by: Dr. Helena Krause, Executive Director
+("Owner" or "Employer")
+
+THE CONTRACTOR:
+Süddeutsche Hochbau Gruppe AG
+Heilbronner Straße 180, 70191 Stuttgart, Germany
+Represented by: Thomas Richter, Vorstandsvorsitzender
+("Contractor" or "General Contractor")
+
+---
+
+RECITALS
+
+WHEREAS, Owner desires to construct a state-of-the-art research and innovation facility consisting of approximately 45,000 square meters of laboratory, office, and collaboration space on Owner's property located at Vaihinger Straße, Stuttgart-Vaihingen;
+
+WHEREAS, Contractor has demonstrated the experience, capability, and financial capacity to perform the construction work required for this project;
+
+WHEREAS, the parties wish to establish their respective rights and obligations in connection with the construction of the Project;
+
+NOW, THEREFORE, in consideration of the mutual covenants and agreements contained herein, and for other good and valuable consideration, the receipt and sufficiency of which are hereby acknowledged, the parties agree as follows:
+
+---
+
+ARTICLE 1: DEFINITIONS
+
+1.1 "Architect" means Schneider + Partner Architekten GmbH, the design professional engaged by Owner for this Project.
+
+1.2 "Change Order" means a written order signed by Owner authorizing a change in the Work, Contract Sum, or Contract Time.
+
+1.3 "Contract Documents" means this Agreement, General Conditions, Supplementary Conditions, Drawings, Specifications, Addenda, Change Orders, and other documents listed in Article 2.
+
+1.4 "Contract Sum" means the total amount payable to Contractor for performance of the Work, as set forth in Article 4.
+
+1.5 "Contract Time" means the period from the Date of Commencement to the date of Substantial Completion, as set forth in Article 3.
+
+1.6 "Day" means calendar day unless otherwise specified.
+
+1.7 "Final Completion" means the date when all Work is complete in accordance with the Contract Documents, including all punch list items and closeout documentation.
+
+1.8 "Project" means the Stuttgart Innovation Campus — Phase 1, including all improvements to be constructed pursuant to the Contract Documents.
+
+1.9 "Substantial Completion" means the stage when the Work is sufficiently complete in accordance with the Contract Documents so that Owner can occupy or utilize the Project for its intended use.
+
+1.10 "Work" means all construction and services required by the Contract Documents, whether completed or partially completed, including all labor, materials, equipment, and services provided by Contractor.
+
+---
+
+ARTICLE 2: CONTRACT DOCUMENTS
+
+2.1 Enumeration
+
+The Contract Documents consist of:
+
+a) This Agreement (including all exhibits and attachments)
+b) General Conditions of Contract (Exhibit A)
+c) Supplementary Conditions (Exhibit B)
+d) Drawings listed in Exhibit C (478 sheets)
+e) Specifications (Divisions 01-33)
+f) Addenda Nos. 1-7
+g) Contractor's Schedule (Exhibit D)
+h) Contractor's Schedule of Values (Exhibit E)
+i) Performance Bond and Payment Bond
+j) Insurance Certificates
+k) All Change Orders issued after execution of this Agreement
+
+2.2 Intent
+
+The Contract Documents are complementary, and what is required by one shall be as binding as if required by all. The intention is to include all labor, materials, equipment, and services necessary for proper execution and completion of the Work.
+
+2.3 Order of Precedence
+
+In case of conflict among the Contract Documents, the following order of precedence shall apply:
+
+a) Change Orders (most recent first)
+b) This Agreement
+c) Supplementary Conditions
+d) General Conditions
+e) Specifications
+f) Drawings (larger scale over smaller scale)
+
+2.4 Interpretation
+
+Unless otherwise stated, all references to articles and sections refer to this Agreement. Words importing the singular include the plural and vice versa. The word "including" means "including without limitation."
+
+---
+
+ARTICLE 3: CONTRACT TIME
+
+3.1 Date of Commencement
+
+The Work shall commence on the date specified in Owner's written Notice to Proceed, which Owner anticipates issuing on or about October 1, 2024.
+
+3.2 Substantial Completion
+
+Contractor shall achieve Substantial Completion of the entire Work within twenty-four (24) months from the Date of Commencement.
+
+3.3 Final Completion
+
+Contractor shall achieve Final Completion within sixty (60) days after Substantial Completion.
+
+3.4 Milestone Dates
+
+Contractor shall achieve the following milestone dates:
+
+| Milestone | Description | Months from Commencement |
+|-----------|-------------|--------------------------|
+| M1 | Foundation complete | 4 |
+| M2 | Structure topped out | 10 |
+| M3 | Building envelope complete | 14 |
+| M4 | MEP rough-in complete | 18 |
+| M5 | Finishes complete | 22 |
+| M6 | Substantial Completion | 24 |
+
+3.5 Time is of the Essence
+
+Time is of the essence with respect to all dates specified in this Agreement. Contractor acknowledges that Owner has significant commitments contingent upon timely completion, including research program launches, tenant occupancies, and funding deadlines.
+
+3.6 Delays and Extensions of Time
+
+a) Contractor shall be entitled to an extension of the Contract Time for delays caused by:
+
+   i) Changes in the Work ordered by Owner
+   ii) Owner's failure to provide required information or approvals within reasonable time
+   iii) Unusual and unforeseeable weather conditions materially different from historical averages
+   iv) Force majeure events as defined in Article 12
+   v) Concealed conditions materially different from those indicated in the Contract Documents
+
+b) Contractor shall submit written notice of any delay event within seven (7) calendar days of first becoming aware of such event, together with an estimate of the anticipated impact on the Contract Time. Failure to provide timely notice shall not automatically waive Contractor's claim but may be considered in evaluating the merits and extent of any time extension.
+
+c) Extensions of time shall be Contractor's sole remedy for delays not caused by Owner's active interference. Contractor expressly waives any claim for delay damages, extended general conditions, or similar costs except as provided in Section 3.7.
+
+3.7 Compensable Delays
+
+Contractor shall be entitled to an equitable adjustment in the Contract Sum for delays caused solely by:
+
+a) Owner's active interference with Contractor's work
+b) Owner-directed suspensions exceeding thirty (30) consecutive days
+c) Significant changes to the Work that extend the critical path
+
+3.8 Liquidated Damages
+
+a) If Contractor fails to achieve Substantial Completion by the date required under Section 3.2 (as may be adjusted by approved Change Orders), Contractor shall pay Owner liquidated damages in the amount of €12,000.00 per calendar day for each day of delay.
+
+b) If Contractor fails to achieve any milestone date specified in Section 3.4 by more than fourteen (14) days, Contractor shall pay Owner interim liquidated damages in the amount of €5,000.00 per calendar day until the milestone is achieved.
+
+c) Liquidated damages represent a genuine pre-estimate of Owner's damages and are not a penalty. Total liquidated damages under this Section shall not exceed ten percent (10%) of the Contract Sum.
+
+d) Owner may deduct liquidated damages from payments otherwise due to Contractor.
+
+e) Payment of liquidated damages shall not relieve Contractor of its obligation to complete the Work or any other obligations under this Agreement.
+
+---
+
+ARTICLE 4: CONTRACT SUM
+
+4.1 Contract Sum
+
+Owner shall pay Contractor for performance of the Work the Contract Sum of:
+
+€78,450,000.00
+(Seventy-Eight Million Four Hundred Fifty Thousand Euros)
+
+4.2 Basis of Contract Sum
+
+The Contract Sum is a Guaranteed Maximum Price (GMP) and includes:
+
+a) All direct costs of the Work
+b) General conditions costs as specified in Exhibit E
+c) Contractor's fee of six percent (6%) of direct costs
+d) A contingency allowance of €2,500,000.00 for unforeseen conditions
+
+4.3 GMP Provisions
+
+a) The Contract Sum shall not be exceeded except by Change Order approved by Owner.
+
+b) Savings below the GMP shall be shared as follows:
+   - 75% to Owner
+   - 25% to Contractor (as additional fee)
+
+c) The contingency allowance may be used only for:
+   - Unforeseen site conditions
+   - Design clarifications that do not constitute scope changes
+   - Costs approved in advance by Owner
+
+4.4 Allowances
+
+The Contract Sum includes the following cash allowances:
+
+| Item | Amount |
+|------|--------|
+| Laboratory equipment connections | €850,000 |
+| Specialty finishes | €425,000 |
+| Technology infrastructure | €675,000 |
+| Landscaping and site improvements | €380,000 |
+| Total Allowances | €2,330,000 |
+
+Allowances shall be adjusted by Change Order based on actual costs.
+
+---
+
+ARTICLE 5: PAYMENT
+
+5.1 Schedule of Values
+
+Within fourteen (14) days after execution of this Agreement, Contractor shall submit a Schedule of Values allocating the Contract Sum to the various portions of the Work. The Schedule of Values shall be prepared in such form as Owner may require and shall be used as the basis for progress payments.
+
+5.2 Progress Payments
+
+a) Contractor shall submit monthly applications for payment on or before the twentieth (20th) day of each month for Work performed through the end of the previous month.
+
+b) Applications for payment shall include:
+   - Completed payment application form (Owner's standard form)
+   - Updated Schedule of Values showing percentage complete for each line item
+   - Supporting documentation for stored materials
+   - Conditional lien waivers from Contractor and major subcontractors
+   - Updated construction schedule showing progress
+
+c) Owner shall review each application and, within seven (7) days, either approve it or notify Contractor of any items in dispute.
+
+d) Owner shall make payment of approved amounts within thirty (30) days after receipt of a complete and accurate payment application.
+
+e) Payment shall be by electronic funds transfer to Contractor's designated account.
+
+5.3 Retainage
+
+a) Owner shall retain five percent (5%) of each progress payment.
+
+b) Upon achievement of Substantial Completion, and provided there are no outstanding claims or disputes, Owner shall release retainage to the extent that it exceeds:
+   - 200% of the estimated cost to complete punch list items
+   - Any amounts in dispute
+
+c) Final retainage shall be released with final payment.
+
+5.4 Payments for Stored Materials
+
+Owner shall make payment for materials and equipment stored at the site or at approved off-site locations, provided:
+
+a) Materials are properly stored and protected
+b) Materials are covered by appropriate insurance
+c) Contractor provides documentation of title and paid invoices
+d) For off-site storage, Owner has inspected or received satisfactory evidence of materials
+
+5.5 Withholding of Payment
+
+Owner may withhold payment, in whole or in part, to the extent reasonably necessary to protect Owner from loss due to:
+
+a) Defective work not remedied
+b) Claims filed or reasonable evidence of likely claims
+c) Contractor's failure to make timely payments to subcontractors
+d) Damage to Owner or third parties for which Contractor is responsible
+e) Contractor's failure to maintain required insurance
+f) Contractor's persistent failure to carry out the Work in accordance with the Contract Documents
+
+If any of the above conditions are cured, Owner shall release withheld amounts within fourteen (14) days.
+
+5.6 Final Payment
+
+a) Upon receipt of Contractor's final application for payment, Owner shall make final inspection of the Work. If the Work is complete in accordance with the Contract Documents, Owner shall issue a final certificate for payment.
+
+b) Final payment, including release of remaining retainage, shall be made within forty-five (45) days after issuance of the final certificate for payment, provided Contractor has submitted:
+   - Final lien waivers from Contractor and all subcontractors
+   - As-built drawings and specifications
+   - Operation and maintenance manuals
+   - All warranties and guarantees
+   - Certificate of occupancy and all required permits
+   - All required training for Owner's personnel
+
+c) Acceptance of final payment shall constitute a waiver of all claims by Contractor except for:
+   - Claims previously made in writing and identified as unsettled
+   - Claims arising from unsettled lien claims
+   - Claims arising from Contractor's warranty obligations
+
+---
+
+ARTICLE 6: CHANGES IN THE WORK
+
+6.1 Owner's Right to Order Changes
+
+Owner may, at any time and without invalidating this Agreement, order changes in the Work within the general scope of the Contract Documents. Such changes shall be authorized by Change Order.
+
+6.2 Change Order Process
+
+a) Owner or Architect may issue a Request for Proposal (RFP) describing proposed changes.
+
+b) Within ten (10) calendar days of receipt of an RFP, Contractor shall submit a detailed proposal including:
+   - Itemized breakdown of costs
+   - Impact on Contract Time with supporting schedule analysis
+   - List of affected subcontractors
+
+c) Owner shall respond to Contractor's proposal within fourteen (14) days.
+
+d) No change shall be implemented until a Change Order is fully executed, except as provided in Section 6.5.
+
+6.3 Pricing of Changes
+
+Change Order pricing shall be determined as follows:
+
+a) Lump sum based on Contractor's proposal, subject to Owner's approval
+
+b) Unit prices as established in the Contract Documents
+
+c) Time and materials with a not-to-exceed limit, using the following rates:
+   - Contractor's fee: 10% on self-performed work, 5% on subcontracted work
+   - Subcontractor markup: reasonable overhead and profit, not to exceed 15%
+
+6.4 Disputes Regarding Changes
+
+a) If Contractor disputes the valuation of a Change Order or believes additional time is warranted, Contractor shall promptly notify Owner in writing.
+
+b) Pending resolution of any dispute, Contractor shall proceed with the Work as directed by Owner. Contractor's compliance with Owner's direction shall not waive Contractor's right to dispute the change, provided Contractor has given timely written notice of its objection.
+
+c) If the parties cannot agree on the terms of a Change Order, either party may invoke the dispute resolution procedures in Article 11.
+
+6.5 Emergency Changes
+
+In case of emergency endangering life or property, Contractor shall take such action as necessary to prevent threatened damage. Contractor shall notify Owner within twenty-four (24) hours and submit a Change Order proposal within seven (7) days.
+
+6.6 Minor Changes
+
+Architect may authorize minor changes in the Work that do not involve adjustment in the Contract Sum or Contract Time and are consistent with the intent of the Contract Documents. Such changes shall be documented by written directive.
+
+---
+
+ARTICLE 7: CONTRACTOR'S RESPONSIBILITIES
+
+7.1 General Responsibilities
+
+Contractor shall:
+
+a) Supervise and direct the Work using Contractor's best skill and attention
+b) Be solely responsible for construction means, methods, techniques, sequences, and procedures
+c) Be responsible for acts and omissions of Contractor's employees, subcontractors, and their agents
+d) Provide qualified personnel to perform the Work
+e) Maintain the site in a safe, clean, and orderly condition
+
+7.2 Superintendent
+
+a) Contractor shall employ a competent superintendent who shall be present at the site at all times during performance of the Work.
+
+b) The superintendent shall represent Contractor and be authorized to receive instructions from Owner and Architect.
+
+c) Contractor shall not change the superintendent without Owner's prior consent, which shall not be unreasonably withheld.
+
+7.3 Subcontractors
+
+a) Contractor shall be fully responsible for acts and omissions of all subcontractors.
+
+b) Within thirty (30) days of execution of this Agreement, Contractor shall submit a list of proposed subcontractors for Owner's review.
+
+c) Owner may object to any proposed subcontractor for reasonable cause. Contractor shall propose an alternative subcontractor at no additional cost.
+
+d) All subcontracts shall include provisions consistent with this Agreement, including flow-down of indemnification and insurance requirements.
+
+7.4 Materials and Equipment
+
+a) All materials and equipment shall be new unless otherwise specified.
+
+b) Contractor shall provide documentation of origin, quality, and compliance upon request.
+
+c) Owner may require removal of defective or non-conforming materials at any time.
+
+7.5 Permits and Fees
+
+Contractor shall obtain and pay for all permits, licenses, and inspections necessary for performance of the Work, except those specifically identified as Owner's responsibility in the Contract Documents.
+
+7.6 Taxes
+
+The Contract Sum includes all taxes legally imposed on the Work as of the date of this Agreement. Changes in tax rates or new taxes after execution shall be addressed by Change Order.
+
+---
+
+ARTICLE 8: OWNER'S RESPONSIBILITIES
+
+8.1 Information and Services
+
+Owner shall furnish:
+
+a) Surveys describing the property, boundaries, topography, and utility locations
+b) Geotechnical investigation reports
+c) Legal description and any easements or encumbrances
+d) Information about hazardous materials, if known
+
+8.2 Approvals
+
+Owner shall review and provide decisions on submittals, requests for information, and other matters requiring Owner's approval within fourteen (14) days of receipt, or such shorter time as the critical path may require.
+
+8.3 Access to Site
+
+Owner shall provide Contractor with access to the site for performance of the Work. Owner reserves the right to perform other work on the site with separate contractors.
+
+8.4 Evidence of Financing
+
+Upon Contractor's written request, Owner shall furnish reasonable evidence that financial arrangements have been made to fulfill Owner's obligations under this Agreement.
+
+---
+
+ARTICLE 9: INSURANCE AND BONDS
+
+9.1 Contractor's Insurance
+
+Contractor shall maintain the following insurance coverage:
+
+a) Commercial General Liability: €10,000,000 per occurrence / €20,000,000 aggregate
+b) Automobile Liability: €5,000,000 combined single limit
+c) Workers' Compensation: Statutory limits
+d) Employer's Liability: €2,000,000
+e) Professional Liability: €5,000,000 (if Contractor provides design services)
+f) Umbrella Liability: €15,000,000
+
+9.2 Owner as Additional Insured
+
+Contractor's general liability and umbrella policies shall name Owner, Architect, and their officers and employees as additional insureds for liability arising from Contractor's operations.
+
+9.3 Builder's Risk Insurance
+
+Owner shall procure and maintain builder's risk insurance covering the Work for its full insurable value on an all-risk basis. The policy shall name Contractor and subcontractors as additional insureds.
+
+9.4 Waiver of Subrogation
+
+Owner and Contractor waive all rights of recovery against each other for damages covered by insurance required by this Agreement. Each party shall require similar waivers from their subcontractors and consultants.
+
+9.5 Performance and Payment Bonds
+
+Contractor shall furnish performance and payment bonds, each in the amount of 100% of the Contract Sum, from a surety acceptable to Owner.
+
+---
+
+ARTICLE 10: INDEMNIFICATION
+
+10.1 Contractor's Indemnification
+
+To the fullest extent permitted by law, Contractor shall defend, indemnify, and hold harmless Owner, Architect, and their officers, directors, employees, and agents from and against claims, damages, losses, and expenses (including attorneys' fees) arising out of or resulting from:
+
+a) Performance of the Work by Contractor or its subcontractors
+b) Any breach of this Agreement by Contractor
+c) Any negligent act or omission of Contractor or its subcontractors
+d) Any violation of law by Contractor or its subcontractors
+
+This indemnification shall apply to the extent such claims are caused by Contractor's negligent acts or omissions or those of its subcontractors, regardless of whether such claims are also caused in part by the negligence of Owner or Architect, but shall not apply to the extent caused by the sole negligence or willful misconduct of Owner or Architect.
+
+10.2 Owner's Indemnification
+
+Owner shall indemnify and hold harmless Contractor from claims arising out of Owner's sole negligence or willful misconduct.
+
+10.3 Limitation
+
+The indemnification obligations in this Article shall not be construed to limit any other rights or remedies available to either party.
+
+---
+
+ARTICLE 11: DISPUTE RESOLUTION
+
+11.1 Initial Decision
+
+Claims and disputes arising under this Agreement shall be referred initially to the Architect for decision. Architect shall render a written decision within twenty-one (21) days of receipt of the claim.
+
+11.2 Mediation
+
+Any claim or dispute not resolved by Architect's decision, or if Architect fails to render a decision, shall be subject to mediation as a condition precedent to arbitration or litigation.
+
+a) Mediation shall be conducted under the rules of the Deutsche Institution für Schiedsgerichtsbarkeit (DIS).
+
+b) The mediator shall be mutually selected by the parties.
+
+c) Mediation shall take place in Stuttgart.
+
+d) Each party shall bear its own costs; mediation fees shall be shared equally.
+
+11.3 Arbitration
+
+If mediation does not resolve the dispute within sixty (60) days, the dispute shall be submitted to binding arbitration under the DIS Arbitration Rules.
+
+a) The arbitration shall be conducted in Stuttgart in the German language.
+
+b) The arbitral tribunal shall consist of three (3) arbitrators.
+
+c) The arbitrators shall be experienced in construction disputes.
+
+d) The arbitral award shall be final and binding, subject only to judicial review as permitted by law.
+
+e) Judgment on the award may be entered in any court of competent jurisdiction.
+
+11.4 Continuation of Work
+
+Pending final resolution of any dispute, Contractor shall continue to perform the Work and Owner shall continue to make undisputed payments. Neither party's participation in dispute resolution shall constitute a waiver of any rights.
+
+11.5 Consolidation
+
+The arbitral tribunal may consolidate any arbitration under this Agreement with any other arbitration involving common issues of fact or law among Owner, Contractor, subcontractors, or other parties.
+
+---
+
+ARTICLE 12: FORCE MAJEURE
+
+12.1 Definition
+
+"Force Majeure" means events beyond the reasonable control of a party, including:
+
+a) Acts of God (earthquake, flood, hurricane)
+b) War, terrorism, civil disturbance
+c) Government actions or embargoes
+d) Epidemics or pandemics declared by WHO
+e) Labor strikes not limited to Contractor's workforce
+f) Fire or explosion not caused by Contractor
+
+12.2 Notice
+
+The affected party shall notify the other party within fourteen (14) days of becoming aware of a Force Majeure event, describing the event and its anticipated impact.
+
+12.3 Effect
+
+a) Neither party shall be liable for failure to perform obligations (other than payment obligations) to the extent performance is prevented by Force Majeure.
+
+b) The Contract Time shall be extended for the duration of the Force Majeure event.
+
+c) Neither party shall be entitled to additional compensation due to Force Majeure, except that Contractor shall be entitled to an equitable adjustment for increased costs directly attributable to Force Majeure events lasting more than sixty (60) days.
+
+---
+
+ARTICLE 13: TERMINATION
+
+13.1 Termination by Owner for Cause
+
+a) Owner may terminate this Agreement if Contractor:
+
+   i) Persistently fails to perform the Work in accordance with the Contract Documents
+   ii) Fails to make timely payment to subcontractors or suppliers
+   iii) Materially violates any provision of this Agreement
+   iv) Becomes insolvent or files for bankruptcy
+
+b) Owner shall give Contractor fourteen (14) days written notice specifying the default and opportunity to cure.
+
+c) If Contractor fails to cure, Owner may terminate by written notice effective immediately.
+
+d) Upon termination for cause, Owner may:
+   - Complete the Work using other contractors
+   - Take possession of materials and equipment at the site
+   - Withhold further payments pending completion
+   - Recover from Contractor excess costs of completion
+
+13.2 Termination by Owner for Convenience
+
+a) Owner may terminate this Agreement for convenience at any time by thirty (30) days written notice.
+
+b) Upon termination for convenience, Contractor shall be entitled to:
+   - Payment for Work properly performed
+   - Reasonable costs of demobilization
+   - Termination fee equal to three percent (3%) of the value of Work not performed
+
+c) Contractor shall not be entitled to anticipated profit on unperformed Work beyond the termination fee.
+
+13.3 Termination by Contractor
+
+a) Contractor may terminate this Agreement if:
+
+   i) Work is stopped for ninety (90) consecutive days due to court order or government action not caused by Contractor
+   ii) Owner fails to make payment for sixty (60) days after payment is due
+   iii) Owner materially breaches this Agreement and fails to cure within thirty (30) days
+
+b) Upon termination by Contractor, Contractor shall be entitled to payment for Work performed plus reasonable termination costs and lost profit on Work not performed.
+
+---
+
+ARTICLE 14: WARRANTY
+
+14.1 General Warranty
+
+Contractor warrants that the Work will be:
+
+a) Performed in a good and workmanlike manner
+b) In accordance with the Contract Documents
+c) Free from defects in materials and workmanship
+
+14.2 Warranty Period
+
+The warranty period shall be two (2) years from the date of Substantial Completion, except:
+
+a) Roofing systems: five (5) years
+b) Mechanical equipment: two (2) years or manufacturer's warranty, whichever is longer
+c) Structural elements: five (5) years
+d) Building envelope: five (5) years
+
+14.3 Correction of Defects
+
+a) Contractor shall promptly correct defective Work discovered during the warranty period.
+
+b) Corrective work shall be performed at Contractor's sole cost and expense.
+
+c) If Contractor fails to correct defects within a reasonable time, Owner may perform corrections and recover costs from Contractor.
+
+d) Correction of defects shall not extend the overall warranty period, but corrected work shall be warranted for one (1) year from correction.
+
+14.4 Exclusions
+
+This warranty shall not apply to defects caused by:
+
+a) Owner's improper operation or maintenance
+b) Modifications made by others without Contractor's approval
+c) Normal wear and tear
+d) Casualty or Force Majeure events
+
+---
+
+ARTICLE 15: MISCELLANEOUS
+
+15.1 Governing Law
+
+This Agreement shall be governed by the laws of Germany.
+
+15.2 Entire Agreement
+
+This Agreement, including all exhibits, constitutes the entire agreement between the parties and supersedes all prior negotiations and agreements.
+
+15.3 Amendments
+
+This Agreement may be amended only by written instrument signed by both parties.
+
+15.4 Assignment
+
+Neither party may assign this Agreement without the other's prior written consent, except that Owner may assign to a related entity or successor in interest.
+
+15.5 Notices
+
+All notices shall be in writing and sent by registered mail or recognized courier to the addresses above. Notice is effective upon receipt.
+
+15.6 Severability
+
+If any provision is held invalid, the remaining provisions shall continue in full force.
+
+15.7 No Waiver
+
+Failure to enforce any provision shall not constitute a waiver of that or any other provision.
+
+15.8 Counterparts
+
+This Agreement may be executed in counterparts, each of which shall be deemed an original.
+
+---
+
+SIGNATURES
+
+OWNER:
+
+Baden-Württemberg Technology Foundation
+
+By: _________________________________
+
+Name: Dr. Helena Krause
+
+Title: Executive Director
+
+Date: _________________________________
+
+
+CONTRACTOR:
+
+Süddeutsche Hochbau Gruppe AG
+
+By: _________________________________
+
+Name: Thomas Richter
+
+Title: Vorstandsvorsitzender
+
+Date: _________________________________
+
+
+By: _________________________________
+
+Name: Andrea Weber
+
+Title: Finanzvorstand
+
+Date: _________________________________
+
+---
+
+LIST OF EXHIBITS
+
+- Exhibit A: General Conditions of Contract
+- Exhibit B: Supplementary Conditions
+- Exhibit C: List of Drawings
+- Exhibit D: Project Schedule
+- Exhibit E: Schedule of Values
+- Exhibit F: List of Subcontractors
+- Exhibit G: Form of Performance Bond
+- Exhibit H: Form of Payment Bond

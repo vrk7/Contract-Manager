@@ -1,0 +1,108 @@
+import React, { useEffect, useState } from 'react';
+import axios from 'axios';
+
+export const ACTIVE_VERSION_STORAGE_KEY = 'activePlaybookVersionId';
+
+export default function PlaybookManager({ apiBase, onVersionChange }) {
+  const [current, setCurrent] = useState(null);
+  const [versions, setVersions] = useState([]);
+  const [editorContent, setEditorContent] = useState('');
+  const [changeNote, setChangeNote] = useState('');
+  const [saving, setSaving] = useState(false);
+
+  const setActiveVersion = (versionId, availableVersions = versions) => {
+    const selected = availableVersions.find((v) => v.id === versionId);
+    if (!selected) {
+      return;
+    }
+    setCurrent(selected);
+    setEditorContent(selected.content || '');
+    localStorage.setItem(ACTIVE_VERSION_STORAGE_KEY, selected.id);
+    onVersionChange?.(selected.id);
+  };
+
+  const load = async (preferredVersionId) => {
+    const list = await axios.get(`${apiBase}/playbook/versions`);
+    const fetchedVersions = list.data || [];
+    setVersions(fetchedVersions);
+
+    if (fetchedVersions.length === 0) {
+      setCurrent(null);
+      setEditorContent('');
+      return;
+    }
+
+    const storedVersionId = localStorage.getItem(ACTIVE_VERSION_STORAGE_KEY);
+    const candidateId =
+      (preferredVersionId && fetchedVersions.some((v) => v.id === preferredVersionId) && preferredVersionId) ||
+      (storedVersionId && fetchedVersions.some((v) => v.id === storedVersionId) && storedVersionId) ||
+      fetchedVersions[0].id;
+
+    setActiveVersion(candidateId, fetchedVersions);
+  };
+
+  useEffect(() => {
+    load();
+  }, []);
+
+  const save = async () => {
+    setSaving(true);
+    const resp = await axios.put(`${apiBase}/playbook`, {
+      content: editorContent,
+      change_note: changeNote,
+    });
+    setSaving(false);
+    setChangeNote('');
+    await load(resp.data.id);
+  };
+
+  const reindex = async (versionId) => {
+    await axios.post(`${apiBase}/playbook/reindex`, { version_id: versionId });
+    await load(versionId);
+  };
+
+  const handleUseForAnalysis = (versionId) => {
+    setActiveVersion(versionId);
+  };
+
+  return (
+    <div>
+      <div className="card-header">
+        <div>
+          <p className="eyebrow">Governance</p>
+          <h3>Playbook</h3>
+          <p className="muted">Edit, version, and reindex your contract playbook.</p>
+        </div>
+        {current?.id && <span className="pill">Active #{current.id}</span>}
+      </div>
+      <textarea value={editorContent} onChange={(e) => setEditorContent(e.target.value)} />
+      <div className="meta-row">
+        <input
+          placeholder="Change note"
+          value={changeNote}
+          onChange={(e) => setChangeNote(e.target.value)}
+          className="input text"
+        />
+        <button onClick={save} disabled={saving}>
+          {saving ? 'Saving…' : 'Save new version'}
+        </button>
+      </div>
+      <h4>Versions</h4>
+      <ul className="version-list">
+        {versions.map((v) => (
+          <li key={v.id} className="version-row">
+            <div>
+              <strong>#{v.id}</strong> <span className="muted">({v.version_label})</span>
+            </div>
+            <div className="pill-group">
+              <button onClick={() => handleUseForAnalysis(v.id)}>Use for analysis</button>
+              <button onClick={() => reindex(v.id)} className="ghost">
+                Reindex
+              </button>
+            </div>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}

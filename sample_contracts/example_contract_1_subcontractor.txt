@@ -1,0 +1,574 @@
+SUBCONTRACT AGREEMENT
+
+Contract No.: SC-2024-0847
+Project: Munich Central Business District Mixed-Use Development
+Date: October 15, 2024
+
+---
+
+PARTIES
+
+General Contractor ("Contractor"):
+Bauwerk München GmbH
+Leopoldstraße 142, 80804 Munich, Germany
+VAT: DE298374651
+
+Subcontractor ("Subcontractor"):
+Elektrotechnik Hoffmann GmbH
+Industriestraße 28, 85748 Garching, Germany
+VAT: DE187294563
+
+Owner ("Owner"):
+MBD Investments AG
+Maximilianstraße 35, 80539 Munich, Germany
+
+---
+
+ARTICLE 1: SCOPE OF WORK
+
+1.1 Work Description
+
+Subcontractor shall furnish all labor, materials, equipment, tools, scaffolding, transportation, and supervision necessary to complete the following scope of work in accordance with the Contract Documents:
+
+Division 26 – Electrical Systems
+- Complete electrical rough-in for all 47 residential units (floors 3-18)
+- Electrical distribution systems for retail spaces (floors G-2)
+- Emergency power systems and generator connections
+- Fire alarm system installation and integration
+- Building automation system (BAS) wiring and terminations
+- Electric vehicle charging infrastructure (parking levels P1-P3)
+- Telecommunications backbone and horizontal cabling
+- Lightning protection system
+
+1.2 Contract Documents
+
+The following documents are incorporated by reference and form part of this Agreement:
+
+a) Main Contract between Contractor and Owner dated August 1, 2024
+b) Architectural drawings Rev. 12, dated September 30, 2024
+c) MEP specifications dated September 15, 2024
+d) Addenda 1-4
+e) Subcontractor's proposal dated October 8, 2024
+f) Project schedule Rev. 3
+
+1.3 Exclusions
+
+The following items are expressly excluded from Subcontractor's scope:
+
+- Permanent power connection (by utility company)
+- Photovoltaic system installation (separate contract)
+- Security system programming (by Owner's vendor)
+- Furniture, fixtures, and equipment (FF&E) connections
+
+1.4 Coordination Requirements
+
+Subcontractor acknowledges that this project involves complex coordination among multiple trades. Subcontractor shall:
+
+a) Attend weekly coordination meetings every Tuesday at 09:00
+b) Maintain current 3-week look-ahead schedules
+c) Provide shop drawings within 14 days of request
+d) Coordinate all ceiling and wall penetrations with mechanical contractor
+e) Participate in BIM coordination sessions as scheduled
+
+---
+
+ARTICLE 2: CONTRACT SUM AND PAYMENT
+
+2.1 Contract Sum
+
+The total Contract Sum for all work described herein is:
+
+€2,847,500.00 (Two Million Eight Hundred Forty-Seven Thousand Five Hundred Euros)
+
+This is a lump sum, fixed-price contract. The Contract Sum includes all labor, materials, equipment, overhead, profit, insurance, bonds, and all other costs necessary to complete the Work.
+
+2.2 Schedule of Values
+
+Subcontractor shall submit a detailed Schedule of Values within seven (7) days of contract execution, broken down as follows:
+
+| Phase | Description | Value |
+|-------|-------------|-------|
+| 1 | Mobilization and temporary power | €142,375 |
+| 2 | Underground and slab rough-in | €341,700 |
+| 3 | Vertical distribution risers | €427,125 |
+| 4 | Floor-by-floor rough-in (residential) | €854,250 |
+| 5 | Retail electrical systems | €284,750 |
+| 6 | Fire alarm and life safety | €341,700 |
+| 7 | BAS and controls wiring | €198,325 |
+| 8 | Finish electrical and devices | €171,050 |
+| 9 | Testing and commissioning | €85,525 |
+| 10 | Closeout and documentation | €700 |
+
+2.3 Progress Payments
+
+a) Subcontractor shall submit monthly payment applications by the 25th of each month for work completed through the last day of that month.
+
+b) Payment applications shall be submitted in Contractor's standard format with supporting documentation including:
+   - Updated schedule of values showing percent complete
+   - Daily reports for the billing period
+   - Material delivery tickets and invoices
+   - Certified payroll records (if applicable)
+
+c) Contractor shall review and process approved payment applications within fifteen (15) business days of receipt of a conforming application.
+
+d) Payment shall be made within sixty (60) days following Contractor's receipt of corresponding payment from Owner. In no event shall Contractor be obligated to pay Subcontractor prior to Contractor's receipt of payment from Owner for Subcontractor's work (pay-when-paid).
+
+e) Contractor reserves the right to withhold payment for:
+   - Defective work not remedied
+   - Claims filed or reasonable evidence of potential claims
+   - Failure to make timely payments to sub-subcontractors or suppliers
+   - Damage to other contractors' work
+   - Failure to maintain required insurance
+
+2.4 Retainage
+
+a) Contractor shall retain ten percent (10%) of each progress payment until the Work is fifty percent (50%) complete.
+
+b) Upon reaching fifty percent (50%) completion, retainage shall be reduced to five percent (5%) for the remainder of the project, provided Subcontractor's work is progressing satisfactorily.
+
+c) Retained amounts shall be released within forty-five (45) days following:
+   - Substantial completion of Subcontractor's work
+   - Receipt of all required closeout documentation
+   - Resolution of all punch list items
+   - Delivery of warranty documentation and as-built drawings
+   - Receipt of final lien waiver
+
+2.5 Final Payment
+
+Final payment, including release of all retainage, shall constitute a waiver of all claims by Subcontractor except those previously made in writing and identified as unsettled at the time of final payment application.
+
+---
+
+ARTICLE 3: TIME AND SCHEDULE
+
+3.1 Contract Time
+
+a) Subcontractor shall commence work on or before November 15, 2024, or within five (5) days of receiving written notice to proceed, whichever is later.
+
+b) Subcontractor shall substantially complete all work by August 31, 2025.
+
+c) Subcontractor shall achieve final completion, including all punch list items and closeout documentation, by September 30, 2025.
+
+3.2 Schedule Integration
+
+a) Subcontractor's work shall be performed in accordance with the Project Master Schedule, as updated from time to time by Contractor.
+
+b) Subcontractor acknowledges receipt of the current Project Master Schedule (Rev. 3, dated October 1, 2024) and agrees that the milestone dates contained therein are achievable.
+
+c) Subcontractor shall provide Contractor with a detailed installation schedule within fourteen (14) days of contract execution showing:
+   - Activity durations and sequences
+   - Manpower loading by week
+   - Major material delivery dates
+   - Coordination milestones with other trades
+   - Testing and inspection requirements
+
+3.3 Schedule Changes
+
+a) Contractor reserves the right to modify the Project Master Schedule as necessary to coordinate work among all parties and to meet Owner's requirements.
+
+b) Subcontractor shall adjust its work sequence and manpower as necessary to comply with schedule changes, provided such changes do not materially alter the overall scope or duration of Subcontractor's work.
+
+c) Subcontractor must submit written notice of any scheduling conflicts or delays within five (5) calendar days of becoming aware of such conflict or delay. Failure to provide timely notice shall constitute a waiver of any claim for time extension or additional compensation related to such conflict or delay.
+
+3.4 Acceleration
+
+a) If Subcontractor falls behind schedule due to causes within its control, Subcontractor shall take such steps as necessary to restore the schedule at no additional cost to Contractor.
+
+b) If Contractor directs Subcontractor to accelerate its work to meet schedule requirements not caused by Subcontractor's delay, Subcontractor shall be entitled to an equitable adjustment in the Contract Sum for demonstrated acceleration costs, provided Subcontractor submits detailed documentation within ten (10) days of completing accelerated work.
+
+3.5 Liquidated Damages
+
+a) Time is of the essence. Subcontractor acknowledges that delay in completion of its work will cause Contractor to incur damages that are difficult to quantify.
+
+b) If Subcontractor fails to achieve substantial completion by the date specified in Section 3.1(b), Subcontractor shall pay Contractor, as liquidated damages and not as a penalty, the sum of €3,500.00 per calendar day for each day of delay until substantial completion is achieved.
+
+c) Liquidated damages shall be capped at eight percent (8%) of the Contract Sum.
+
+d) Contractor may deduct liquidated damages from any payments otherwise due to Subcontractor.
+
+---
+
+ARTICLE 4: CHANGES IN THE WORK
+
+4.1 Change Order Process
+
+a) Contractor may order changes in the Work within the general scope of this Agreement. Changes shall be authorized by written Change Order signed by both parties.
+
+b) Subcontractor shall not proceed with changed work without written authorization from Contractor, except in emergency situations as described in Section 4.5.
+
+c) Upon receipt of a request for proposal (RFP) for changed work, Subcontractor shall submit a detailed quotation within seven (7) calendar days, including:
+   - Itemized labor costs with hours and rates
+   - Material costs with supplier quotations
+   - Equipment costs
+   - Subcontractor overhead and profit (not to exceed 15%)
+   - Schedule impact analysis
+
+4.2 Pricing of Changes
+
+a) Change Order pricing shall be based on one of the following methods, as selected by Contractor:
+   - Lump sum agreed price
+   - Unit prices established in the Contract Documents
+   - Time and materials with a not-to-exceed limit
+
+b) For time and materials work, the following rates shall apply:
+   - Journeyman electrician: €58.00/hour
+   - Apprentice electrician: €38.00/hour
+   - Foreman: €68.00/hour
+   - Project manager: €85.00/hour
+
+c) Material costs shall be actual invoice cost plus ten percent (10%) markup.
+
+d) Equipment rental shall be at actual cost, not to exceed published rental rates.
+
+4.3 Disputed Changes
+
+a) If Subcontractor disagrees with Contractor's valuation of a Change Order, Subcontractor shall nevertheless proceed with the work upon Contractor's written direction.
+
+b) Subcontractor shall perform disputed work and reserve its rights by providing written notice of dispute within three (3) calendar days of receiving direction to proceed. Failure to provide timely notice shall constitute acceptance of Contractor's valuation.
+
+c) Disputed amounts shall be resolved in accordance with Article 11 (Dispute Resolution).
+
+4.4 Minor Changes
+
+Contractor may issue written instructions for minor changes in the Work not involving adjustment in the Contract Sum or Contract Time. Subcontractor shall promptly carry out such instructions.
+
+4.5 Emergency Changes
+
+In case of emergency affecting safety of persons or property, Subcontractor shall act immediately to prevent threatened damage, injury, or loss. Subcontractor shall notify Contractor of such emergency work within twenty-four (24) hours and submit documentation of costs within five (5) days.
+
+---
+
+ARTICLE 5: INDEMNIFICATION AND LIABILITY
+
+5.1 Subcontractor's Indemnification
+
+a) To the fullest extent permitted by law, Subcontractor shall indemnify, defend, and hold harmless Contractor, Owner, Architect, and their respective officers, directors, employees, agents, and consultants (collectively, "Indemnitees") from and against all claims, damages, losses, costs, and expenses, including but not limited to attorneys' fees and litigation costs, arising out of or resulting from:
+
+   i) Performance of Subcontractor's work, including work by its sub-subcontractors and suppliers
+
+   ii) Any breach of this Agreement by Subcontractor
+
+   iii) Any violation of applicable laws, regulations, or codes by Subcontractor
+
+   iv) Any infringement of patent, trademark, or copyright arising from Subcontractor's work
+
+   v) Injuries to or death of any person, including Subcontractor's employees
+
+   vi) Damage to or destruction of property
+
+b) This indemnification obligation shall apply regardless of whether such claims are caused in part by the negligence of any Indemnitee, but shall not apply to the extent caused by the sole negligence or willful misconduct of an Indemnitee.
+
+c) Subcontractor's indemnification obligation shall survive completion or termination of this Agreement.
+
+5.2 Contractor's Indemnification
+
+Contractor shall indemnify and hold harmless Subcontractor from claims arising out of Contractor's sole negligence or willful misconduct, but only to the extent of Contractor's available insurance coverage.
+
+5.3 Limitation of Liability
+
+a) Except for indemnification obligations under Section 5.1 and claims covered by insurance, neither party's total liability to the other under this Agreement shall exceed the Contract Sum.
+
+b) In no event shall either party be liable to the other for consequential, incidental, special, or punitive damages, including lost profits, loss of use, or business interruption, regardless of whether such damages were foreseeable or whether a party was advised of the possibility of such damages.
+
+c) Notwithstanding the foregoing, the limitation in subsection (b) shall not apply to:
+   - Subcontractor's indemnification obligations
+   - Damages arising from fraud or willful misconduct
+   - Damages covered by insurance required under this Agreement
+
+5.4 Waiver of Subrogation
+
+Subcontractor waives all rights of recovery against Indemnitees for damages covered by insurance required by this Agreement, except for damages arising from willful misconduct. Subcontractor shall require similar waivers from its sub-subcontractors and suppliers.
+
+---
+
+ARTICLE 6: INSURANCE REQUIREMENTS
+
+6.1 Required Coverage
+
+Subcontractor shall maintain the following insurance coverage throughout the duration of this Agreement:
+
+a) Commercial General Liability
+   - Per occurrence: €5,000,000
+   - General aggregate: €10,000,000
+   - Products/completed operations aggregate: €5,000,000
+   - Personal and advertising injury: €2,000,000
+
+b) Automobile Liability
+   - Combined single limit: €2,000,000
+
+c) Workers' Compensation
+   - Statutory limits as required by German law
+   - Employer's liability: €1,000,000
+
+d) Professional Liability (if design services are provided)
+   - Per claim: €2,000,000
+   - Aggregate: €4,000,000
+
+e) Umbrella/Excess Liability
+   - Per occurrence: €5,000,000
+   - Aggregate: €5,000,000
+
+6.2 Policy Requirements
+
+a) All policies (except Workers' Compensation and Professional Liability) shall name Contractor, Owner, Architect, and their respective officers and employees as additional insureds.
+
+b) All policies shall be primary and non-contributory with respect to any insurance maintained by Contractor or Owner.
+
+c) All policies shall include a waiver of subrogation in favor of Contractor and Owner.
+
+d) All policies shall provide that coverage shall not be cancelled, non-renewed, or materially modified without thirty (30) days prior written notice to Contractor.
+
+6.3 Evidence of Insurance
+
+a) Prior to commencing work, Subcontractor shall provide Contractor with certificates of insurance evidencing all required coverage.
+
+b) Upon request, Subcontractor shall provide copies of actual policies and endorsements.
+
+c) Failure to maintain required insurance shall be a material breach of this Agreement.
+
+---
+
+ARTICLE 7: WARRANTY
+
+7.1 General Warranty
+
+a) Subcontractor warrants that all work shall be:
+   - Performed in a good and workmanlike manner
+   - In accordance with the Contract Documents
+   - Free from defects in materials and workmanship
+   - In compliance with all applicable codes and regulations
+
+b) This warranty shall extend for a period of twenty-four (24) months from the date of substantial completion of the Project, or such longer period as may be required by the Contract Documents or applicable law.
+
+7.2 Extended Warranties
+
+The following components shall carry extended warranties as specified:
+
+| Component | Warranty Period |
+|-----------|----------------|
+| Electrical panels and switchgear | 5 years |
+| Fire alarm system | 3 years |
+| LED lighting fixtures | 5 years |
+| EV charging equipment | 3 years |
+| Generator and ATS | 2 years |
+
+7.3 Warranty Repairs
+
+a) Upon receipt of notice of defective work during the warranty period, Subcontractor shall commence corrective action within forty-eight (48) hours for emergency conditions and within seven (7) days for non-emergency conditions.
+
+b) Warranty repairs shall be performed at Subcontractor's sole expense, including all labor, materials, equipment, and any damage to other work caused by the repairs.
+
+c) If Subcontractor fails to commence warranty repairs within the specified timeframes, Contractor may perform or have others perform such repairs, and Subcontractor shall reimburse Contractor for all costs incurred plus fifteen percent (15%) for administrative overhead.
+
+7.4 Warranty Exclusions
+
+This warranty shall not apply to:
+- Damage caused by others after acceptance of Subcontractor's work
+- Normal wear and tear
+- Improper operation or maintenance by Owner
+- Modifications made by others without Subcontractor's approval
+- Force majeure events
+
+---
+
+ARTICLE 8: TERMINATION
+
+8.1 Termination for Cause
+
+a) Contractor may terminate this Agreement for cause if Subcontractor:
+   - Persistently fails to perform work in accordance with the Contract Documents
+   - Fails to maintain required insurance coverage
+   - Fails to make timely payment to sub-subcontractors or suppliers
+   - Materially breaches any provision of this Agreement
+   - Becomes insolvent or files for bankruptcy
+
+b) Prior to termination for cause, Contractor shall provide Subcontractor with written notice specifying the default and allowing seven (7) calendar days to cure.
+
+c) If Subcontractor fails to cure within the specified period, Contractor may terminate this Agreement by written notice effective immediately.
+
+d) Upon termination for cause, Contractor may:
+   - Take possession of all materials and equipment at the site
+   - Complete the work using other contractors
+   - Withhold further payments to Subcontractor
+   - Charge Subcontractor for all costs to complete the work in excess of the unpaid Contract Sum
+
+8.2 Termination for Convenience
+
+a) Contractor may terminate this Agreement for convenience at any time by providing ten (10) calendar days written notice to Subcontractor.
+
+b) Upon termination for convenience, Subcontractor shall be entitled to payment for:
+   - Work properly performed prior to termination
+   - Reasonable demobilization costs
+   - Materials purchased for the project that cannot be returned (at invoice cost)
+
+c) Subcontractor shall not be entitled to anticipated profit on unperformed work or any other consequential damages resulting from termination for convenience.
+
+8.3 Suspension
+
+a) Contractor may suspend Subcontractor's work at any time for Contractor's convenience.
+
+b) If suspension exceeds thirty (30) consecutive days through no fault of Subcontractor, Subcontractor shall be entitled to an equitable adjustment for demonstrated additional costs directly resulting from the suspension.
+
+c) Subcontractor must submit a claim for suspension costs within fourteen (14) days of resumption of work.
+
+---
+
+ARTICLE 9: SAFETY AND COMPLIANCE
+
+9.1 Safety Requirements
+
+a) Subcontractor shall comply with all applicable safety laws, regulations, and rules, including but not limited to German Occupational Safety and Health regulations (Arbeitsschutzgesetz) and applicable BG (Berufsgenossenschaft) requirements.
+
+b) Subcontractor shall:
+   - Designate a competent safety representative
+   - Conduct weekly toolbox safety meetings
+   - Maintain required safety equipment and personal protective equipment
+   - Report all accidents and near-misses within 24 hours
+   - Participate in site-wide safety programs
+
+c) Contractor reserves the right to remove any Subcontractor personnel who violate safety requirements.
+
+9.2 Environmental Compliance
+
+Subcontractor shall comply with all environmental laws and regulations and shall properly handle, store, and dispose of all hazardous materials used in connection with its work.
+
+9.3 Labor Compliance
+
+a) Subcontractor shall comply with all applicable labor laws, including minimum wage requirements, working time regulations, and anti-discrimination laws.
+
+b) Subcontractor represents that it does not employ illegal workers and shall provide documentation upon request.
+
+9.4 Quality Control
+
+a) Subcontractor shall maintain a quality control program appropriate for the work.
+
+b) Subcontractor shall perform all inspections and tests required by the Contract Documents, applicable codes, and good industry practice.
+
+c) Subcontractor shall provide Contractor with copies of all inspection reports and test results within three (3) days of completion.
+
+---
+
+ARTICLE 10: INTELLECTUAL PROPERTY
+
+10.1 Ownership of Documents
+
+All drawings, specifications, calculations, and other documents prepared by Subcontractor specifically for this project shall become the property of Contractor upon payment.
+
+10.2 License
+
+Subcontractor grants Contractor and Owner a perpetual, royalty-free license to use any pre-existing intellectual property incorporated into the work for the purpose of operating, maintaining, and modifying the project.
+
+10.3 Infringement
+
+Subcontractor shall defend and indemnify Contractor against any claims of intellectual property infringement arising from Subcontractor's work.
+
+---
+
+ARTICLE 11: DISPUTE RESOLUTION
+
+11.1 Negotiation
+
+The parties shall attempt to resolve any dispute arising under this Agreement through good faith negotiation. Either party may request a meeting of senior representatives by written notice, and such meeting shall occur within fourteen (14) days.
+
+11.2 Mediation
+
+If negotiation fails to resolve the dispute within thirty (30) days, either party may initiate mediation under the rules of the German Institution of Arbitration (DIS). The mediation shall take place in Munich.
+
+11.3 Arbitration
+
+a) Any dispute not resolved through negotiation or mediation shall be finally resolved by binding arbitration under the DIS Arbitration Rules.
+
+b) The arbitration shall be conducted in Munich, Germany.
+
+c) The arbitration shall be conducted in German, with English translation available upon request.
+
+d) The arbitral tribunal shall consist of three (3) arbitrators.
+
+e) The prevailing party shall be entitled to recover its reasonable attorneys' fees and costs from the non-prevailing party.
+
+11.4 Continuation of Work
+
+Pending resolution of any dispute, Subcontractor shall continue to perform its work diligently and without delay, and Contractor shall continue to make undisputed payments.
+
+11.5 Governing Law
+
+This Agreement shall be governed by and construed in accordance with the laws of Germany, without regard to conflicts of law principles.
+
+---
+
+ARTICLE 12: GENERAL PROVISIONS
+
+12.1 Independent Contractor
+
+Subcontractor is an independent contractor and not an employee, agent, or joint venturer of Contractor. Subcontractor shall be solely responsible for all taxes, insurance, and benefits for its employees.
+
+12.2 Assignment
+
+Subcontractor shall not assign this Agreement or any rights hereunder without Contractor's prior written consent. Any attempted assignment without consent shall be void.
+
+12.3 Notices
+
+All notices shall be in writing and delivered by hand, registered mail, or recognized courier service to the addresses set forth above. Notice shall be effective upon receipt.
+
+12.4 Entire Agreement
+
+This Agreement, including all exhibits and documents incorporated by reference, constitutes the entire agreement between the parties and supersedes all prior negotiations, representations, and agreements.
+
+12.5 Amendments
+
+This Agreement may be amended only by written instrument signed by both parties.
+
+12.6 Severability
+
+If any provision of this Agreement is held invalid or unenforceable, the remaining provisions shall continue in full force and effect.
+
+12.7 Waiver
+
+Failure of either party to enforce any provision of this Agreement shall not constitute a waiver of that provision or any other provision.
+
+12.8 Headings
+
+Section headings are for convenience only and shall not affect the interpretation of this Agreement.
+
+---
+
+SIGNATURES
+
+CONTRACTOR:
+
+Bauwerk München GmbH
+
+By: _________________________________
+
+Name: Klaus Bauer
+
+Title: Managing Director
+
+Date: _________________________________
+
+
+SUBCONTRACTOR:
+
+Elektrotechnik Hoffmann GmbH
+
+By: _________________________________
+
+Name: Markus Hoffmann
+
+Title: Geschäftsführer
+
+Date: _________________________________
+
+---
+
+EXHIBIT A: DETAILED SCOPE OF WORK
+[Attached separately]
+
+EXHIBIT B: PROJECT SCHEDULE
+[Attached separately]
+
+EXHIBIT C: INSURANCE CERTIFICATES
+[To be provided prior to commencement]
+
+EXHIBIT D: CONTRACTOR'S STANDARD FORMS
+[Attached separately]

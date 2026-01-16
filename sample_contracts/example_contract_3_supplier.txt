@@ -1,0 +1,745 @@
+MATERIALS SUPPLY AND INSTALLATION AGREEMENT
+
+Agreement No.: MSA-2024-0293
+Project: Frankfurt Airport Terminal 3 Expansion
+Effective Date: November 1, 2024
+
+---
+
+1. PARTIES
+
+1.1 Purchaser:
+
+Fraport Bau Management GmbH
+Frankfurt Airport, Building 234
+60547 Frankfurt am Main, Germany
+VAT ID: DE247891234
+(hereinafter "Purchaser" or "FBM")
+
+1.2 Supplier:
+
+Alpine Curtain Wall Systems AG
+Industriepark Nord 45
+6023 Rothenburg, Switzerland
+VAT ID: CHE-123.456.789
+(hereinafter "Supplier")
+
+1.3 End Client:
+
+Fraport AG
+(hereinafter "Owner")
+
+---
+
+2. RECITALS
+
+2.1 Purchaser has been engaged as Construction Manager for the Frankfurt Airport Terminal 3 Expansion Project, a major infrastructure development comprising approximately 185,000 square meters of terminal space.
+
+2.2 Supplier specializes in the design, engineering, fabrication, and installation of high-performance curtain wall and facade systems for complex architectural projects.
+
+2.3 Purchaser desires to engage Supplier to provide unitized curtain wall systems for the project, and Supplier desires to accept such engagement on the terms set forth herein.
+
+2.4 This Agreement is entered into pursuant to Purchaser's obligations under its Construction Management Agreement with Owner dated March 15, 2023.
+
+---
+
+3. SCOPE OF SUPPLY
+
+3.1 General Scope
+
+Supplier shall design, engineer, fabricate, deliver, and install complete unitized curtain wall systems for the following areas of the Project:
+
+Zone A — Main Terminal Hall (Departure Level)
+- Approximately 12,400 square meters of floor-to-ceiling glazing
+- Maximum panel height: 6.2 meters
+- Triple-pane insulated glass units with integrated solar control
+
+Zone B — Pier B Connector
+- Approximately 8,600 square meters of curtain wall
+- Curved geometry sections (minimum radius 45 meters)
+- Fire-rated assemblies at specific locations per drawings
+
+Zone C — Arrivals Hall
+- Approximately 6,200 square meters
+- Double-skin facade system with integrated maintenance access
+- Motorized external louvers
+
+Zone D — Retail Atrium
+- Approximately 3,800 square meters
+- Structural glass fins
+- Specialty point-fixed glazing at feature areas
+
+Total Approximate Area: 31,000 square meters
+
+3.2 Included Work
+
+Supplier's scope includes:
+
+a) Engineering and Design
+   - Structural analysis and calculations
+   - Thermal performance analysis
+   - Acoustic analysis
+   - Shop drawings and fabrication drawings
+   - Coordination with building structural system
+   - BIM model development (LOD 400)
+
+b) Fabrication
+   - All aluminum extrusions and framing members
+   - Insulated glass units per specifications
+   - Steel reinforcement and anchorage components
+   - Gaskets, sealants, and weatherstripping
+   - Vision and spandrel panels
+
+c) Delivery
+   - Transportation to site
+   - Off-loading and protected storage
+   - Sequenced delivery per installation schedule
+
+d) Installation
+   - Complete installation of all curtain wall systems
+   - Sealant application and weatherproofing
+   - Integration with adjacent building systems
+   - Testing and commissioning
+
+e) Closeout
+   - As-built drawings
+   - Operation and maintenance manuals
+   - Warranty documentation
+   - Training for Owner's maintenance personnel
+
+3.3 Exclusions
+
+The following items are expressly excluded:
+
+- Primary building structure and anchor embed plates
+- Interior finishes beyond curtain wall system
+- Window treatments (blinds, shades)
+- Bird deterrent systems (by others)
+- Cleaning equipment and davit systems
+- Building automation system integration beyond terminal connections
+
+3.4 Performance Requirements
+
+Supplier warrants that the curtain wall systems shall meet or exceed the following performance criteria:
+
+| Parameter | Requirement | Test Standard |
+|-----------|-------------|---------------|
+| Air infiltration | ≤ 0.06 cfm/ft² @ 75 Pa | EN 12153 |
+| Water penetration | No penetration @ 600 Pa static | EN 12155 |
+| Structural deflection | L/175 under design wind load | EN 13116 |
+| Thermal transmittance | U-value ≤ 1.0 W/m²K (overall) | EN ISO 12567 |
+| Acoustic performance | Rw ≥ 42 dB | EN ISO 10140 |
+| Solar heat gain | SHGC ≤ 0.25 | EN 410 |
+| Fire rating | E60/EW30 at designated locations | EN 13501-2 |
+
+---
+
+4. CONTRACT PRICE
+
+4.1 Total Contract Price
+
+The total Contract Price for all work described in Section 3 is:
+
+€47,850,000.00
+(Forty-Seven Million Eight Hundred Fifty Thousand Euros)
+
+4.2 Price Breakdown
+
+| Component | Amount |
+|-----------|--------|
+| Engineering and design | €2,870,000 |
+| Materials and fabrication | €31,280,000 |
+| Transportation and logistics | €1,915,000 |
+| Installation labor | €9,570,000 |
+| Testing and commissioning | €956,000 |
+| Contingency and risk | €1,259,000 |
+| Total | €47,850,000 |
+
+4.3 Fixed Price
+
+a) The Contract Price is a firm, fixed price and shall not be subject to adjustment except as expressly provided in this Agreement.
+
+b) The Contract Price includes all costs for labor, materials, equipment, engineering, overhead, profit, insurance, bonds, taxes (except VAT), and all other expenses necessary to complete the Work.
+
+c) Supplier assumes all risk of price fluctuations in materials, labor, currency exchange, and other costs.
+
+4.4 Currency and Exchange
+
+a) The Contract Price is stated in Euros and shall be paid in Euros.
+
+b) Notwithstanding Section 4.3, if the EUR/CHF exchange rate varies by more than 8% from the rate on the Effective Date (1 EUR = 0.94 CHF), either party may request a good-faith renegotiation of the affected portion of the Contract Price. Neither party is obligated to agree to any adjustment.
+
+4.5 Taxes
+
+a) The Contract Price excludes German value-added tax (VAT), which shall be added to invoices at the applicable rate.
+
+b) Supplier is responsible for all taxes imposed by Swiss authorities.
+
+c) Purchaser shall provide documentation necessary for any applicable tax exemptions.
+
+---
+
+5. PAYMENT TERMS
+
+5.1 Payment Schedule
+
+Payment shall be made according to the following milestone schedule:
+
+| Milestone | Payment | Amount | Cumulative |
+|-----------|---------|--------|------------|
+| Contract execution | 10% | €4,785,000 | 10% |
+| Completion of engineering | 10% | €4,785,000 | 20% |
+| Commencement of fabrication | 15% | €7,177,500 | 35% |
+| 50% fabrication complete | 15% | €7,177,500 | 50% |
+| Delivery to site begins | 10% | €4,785,000 | 60% |
+| 50% installation complete | 15% | €7,177,500 | 75% |
+| Substantial completion | 15% | €7,177,500 | 90% |
+| Final completion | 10% | €4,785,000 | 100% |
+
+5.2 Milestone Verification
+
+a) Supplier shall notify Purchaser upon achievement of each milestone and provide supporting documentation.
+
+b) Purchaser shall verify milestone completion within ten (10) business days of notification.
+
+c) If Purchaser disputes milestone completion, Purchaser shall notify Supplier in writing specifying the deficiencies.
+
+5.3 Payment Processing
+
+a) Upon verification of milestone completion, Supplier shall submit an invoice for the corresponding payment amount.
+
+b) Invoices shall be paid within seventy-five (75) days of receipt of a valid invoice for a verified milestone.
+
+c) Invoices shall reference this Agreement number and include:
+   - Milestone achieved
+   - Supporting documentation
+   - Valid VAT invoice meeting German requirements
+   - Bank details for payment
+
+5.4 Advance Payment Security
+
+a) The advance payment upon contract execution (10%) shall be secured by an advance payment guarantee from a bank acceptable to Purchaser.
+
+b) The guarantee shall be in the form attached as Exhibit D and shall remain in effect until Supplier has earned payments equal to the advance.
+
+c) The guarantee shall be reduced proportionally as Supplier earns milestone payments.
+
+5.5 Retainage
+
+a) In addition to the milestone payment schedule, Purchaser shall retain five percent (5%) of each milestone payment as retainage.
+
+b) Retainage shall be released as follows:
+   - 50% upon Substantial Completion and submission of warranty bond
+   - Remaining 50% upon Final Completion and acceptance of all closeout documents
+
+c) If Final Completion is not achieved within ninety (90) days after Substantial Completion, Purchaser may use retained funds to complete punch list items and closeout requirements.
+
+5.6 Right of Set-Off
+
+Purchaser shall have the right to set off against payments due to Supplier:
+
+a) Liquidated damages under Section 6.4
+b) Costs incurred by Purchaser to remedy defective work
+c) Claims for which Supplier is liable under this Agreement
+d) Amounts owed by Supplier to Purchaser under any other agreement
+
+Purchaser shall provide Supplier with reasonable notice and documentation supporting any set-off.
+
+5.7 Payment Disputes
+
+a) If Supplier disputes any withholding or set-off, Supplier shall notify Purchaser in writing within fourteen (14) days.
+
+b) Disputed amounts shall be resolved through the dispute resolution procedures in Section 13. Supplier shall not suspend work due to payment disputes unless Purchaser fails to pay undisputed amounts for more than one hundred twenty (120) days.
+
+c) Late payments shall bear interest at 3% per annum above the European Central Bank base rate.
+
+---
+
+6. TIME AND SCHEDULE
+
+6.1 Contract Duration
+
+a) Supplier shall complete all engineering and design within six (6) months of the Effective Date.
+
+b) Supplier shall complete all fabrication and deliver materials to site within eighteen (18) months of the Effective Date.
+
+c) Supplier shall achieve Substantial Completion of installation within twenty-four (24) months of the Effective Date.
+
+d) Supplier shall achieve Final Completion within twenty-six (26) months of the Effective Date.
+
+6.2 Detailed Schedule
+
+a) Within thirty (30) days of contract execution, Supplier shall submit a detailed project schedule showing:
+   - Engineering milestones and approval dates
+   - Fabrication sequences by zone
+   - Delivery schedule coordinated with site readiness
+   - Installation sequences and manpower loading
+   - Testing and commissioning activities
+
+b) The schedule shall be in Primavera P6 format and integrated with the Project Master Schedule.
+
+c) Supplier shall update the schedule monthly and participate in weekly coordination meetings.
+
+6.3 Schedule Delays
+
+a) Supplier shall be entitled to an extension of time for delays caused by:
+   - Changes in the Work ordered by Purchaser
+   - Late access to work areas due to causes beyond Supplier's control
+   - Force majeure events per Section 14
+   - Concealed conditions materially different from Contract Documents
+
+b) Supplier shall provide written notice of delay within four (4) business days of becoming aware of a delay event, including:
+   - Description of the delay event
+   - Affected activities
+   - Estimated duration of delay
+   - Proposed mitigation measures
+
+c) Failure to provide timely notice shall result in waiver of any claim for time extension or delay costs, except for delays caused by Purchaser's gross negligence or willful misconduct.
+
+d) Supplier's sole remedy for excusable delays shall be an extension of time. Supplier shall not be entitled to additional compensation for delay unless the delay is caused solely by Purchaser's breach of this Agreement.
+
+6.4 Liquidated Damages for Delay
+
+a) Time is of the essence. Supplier acknowledges that timely completion is critical to airport operations and that delay will cause substantial damages to Purchaser and Owner that are difficult to quantify.
+
+b) If Supplier fails to achieve Substantial Completion by the date specified in Section 6.1(c) (as adjusted by approved Change Orders), Supplier shall pay Purchaser liquidated damages in the amount of €75,000.00 per calendar day of delay.
+
+c) If Supplier fails to achieve any Zone completion milestone specified in the detailed schedule by more than seven (7) days, Supplier shall pay interim liquidated damages of €25,000.00 per day until the milestone is achieved. Interim liquidated damages shall be credited against final liquidated damages.
+
+d) Liquidated damages shall be capped at fifteen percent (15%) of the Contract Price (€7,177,500).
+
+e) Liquidated damages represent a genuine pre-estimate of Purchaser's damages. Payment of liquidated damages shall not relieve Supplier of its obligation to complete the Work.
+
+f) Purchaser may deduct liquidated damages from payments otherwise due to Supplier.
+
+6.5 Early Completion Bonus
+
+If Supplier achieves Substantial Completion more than thirty (30) days before the required date, Supplier shall be entitled to a bonus of €15,000.00 for each full day of early completion, up to a maximum of €450,000.00.
+
+---
+
+7. QUALITY AND TESTING
+
+7.1 Quality Management System
+
+a) Supplier shall maintain a quality management system certified to ISO 9001:2015.
+
+b) Supplier shall prepare and submit a Project Quality Plan within sixty (60) days of contract execution.
+
+c) The Quality Plan shall address:
+   - Inspection and test procedures
+   - Non-conformance handling
+   - Document control
+   - Traceability of materials
+
+7.2 Factory Testing
+
+a) Supplier shall conduct factory testing of representative mock-up panels including:
+   - Air infiltration testing
+   - Water penetration testing
+   - Structural testing
+
+b) Purchaser and Owner shall be entitled to witness factory testing upon reasonable notice.
+
+c) Supplier shall provide test reports within fourteen (14) days of testing.
+
+d) Failed tests shall be repeated at Supplier's expense after corrective action.
+
+7.3 Field Testing
+
+a) Supplier shall conduct field testing of installed curtain wall including:
+   - Water testing of 10% of installed panels (minimum)
+   - Air barrier continuity testing
+   - Thermal imaging survey
+
+b) Supplier shall remedy any deficiencies discovered during testing at no additional cost.
+
+7.4 Inspections
+
+a) Purchaser shall have the right to inspect materials and workmanship at any time during fabrication and installation.
+
+b) Purchaser's inspections shall not relieve Supplier of responsibility for quality.
+
+c) Supplier shall provide Purchaser with reasonable access to fabrication facilities upon 48 hours notice.
+
+---
+
+8. DESIGN RESPONSIBILITY
+
+8.1 Design Services
+
+a) Supplier shall be responsible for complete engineering and design of the curtain wall systems, including:
+   - Structural design of all framing members
+   - Connection design to building structure
+   - Thermal and condensation analysis
+   - Movement accommodation design
+   - Shop and fabrication drawings
+
+b) Supplier's design shall comply with the Contract Documents, applicable codes, and industry standards.
+
+8.2 Design Review
+
+a) Supplier shall submit design documents for review at the following stages:
+   - 30% design development
+   - 60% design development
+   - 100% for fabrication release
+
+b) Purchaser shall review and respond to submissions within twenty-one (21) days. Purchaser's review shall be limited to conformance with the Contract Documents and shall not relieve Supplier of design responsibility.
+
+c) Purchaser's approval of design documents shall not constitute acceptance of design adequacy.
+
+8.3 Design Liability
+
+a) Supplier shall be solely responsible for the adequacy, accuracy, and completeness of its design.
+
+b) Supplier shall carry professional liability insurance as specified in Section 11.
+
+c) Supplier shall indemnify Purchaser against claims arising from design defects.
+
+---
+
+9. WARRANTY
+
+9.1 Product Warranty
+
+Supplier warrants that all materials and equipment furnished under this Agreement shall be:
+
+a) New and of good quality
+b) Free from defects in design, materials, and workmanship
+c) Suitable for their intended purpose
+d) In conformance with the Contract Documents and applicable codes
+
+9.2 Warranty Period
+
+a) The general warranty period shall be five (5) years from Substantial Completion.
+
+b) The following components shall have extended warranties:
+
+| Component | Warranty Period |
+|-----------|----------------|
+| Insulated glass units (seal failure) | 10 years |
+| Factory-applied finishes | 20 years |
+| Structural silicone | 20 years |
+| Hardware and operators | 5 years |
+| Gaskets and weatherstripping | 10 years |
+
+c) If Supplier or its designated service provider is not available to perform warranty repairs, the warranty shall be backed by a warranty bond from a surety acceptable to Purchaser.
+
+9.3 Warranty Repairs
+
+a) Supplier shall respond to warranty claims within twenty-four (24) hours for emergencies (water infiltration, safety concerns) and seventy-two (72) hours for non-emergency defects.
+
+b) Supplier shall complete warranty repairs within:
+   - 48 hours for emergencies
+   - 14 days for standard repairs
+   - 30 days for repairs requiring replacement parts
+
+c) Warranty repairs shall be performed at Supplier's sole expense, including all labor, materials, access equipment, and consequential damage to adjacent work.
+
+d) If Supplier fails to respond within the specified timeframes, Purchaser may perform repairs and recover costs from Supplier at 150% of reasonable repair costs, or draw upon the warranty bond.
+
+9.4 Warranty Exclusions
+
+This warranty shall not apply to defects caused by:
+
+a) Abuse, misuse, or vandalism
+b) Unauthorized modifications
+c) Failure to perform recommended maintenance
+d) Building movement beyond design parameters
+e) Force majeure events
+
+9.5 Extended Warranty Option
+
+Purchaser may elect to purchase an extended warranty for years 6-10 at a price of €250,000.00, to be exercised in writing prior to expiration of the initial warranty period.
+
+---
+
+10. INDEMNIFICATION AND LIABILITY
+
+10.1 Supplier's Indemnification
+
+To the fullest extent permitted by applicable law, Supplier shall indemnify, defend, and hold harmless Purchaser, Owner, and their respective directors, officers, employees, agents, and consultants (collectively, "Indemnified Parties") from and against any and all claims, demands, suits, actions, damages, losses, costs, and expenses (including attorneys' fees and costs of litigation) arising out of or resulting from:
+
+a) Supplier's performance or non-performance of this Agreement
+
+b) Any negligent act, error, or omission of Supplier, its employees, agents, or subcontractors
+
+c) Any breach of this Agreement by Supplier
+
+d) Any violation of applicable law by Supplier
+
+e) Any claim that Supplier's work infringes any patent, copyright, trademark, or other intellectual property right
+
+f) Death or bodily injury to any person arising from Supplier's work
+
+g) Damage to or destruction of property arising from Supplier's work
+
+h) Any defect in Supplier's design, regardless of whether such defect is discovered during or after the warranty period
+
+10.2 Extent of Indemnification
+
+Supplier's indemnification obligations shall apply regardless of whether the claims are caused in part by the negligence of any Indemnified Party, but shall not apply to the extent claims are caused by the sole negligence or willful misconduct of an Indemnified Party. Supplier's indemnification obligation shall include claims caused by the concurrent negligence of Supplier and any Indemnified Party.
+
+10.3 Purchaser's Indemnification
+
+Purchaser shall indemnify Supplier from claims arising from Purchaser's sole negligence or willful misconduct.
+
+10.4 Limitation of Liability
+
+a) Except for Supplier's indemnification obligations under Section 10.1 and claims covered by insurance, Supplier's total aggregate liability under this Agreement shall not exceed one hundred percent (100%) of the Contract Price.
+
+b) NEITHER PARTY SHALL BE LIABLE TO THE OTHER FOR CONSEQUENTIAL, INCIDENTAL, INDIRECT, SPECIAL, OR PUNITIVE DAMAGES, INCLUDING BUT NOT LIMITED TO LOSS OF PROFITS, LOSS OF REVENUE, LOSS OF USE, COST OF CAPITAL, OR BUSINESS INTERRUPTION DAMAGES.
+
+c) THE LIMITATION IN SUBSECTION (b) SHALL NOT APPLY TO:
+   - Supplier's indemnification obligations
+   - Liquidated damages under Section 6.4
+   - Claims for fraud or willful misconduct
+   - Claims arising from Supplier's gross negligence
+   - Intellectual property infringement claims
+   - Third-party claims against which a party is entitled to indemnification
+
+d) The limitations in this Section shall apply regardless of the form of action, whether in contract, tort, strict liability, or otherwise.
+
+10.5 Survival
+
+Indemnification obligations shall survive completion or termination of this Agreement.
+
+---
+
+11. INSURANCE
+
+11.1 Required Coverage
+
+Supplier shall procure and maintain the following insurance:
+
+a) Commercial General Liability
+   - Per occurrence: €10,000,000
+   - General aggregate: €20,000,000
+   - Products/completed operations: €10,000,000
+
+b) Professional Liability (E&O)
+   - Per claim: €10,000,000
+   - Aggregate: €20,000,000
+   - Coverage shall be maintained for five (5) years after Final Completion
+
+c) Automobile Liability
+   - Combined single limit: €5,000,000
+
+d) Employer's Liability
+   - Per accident: €5,000,000
+   - Disease: €5,000,000
+
+e) All-Risk Installation Coverage
+   - Full Contract Price plus 10%
+
+f) Transit Insurance
+   - Full value of materials in transit
+
+11.2 Additional Insureds
+
+Purchaser, Owner, and their respective officers and employees shall be named as additional insureds on general liability and umbrella policies.
+
+11.3 Policy Requirements
+
+a) All policies shall be primary and non-contributory.
+
+b) All policies shall include waiver of subrogation in favor of Purchaser and Owner.
+
+c) Policies shall not be cancelled or materially modified without thirty (30) days prior written notice to Purchaser.
+
+d) Deductibles shall not exceed €100,000 without Purchaser's approval.
+
+11.4 Evidence of Insurance
+
+Supplier shall provide certificates of insurance within fourteen (14) days of contract execution and annually thereafter. Upon request, Supplier shall provide copies of policies and endorsements.
+
+---
+
+12. TERMINATION
+
+12.1 Termination for Cause
+
+a) Purchaser may terminate this Agreement for cause if Supplier:
+
+   i) Fails to prosecute the Work diligently
+   ii) Fails to meet the performance requirements in Section 3.4
+   iii) Fails to maintain required insurance
+   iv) Materially breaches any provision of this Agreement
+   v) Becomes insolvent or files for bankruptcy
+   vi) Fails to remedy defective work after written notice
+
+b) Purchaser shall provide ten (10) days written notice specifying the default.
+
+c) If Supplier fails to cure within the notice period, termination shall be effective immediately upon written notice.
+
+d) Upon termination for cause:
+   - Purchaser may complete the Work using others
+   - Purchaser may take possession of all materials, equipment, and work in progress
+   - Supplier shall assign subcontracts to Purchaser upon request
+   - Supplier shall be liable for excess costs of completion
+
+12.2 Termination for Convenience
+
+a) Purchaser may terminate this Agreement for convenience at any time upon fourteen (14) days written notice.
+
+b) Upon termination for convenience, Supplier shall be entitled to:
+   - Payment for Work properly performed prior to termination
+   - Reasonable costs of demobilization
+   - Cost of materials fabricated but not yet delivered (at invoice cost less salvage value)
+   - Five percent (5%) of the value of Work not yet performed as a termination fee
+
+c) Supplier shall not be entitled to anticipated profit on unperformed Work beyond the termination fee provided above.
+
+d) Supplier shall take immediate steps to minimize further costs and shall comply with Purchaser's instructions regarding disposition of materials and equipment.
+
+12.3 Suspension
+
+a) Purchaser may suspend the Work at any time for Purchaser's convenience.
+
+b) If suspension exceeds sixty (60) days through no fault of Supplier, Supplier shall be entitled to an equitable adjustment for demonstrated increased costs.
+
+c) If suspension exceeds one hundred eighty (180) days, Supplier may treat the suspension as a termination for convenience.
+
+---
+
+13. DISPUTE RESOLUTION
+
+13.1 Negotiation
+
+The parties shall attempt to resolve disputes through good-faith negotiation. Senior representatives shall meet within fourteen (14) days of written request.
+
+13.2 Expert Determination
+
+Technical disputes regarding performance requirements or quality standards may, by mutual agreement, be referred to an independent expert for binding determination.
+
+13.3 Mediation
+
+Disputes not resolved through negotiation shall be submitted to mediation under ICC Mediation Rules. Mediation shall take place in Zurich.
+
+13.4 Arbitration
+
+a) Disputes not resolved through mediation shall be finally settled by arbitration under the ICC Arbitration Rules.
+
+b) The seat of arbitration shall be Zurich, Switzerland.
+
+c) The arbitration shall be conducted in English.
+
+d) The tribunal shall consist of three arbitrators.
+
+e) The arbitral award shall be final and binding.
+
+f) Each party shall bear its own costs of arbitration. The tribunal may allocate the costs of the arbitration in the final award as it deems appropriate.
+
+13.5 Continued Performance
+
+Supplier shall continue to perform its obligations under this Agreement during any dispute resolution process, and Purchaser shall continue to make undisputed payments.
+
+13.6 Injunctive Relief
+
+Nothing in this Section shall prevent either party from seeking injunctive or other equitable relief in any court of competent jurisdiction.
+
+---
+
+14. FORCE MAJEURE
+
+14.1 Definition
+
+"Force Majeure" means events beyond a party's reasonable control, including acts of God, war, terrorism, civil unrest, government actions, pandemics, natural disasters, and industry-wide labor disputes.
+
+14.2 Notice
+
+The affected party shall notify the other within seven (7) days of becoming aware of a Force Majeure event.
+
+14.3 Effect
+
+a) Performance obligations shall be suspended during Force Majeure.
+
+b) The affected party shall use reasonable efforts to mitigate the impact and resume performance.
+
+c) Neither party shall be entitled to additional compensation due to Force Majeure, except for documented out-of-pocket costs incurred to protect or preserve the Work during the Force Majeure event.
+
+14.4 Extended Force Majeure
+
+If Force Majeure prevents performance for more than one hundred twenty (120) days, either party may terminate this Agreement upon thirty (30) days written notice. Upon such termination, Supplier shall be compensated for Work performed prior to termination.
+
+---
+
+15. GENERAL PROVISIONS
+
+15.1 Governing Law
+
+This Agreement shall be governed by Swiss law, excluding conflict of laws rules and the United Nations Convention on Contracts for the International Sale of Goods (CISG).
+
+15.2 Confidentiality
+
+Each party shall keep confidential all proprietary information received from the other party. This obligation shall survive termination for five (5) years.
+
+15.3 Assignment
+
+Neither party may assign this Agreement without the other's written consent, except Purchaser may assign to Owner or any affiliate.
+
+15.4 Notices
+
+All notices shall be in writing, sent by registered mail or courier to the addresses above, and effective upon receipt.
+
+15.5 Entire Agreement
+
+This Agreement constitutes the entire agreement between the parties and supersedes all prior negotiations.
+
+15.6 Amendments
+
+Modifications must be in writing signed by both parties.
+
+15.7 Severability
+
+Invalid provisions shall be severed without affecting the remainder.
+
+15.8 Waiver
+
+No waiver shall be effective unless in writing.
+
+15.9 Language
+
+This Agreement is executed in English. If translated, the English version shall prevail.
+
+---
+
+SIGNATURES
+
+PURCHASER:
+
+Fraport Bau Management GmbH
+
+By: _________________________________
+
+Name: Michael Brenner
+
+Title: Geschäftsführer
+
+Date: _________________________________
+
+
+SUPPLIER:
+
+Alpine Curtain Wall Systems AG
+
+By: _________________________________
+
+Name: Hans-Peter Müller
+
+Title: CEO
+
+Date: _________________________________
+
+---
+
+EXHIBITS
+
+- Exhibit A: Technical Specifications
+- Exhibit B: Drawings List
+- Exhibit C: Project Schedule
+- Exhibit D: Form of Advance Payment Guarantee
+- Exhibit E: Form of Performance Bond
+- Exhibit F: Form of Warranty Bond
+- Exhibit G: Insurance Requirements
+- Exhibit H: Quality Plan Requirements
