@@ -1,8 +1,34 @@
 import React from 'react';
 
-const riskColor = (risk) => `badge ${risk}`;
+interface RetrievedChunk {
+  chunk_id: string;
+  source: string;
+  content: string;
+}
 
-const parseRecommendation = (text = '') => {
+interface Finding {
+  clause_type: string;
+  risk_level: string;
+  extracted_value?: string;
+  deviation?: string;
+  playbook_standard?: string;
+  recommendation?: string;
+  source_text?: string;
+  retrieved_chunks?: RetrievedChunk[];
+}
+
+interface FindingsListProps {
+  findings: Finding[];
+}
+
+interface ParsedRecommendation {
+  main: string;
+  citations: string[];
+}
+
+const riskColor = (risk: string): string => `badge ${risk}`;
+
+const parseRecommendation = (text: string = ''): ParsedRecommendation => {
   const [main, citations] = text.split(/Cite chunks:/i);
   const cleanedMain = main.replace(/^(Summary:|Action:)/i, '').trim();
   const cleanedCitations = (citations || '').replace(/\.$/, '').trim();
@@ -15,7 +41,7 @@ const parseRecommendation = (text = '') => {
   };
 };
 
-export default function FindingsList({ findings }) {
+export default function FindingsList({ findings }: FindingsListProps) {
   if (!findings.length) {
     return <p>No findings yet.</p>;
   }
@@ -74,7 +100,7 @@ export default function FindingsList({ findings }) {
                 <div className="retrieved-section">
                   <p className="label">Retrieved evidence</p>
                   <ul className="chunk-list">
-                    {f.retrieved_chunks.map((c) => (
+                    {f.retrieved_chunks!.map((c) => (
                       <li key={c.chunk_id} className="chunk-item">
                         <div className="chunk-meta">
                           <span className="chip ghost">Chunk {c.chunk_id}</span>

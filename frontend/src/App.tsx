@@ -5,38 +5,85 @@ import FindingsList from './components/FindingsList';
 
 const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:8000';
 
-function App() {
-  const [contractText, setContractText] = useState('');
-  const [analysisType, setAnalysisType] = useState('risks');
-  const [analysisId, setAnalysisId] = useState(null);
-  const [status, setStatus] = useState(null);
-  const [result, setResult] = useState(null);
-  const [warnings, setWarnings] = useState([]);
-  const [usage, setUsage] = useState(null);
-  const eventSourceRef = useRef(null);
-  const [activeTab, setActiveTab] = useState('analyzer');
-  const [playbookVersion, setPlaybookVersion] = useState(null);
+type AnalysisType = 'risks' | 'summary' | 'obligations';
 
-  const startStream = (id) => {
+interface GuardrailWarning {
+  type: string;
+  message: string;
+}
+
+interface Usage {
+  total_tokens: number;
+  estimated_cost_usd: string;
+}
+
+interface Finding {
+  clause_type: string;
+  risk_level: string;
+  extracted_value?: string;
+  deviation?: string;
+  playbook_standard?: string;
+  recommendation?: string;
+  source_text?: string;
+  retrieved_chunks?: Array<{
+    chunk_id: string;
+    source: string;
+    content: string;
+  }>;
+}
+
+interface AnalysisResult {
+  findings: Finding[];
+  overall_risk_score?: string;
+  guardrail_warnings?: GuardrailWarning[];
+  usage?: Usage;
+}
+
+interface StatusEvent {
+  message?: string;
+  status?: string;
+}
+
+interface PartialFindingEvent {
+  finding: Finding;
+}
+
+interface FinalEvent {
+  result: AnalysisResult;
+}
+
+function App() {
+  const [contractText, setContractText] = useState<string>('');
+  const [analysisType, setAnalysisType] = useState<AnalysisType>('risks');
+  const [analysisId, setAnalysisId] = useState<string | null>(null);
+  const [status, setStatus] = useState<string | null>(null);
+  const [result, setResult] = useState<AnalysisResult | null>(null);
+  const [warnings, setWarnings] = useState<GuardrailWarning[]>([]);
+  const [usage, setUsage] = useState<Usage | null>(null);
+  const eventSourceRef = useRef<EventSource | null>(null);
+  const [activeTab, setActiveTab] = useState<'analyzer' | 'playbook'>('analyzer');
+  const [playbookVersion, setPlaybookVersion] = useState<string | null>(null);
+
+  const startStream = (id: string) => {
     if (eventSourceRef.current) {
       eventSourceRef.current.close();
     }
     const stream = new EventSource(`${API_BASE}/analysis/${id}/stream`);
     eventSourceRef.current = stream;
-    stream.addEventListener('status', (e) => {
-      const payload = JSON.parse(e.data);
-      setStatus(payload.message || payload.status);
+    stream.addEventListener('status', (e: MessageEvent) => {
+      const payload = JSON.parse(e.data) as StatusEvent;
+      setStatus(payload.message || payload.status || null);
     });
-    stream.addEventListener('partial_finding', (e) => {
-      const payload = JSON.parse(e.data);
+    stream.addEventListener('partial_finding', (e: MessageEvent) => {
+      const payload = JSON.parse(e.data) as PartialFindingEvent;
       setResult((prev) => {
         const findings = prev?.findings ? [...prev.findings] : [];
         findings.push(payload.finding);
-        return { ...(prev || {}), findings };
+        return { ...(prev || { findings: [] }), findings };
       });
     });
-    stream.addEventListener('final', (e) => {
-      const payload = JSON.parse(e.data);
+    stream.addEventListener('final', (e: MessageEvent) => {
+      const payload = JSON.parse(e.data) as FinalEvent;
       setResult(payload.result);
       setWarnings(payload.result.guardrail_warnings || []);
       setUsage(payload.result.usage || null);
@@ -49,7 +96,7 @@ function App() {
     setResult(null);
     setWarnings([]);
     setUsage(null);
-    const resp = await axios.post(`${API_BASE}/analyze`, {
+    const resp = await axios.post<{ analysis_id: string }>(`${API_BASE}/analyze`, {
       contract_text: contractText,
       analysis_type: analysisType,
       playbook_version_id: playbookVersion || null,
@@ -59,7 +106,7 @@ function App() {
     startStream(resp.data.analysis_id);
   };
 
-  const riskBadgeClass = (risk) => `badge ${risk}`;
+  const riskBadgeClass = (risk: string): string => `badge ${risk}`;
 
   return (
     <div className="container">
@@ -101,7 +148,7 @@ function App() {
             <div style={{ margin: '0.5rem 0' }}>
               <label className="input-label" htmlFor="analysisType">
                 Analysis type
-                <select id="analysisType" value={analysisType} onChange={(e) => setAnalysisType(e.target.value)}>
+                <select id="analysisType" value={analysisType} onChange={(e) => setAnalysisType(e.target.value as AnalysisType)}>
                   <option value="risks">Risks</option>
                   <option value="summary">Summary</option>
                   <option value="obligations">Obligations</option>
