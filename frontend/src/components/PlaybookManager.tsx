@@ -3,14 +3,27 @@ import axios from 'axios';
 
 export const ACTIVE_VERSION_STORAGE_KEY = 'activePlaybookVersionId';
 
-export default function PlaybookManager({ apiBase, onVersionChange }) {
-  const [current, setCurrent] = useState(null);
-  const [versions, setVersions] = useState([]);
-  const [editorContent, setEditorContent] = useState('');
-  const [changeNote, setChangeNote] = useState('');
-  const [saving, setSaving] = useState(false);
+interface PlaybookVersion {
+  id: string;
+  version_label: string;
+  content: string;
+  change_note?: string;
+  created_at?: string;
+}
 
-  const setActiveVersion = (versionId, availableVersions = versions) => {
+interface PlaybookManagerProps {
+  apiBase: string;
+  onVersionChange?: (versionId: string) => void;
+}
+
+export default function PlaybookManager({ apiBase, onVersionChange }: PlaybookManagerProps) {
+  const [current, setCurrent] = useState<PlaybookVersion | null>(null);
+  const [versions, setVersions] = useState<PlaybookVersion[]>([]);
+  const [editorContent, setEditorContent] = useState<string>('');
+  const [changeNote, setChangeNote] = useState<string>('');
+  const [saving, setSaving] = useState<boolean>(false);
+
+  const setActiveVersion = (versionId: string, availableVersions: PlaybookVersion[] = versions) => {
     const selected = availableVersions.find((v) => v.id === versionId);
     if (!selected) {
       return;
@@ -21,8 +34,8 @@ export default function PlaybookManager({ apiBase, onVersionChange }) {
     onVersionChange?.(selected.id);
   };
 
-  const load = async (preferredVersionId) => {
-    const list = await axios.get(`${apiBase}/playbook/versions`);
+  const load = async (preferredVersionId?: string) => {
+    const list = await axios.get<PlaybookVersion[]>(`${apiBase}/playbook/versions`);
     const fetchedVersions = list.data || [];
     setVersions(fetchedVersions);
 
@@ -47,7 +60,7 @@ export default function PlaybookManager({ apiBase, onVersionChange }) {
 
   const save = async () => {
     setSaving(true);
-    const resp = await axios.put(`${apiBase}/playbook`, {
+    const resp = await axios.put<{ id: string }>(`${apiBase}/playbook`, {
       content: editorContent,
       change_note: changeNote,
     });
@@ -56,12 +69,12 @@ export default function PlaybookManager({ apiBase, onVersionChange }) {
     await load(resp.data.id);
   };
 
-  const reindex = async (versionId) => {
+  const reindex = async (versionId: string) => {
     await axios.post(`${apiBase}/playbook/reindex`, { version_id: versionId });
     await load(versionId);
   };
 
-  const handleUseForAnalysis = (versionId) => {
+  const handleUseForAnalysis = (versionId: string) => {
     setActiveVersion(versionId);
   };
 

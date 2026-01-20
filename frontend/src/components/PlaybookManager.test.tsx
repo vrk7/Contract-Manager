@@ -5,6 +5,8 @@ import axios from 'axios';
 
 vi.mock('axios');
 
+const mockAxios = axios as any;
+
 const mockVersions = [
   {
     id: '7f187ff4-d8e2-48e9-9518-b3455094e726',
@@ -26,7 +28,7 @@ describe('PlaybookManager', () => {
 
   it('restores the persisted active version when available', async () => {
     localStorage.setItem(ACTIVE_VERSION_STORAGE_KEY, mockVersions[1].id);
-    axios.get.mockResolvedValue({ data: mockVersions });
+    mockAxios.get.mockResolvedValue({ data: mockVersions });
     const onVersionChange = vi.fn();
 
     render(<PlaybookManager apiBase="/api" onVersionChange={onVersionChange} />);
@@ -37,7 +39,7 @@ describe('PlaybookManager', () => {
   });
 
   it('switches active version when "Use for analysis" is clicked and persists selection', async () => {
-    axios.get.mockResolvedValue({ data: mockVersions });
+    mockAxios.get.mockResolvedValue({ data: mockVersions });
     const onVersionChange = vi.fn();
 
     render(<PlaybookManager apiBase="/api" onVersionChange={onVersionChange} />);
