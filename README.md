@@ -36,6 +36,7 @@ The solution reads the playbook and example contracts in `sample_contracts/` and
 ```bash
 python -m venv .venv && source .venv/bin/activate
 pip install -r backend/requirements.txt
+alembic upgrade head
 uvicorn backend.app.main:app --reload --port 8000
 ```
 
@@ -77,12 +78,17 @@ DEBUG_MODE=false
 
 # Frontend -> backend base URL
 VITE_API_BASE=http://localhost:8000
+
+# API key auth — set the same value on both sides. Leave unset to disable auth (local dev).
+API_KEY=
+VITE_API_KEY=
 ```
 
 - `ANTHROPIC_API_KEY` / `ANTHROPIC_MODEL` – Claude via official SDK (optional; offline heuristic fallback used in tests).
 - `DATABASE_URL` – defaults to Postgres (`postgres+asyncpg://...`) targeting the `db` service in `docker-compose` (and automatically when running inside the container); outside Docker, the app falls back to SQLite unless you set `DATABASE_URL` yourself.
 - `CHROMA_DIR` – persistent embedding store.
 - `RATE_LIMIT_PER_MINUTE` / `RATE_LIMIT_STREAM_PER_MINUTE` – slowapi per-IP throttles.
+- `API_KEY` / `VITE_API_KEY` – shared API key for authentication. Set the same value on both backend and frontend. Leave unset to disable auth (local dev / tests).
 
 ### Frontend
 
