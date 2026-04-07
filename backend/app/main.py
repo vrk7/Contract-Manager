@@ -1,6 +1,7 @@
 import asyncio
 import json
 import logging
+import secrets
 from datetime import datetime
 from typing import Any
 from pathlib import Path
@@ -11,10 +12,13 @@ from fastapi import (
     Depends,
     FastAPI,
     HTTPException,
+    Query,
     Request,
     Response,
+    Security,
     status,
 )
+from fastapi.security import APIKeyHeader
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, StreamingResponse
 from slowapi import Limiter, _rate_limit_exceeded_handler
@@ -44,6 +48,28 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 settings = get_settings()
 IN_MEMORY_RESULTS: dict[str, dict] = {}
+
+_api_key_header = APIKeyHeader(name="X-API-Key", auto_error=False)
+
+
+def verify_api_key(key: str | None = Security(_api_key_header)) -> None:
+    """Validate X-API-Key header. Skipped when API_KEY env var is not set (local dev)."""
+    if not settings.api_key:
+        return
+    if not key or not secrets.compare_digest(key, settings.api_key):
+        raise HTTPException(status_code=401, detail="Invalid or missing API key")
+
+
+def verify_api_key_query(
+    header_key: str | None = Security(_api_key_header),
+    query_key: str | None = Query(default=None, alias="api_key"),
+) -> None:
+    """Same as verify_api_key but also accepts ?api_key= for EventSource streams."""
+    if not settings.api_key:
+        return
+    provided = header_key or query_key
+    if not provided or not secrets.compare_digest(provided, settings.api_key):
+        raise HTTPException(status_code=401, detail="Invalid or missing API key")
 
 limiter = Limiter(key_func=get_remote_address, default_limits=[f"{settings.rate_limit_per_minute}/minute"])
 app = FastAPI(title=settings.app_name)
@@ -138,7 +164,7 @@ async def _process_analysis(analysis_id: str) -> None:
 
 @app.post("/analyze", response_model=AnalysisStatusResponse)
 @limiter.limit(f"{settings.rate_limit_per_minute}/minute")
-async def analyze(request: Request, payload: AnalysisCreateRequest, background_tasks: BackgroundTasks, session: AsyncSession | None = Depends(session_dependency)) -> AnalysisStatusResponse:
+async def analyze(request: Request, payload: AnalysisCreateRequest, background_tasks: BackgroundTasks, session: AsyncSession | None = Depends(session_dependency), _auth: None = Depends(verify_api_key)) -> AnalysisStatusResponse:
     contract_text, guardrails = filter_malicious_segments(payload.contract_text)
     if settings.in_memory_mode:
         analysis_id = str(uuid.uuid4())
@@ -187,7 +213,7 @@ async def analyze(request: Request, payload: AnalysisCreateRequest, background_t
 
 
 @app.get("/analysis/{analysis_id}", response_model=AnalysisResult | AnalysisStatusResponse)
-async def get_analysis(analysis_id: str, session: AsyncSession | None = Depends(session_dependency)):
+async def get_analysis(analysis_id: str, session: AsyncSession | None = Depends(session_dependency), _auth: None = Depends(verify_api_key)):
     if settings.in_memory_mode:
         data = IN_MEMORY_RESULTS.get(analysis_id)
         if not data:
@@ -210,7 +236,7 @@ def _format_sse(event: str, data: Any) -> str:
 
 @app.get("/analysis/{analysis_id}/stream")
 @limiter.limit(f"{settings.rate_limit_stream_per_minute}/minute")
-async def stream_analysis(request: Request, analysis_id: str):  # noqa: ARG001
+async def stream_analysis(request: Request, analysis_id: str, _auth: None = Depends(verify_api_key_query)):  # noqa: ARG001
     if settings.in_memory_mode:
         data = IN_MEMORY_RESULTS.get(analysis_id)
         if not data:
@@ -228,7 +254,7 @@ async def stream_analysis(request: Request, analysis_id: str):  # noqa: ARG001
 
 
 @app.get("/playbook", response_model=PlaybookResponse)
-async def get_current_playbook(session: AsyncSession | None = Depends(session_dependency)):
+async def get_current_playbook(session: AsyncSession | None = Depends(session_dependency), _auth: None = Depends(verify_api_key)):
     if settings.in_memory_mode:
         content = settings.resolve_playbook_path().read_text(encoding="utf-8")
         return PlaybookResponse(
@@ -255,7 +281,7 @@ async def get_current_playbook(session: AsyncSession | None = Depends(session_de
 
 
 @app.get("/playbook/versions", response_model=list[PlaybookResponse])
-async def get_playbook_versions(session: AsyncSession | None = Depends(session_dependency)):
+async def get_playbook_versions(session: AsyncSession | None = Depends(session_dependency), _auth: None = Depends(verify_api_key)):
     if settings.in_memory_mode:
         content = settings.resolve_playbook_path().read_text(encoding="utf-8")
         return [
@@ -271,7 +297,7 @@ async def get_playbook_versions(session: AsyncSession | None = Depends(session_d
 
 
 @app.get("/playbook/versions/{version_id}", response_model=PlaybookResponse)
-async def get_playbook_version(version_id: str, session: AsyncSession | None = Depends(session_dependency)):
+async def get_playbook_version(version_id: str, session: AsyncSession | None = Depends(session_dependency), _auth: None = Depends(verify_api_key)):
     if settings.in_memory_mode:
         content = settings.resolve_playbook_path().read_text(encoding="utf-8")
         return PlaybookResponse(
@@ -295,7 +321,7 @@ async def get_playbook_version(version_id: str, session: AsyncSession | None = D
 
 
 @app.put("/playbook", response_model=PlaybookResponse)
-async def update_playbook(request: PlaybookUpdateRequest, session: AsyncSession | None = Depends(session_dependency)):
+async def update_playbook(request: PlaybookUpdateRequest, session: AsyncSession | None = Depends(session_dependency), _auth: None = Depends(verify_api_key)):
     if settings.in_memory_mode:
         return PlaybookResponse(
             id="in-memory",
@@ -318,7 +344,7 @@ async def update_playbook(request: PlaybookUpdateRequest, session: AsyncSession 
 
 
 @app.post("/playbook/reindex")
-async def reindex_playbook(body: PlaybookReindexRequest, session: AsyncSession | None = Depends(session_dependency)):
+async def reindex_playbook(body: PlaybookReindexRequest, session: AsyncSession | None = Depends(session_dependency), _auth: None = Depends(verify_api_key)):
     if settings.in_memory_mode:
         return {"status": "ok", "version_id": "in-memory"}
     version_id = body.version_id

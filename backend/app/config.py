@@ -28,6 +28,7 @@ class Settings:
     cost_per_output_token: float = float(
         os.getenv("COST_PER_OUTPUT_TOKEN", "0.000075")
     )  # approx Claude 3.5 Sonnet pricing
+    api_key: str | None = os.getenv("API_KEY")
     debug_mode: bool = os.getenv("DEBUG_MODE", "false").lower() == "true"
     inline_analysis: bool = os.getenv("INLINE_ANALYSIS", "false").lower() == "true"
     in_memory_mode: bool = os.getenv("BYPASS_DB_FOR_TESTS", "false").lower() == "true"

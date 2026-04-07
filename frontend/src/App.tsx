@@ -1,9 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import axios from 'axios';
 import PlaybookManager from './components/PlaybookManager';
 import FindingsList from './components/FindingsList';
-
-const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:8000';
+import { api, streamUrl } from './api';
 
 type AnalysisType = 'risks' | 'summary' | 'obligations';
 
@@ -68,7 +66,7 @@ function App() {
     if (eventSourceRef.current) {
       eventSourceRef.current.close();
     }
-    const stream = new EventSource(`${API_BASE}/analysis/${id}/stream`);
+    const stream = new EventSource(streamUrl(`/analysis/${id}/stream`));
     eventSourceRef.current = stream;
     stream.addEventListener('status', (e: MessageEvent) => {
       const payload = JSON.parse(e.data) as StatusEvent;
@@ -96,7 +94,7 @@ function App() {
     setResult(null);
     setWarnings([]);
     setUsage(null);
-    const resp = await axios.post<{ analysis_id: string }>(`${API_BASE}/analyze`, {
+    const resp = await api.post<{ analysis_id: string }>('/analyze', {
       contract_text: contractText,
       analysis_type: analysisType,
       playbook_version_id: playbookVersion || null,
@@ -211,7 +209,7 @@ function App() {
 
       {activeTab === 'playbook' && (
         <div className="card">
-          <PlaybookManager apiBase={API_BASE} onVersionChange={setPlaybookVersion} />
+          <PlaybookManager onVersionChange={setPlaybookVersion} />
         </div>
       )}
     </div>

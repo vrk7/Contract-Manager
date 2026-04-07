@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import axios from 'axios';
+import { api } from '../api';
 
 export const ACTIVE_VERSION_STORAGE_KEY = 'activePlaybookVersionId';
 
@@ -12,11 +12,10 @@ interface PlaybookVersion {
 }
 
 interface PlaybookManagerProps {
-  apiBase: string;
   onVersionChange?: (versionId: string) => void;
 }
 
-export default function PlaybookManager({ apiBase, onVersionChange }: PlaybookManagerProps) {
+export default function PlaybookManager({ onVersionChange }: PlaybookManagerProps) {
   const [current, setCurrent] = useState<PlaybookVersion | null>(null);
   const [versions, setVersions] = useState<PlaybookVersion[]>([]);
   const [editorContent, setEditorContent] = useState<string>('');
@@ -35,7 +34,7 @@ export default function PlaybookManager({ apiBase, onVersionChange }: PlaybookMa
   };
 
   const load = async (preferredVersionId?: string) => {
-    const list = await axios.get<PlaybookVersion[]>(`${apiBase}/playbook/versions`);
+    const list = await api.get<PlaybookVersion[]>('/playbook/versions');
     const fetchedVersions = list.data || [];
     setVersions(fetchedVersions);
 
@@ -60,7 +59,7 @@ export default function PlaybookManager({ apiBase, onVersionChange }: PlaybookMa
 
   const save = async () => {
     setSaving(true);
-    const resp = await axios.put<{ id: string }>(`${apiBase}/playbook`, {
+    const resp = await api.put<{ id: string }>('/playbook', {
       content: editorContent,
       change_note: changeNote,
     });
@@ -70,7 +69,7 @@ export default function PlaybookManager({ apiBase, onVersionChange }: PlaybookMa
   };
 
   const reindex = async (versionId: string) => {
-    await axios.post(`${apiBase}/playbook/reindex`, { version_id: versionId });
+    await api.post('/playbook/reindex', { version_id: versionId });
     await load(versionId);
   };
 
