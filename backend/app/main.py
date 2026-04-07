@@ -28,7 +28,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from .config import get_settings
-from .database import Base, engine, get_session
+from .database import get_session
 from .events import event_bus
 from .guards import filter_malicious_segments
 from .models import Analysis, PlaybookVersion
@@ -98,8 +98,8 @@ async def root() -> dict[str, str]:
 async def startup_event() -> None:
     if settings.in_memory_mode:
         return
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
+    # Schema is managed by Alembic. Run `alembic upgrade head` before starting
+    # the app for the first time or after any schema change.
     async with get_session() as session:
         await seed_playbook(session, str(settings.resolve_playbook_path()))
 
