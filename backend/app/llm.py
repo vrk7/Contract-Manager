@@ -35,7 +35,7 @@ class AnthropicClient:
         self.model = settings.anthropic_model
         self.client: Optional[anthropic.AsyncAnthropic] = None
         if self.api_key:
-            self.client = anthropic.AsyncAnthropic(api_key=self.api_key)
+            self.client = anthropic.AsyncAnthropic(api_key=self.api_key, timeout=60.0)
 
     async def complete(self, prompt: str, max_tokens: int = 512) -> tuple[str, LLMUsage]:
         """

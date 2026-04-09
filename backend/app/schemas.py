@@ -49,7 +49,7 @@ class AnalysisResult(BaseModel):
 
 
 class AnalysisCreateRequest(BaseModel):
-    contract_text: str = Field(min_length=10)
+    contract_text: str = Field(min_length=10, max_length=5_000_000)
     analysis_type: Literal["risks", "summary", "obligations"]
     playbook_version_id: Optional[str] = None
 

@@ -18,31 +18,100 @@ from .schemas import AnalysisResult, Finding, GuardrailWarning, RetrievedChunk, 
 logger = logging.getLogger(__name__)
 
 
+# Contracts longer than this are split into sections before extraction.
+_LARGE_CONTRACT_THRESHOLD = 30_000  # ~6 pages
+
+# Context characters captured around each regex match.
+_CONTEXT_WINDOW = 300
+
+_PATTERNS: list[tuple[str, str, str]] = [
+    ("payment_terms",          r"within\s+(\d+)\s+days",                                                    "days"),
+    ("retainage",              r"retain(?:age)?\s+(\d+)%",                                                  "%"),
+    ("notice_period",          r"within\s+(\d+)\s+(?:calendar\s+)?days.*?notice",                           "days"),
+    ("indemnification",        r"indemnif\w+.*?(regardless of fault|any and all)",                           ""),
+    ("termination_notice",     r"terminat\w+.*?(\d+)\s+calendar\s+days",                                    "days"),
+    ("dispute_resolution",     r"arbitration.*?in\s+([A-Za-z\s]+)",                                         "location"),
+    ("liquidated_damages",     r"€?([\d,\.]+)\s*per\s*(?:calendar\s*)?day",                                 "currency"),
+    ("force_majeure",          r"force\s+majeure|act\s+of\s+(?:God|nature)|unforeseeable\s+(?:event|circumstance)", ""),
+    ("warranty",               r"warrant\w*\s+(?:period\s+of\s+)?(\d+)\s+(?:year|month)",                   "period"),
+    ("insurance",              r"insur\w+\s+(?:coverage|requirement)\w*.*?\$([\d,]+(?:\.\d+)?)",             "USD"),
+    ("change_order",           r"change\s+order\s+(?:markup|fee|overhead)\s+of\s+(\d+)",                    "%"),
+    ("substantial_completion", r"substantial\s+complet\w+.*?(\d+\s+days|[A-Z][a-z]+\s+\d+,?\s*\d{4})",     ""),
+    ("delay_damages",          r"delay\w*\s+damages.*?\$([\d,]+)|liquidated.*?delay.*?\$([\d,]+)",           "USD"),
+    ("governing_law",          r"governed\s+by\s+(?:the\s+)?laws?\s+of\s+(?:the\s+)?([A-Za-z ]+)",         "jurisdiction"),
+    ("limitation_of_liability", r"liabilit\w+\s+(?:shall\s+)?not\s+exceed\s+\$?([\d,]+)",                  "USD"),
+]
+
+
+def _split_into_sections(text: str, max_size: int = 10_000) -> list[str]:
+    """
+    Split a large contract into sections for clause extraction.
+    Detects common structural headings; falls back to overlapping windows.
+    """
+    heading_re = re.compile(
+        r"(?m)^(?:"
+        r"(?:ARTICLE|SECTION|CLAUSE)\s+\d+|"
+        r"\d+\.\s{1,4}[A-Z]|"
+        r"\d+\.\d+\s+[A-Z]|"
+        r"[A-Z][A-Z &\-]{5,}$"
+        r")"
+    )
+    splits = [m.start() for m in heading_re.finditer(text)]
+
+    sections: list[str] = []
+    overlap = 500
+
+    if len(splits) >= 3:
+        for i, start in enumerate(splits):
+            end = splits[i + 1] if i + 1 < len(splits) else len(text)
+            chunk = text[start:end]
+            if len(chunk) > max_size:
+                step = max_size - overlap
+                for j in range(0, len(chunk), step):
+                    sections.append(chunk[j : j + max_size])
+            else:
+                sections.append(chunk)
+    else:
+        # No clear headings — sliding window
+        step = max_size - overlap
+        for i in range(0, len(text), step):
+            sections.append(text[i : i + max_size])
+
+    return sections
+
+
 def _extract_clauses(contract_text: str) -> list[dict[str, str]]:
     """
-    Lightweight deterministic clause extraction. Focuses on key risk areas.
+    Extract clause matches from contract text using regex patterns.
+    Large contracts are split into overlapping sections first so that
+    heading-level context is preserved and no matches fall through gaps.
     """
-    patterns = [
-        ("payment_terms", r"within\s+(\d+)\s+days", "days"),
-        ("retainage", r"retain(?:age)?\s+(\d+)%", "%"),
-        ("notice_period", r"within\s+(\d+)\s+(?:calendar\s+)?days.*notice", "days"),
-        ("indemnification", r"indemnif\w+.*?(regardless of fault|any and all)", ""),
-        ("termination_notice", r"terminate.*?(\d+)\s+calendar\s+days", "days"),
-        ("dispute_resolution", r"arbitration.*?in\s+([A-Za-z\s]+)", "location"),
-        ("liquidated_damages", r"€?([\d,\.]+)\s*per\s*(?:calendar\s*)?day", "currency"),
-    ]
+    sections = (
+        _split_into_sections(contract_text)
+        if len(contract_text) > _LARGE_CONTRACT_THRESHOLD
+        else [contract_text]
+    )
+
     findings: list[dict[str, str]] = []
-    for clause_type, pattern, unit in patterns:
-        for match in re.finditer(pattern, contract_text, flags=re.IGNORECASE):
-            value = match.group(1) if match.groups() else match.group(0)
-            span_text = contract_text[max(0, match.start() - 50) : match.end() + 50]
-            findings.append(
-                {
-                    "clause_type": clause_type,
-                    "extracted_value": f"{value} {unit}".strip(),
-                    "source_text": span_text.strip(),
-                }
-            )
+    seen: set[str] = set()
+
+    for section in sections:
+        for clause_type, pattern, unit in _PATTERNS:
+            for match in re.finditer(pattern, section, flags=re.IGNORECASE):
+                value = match.group(1) if match.groups() else match.group(0)
+                dedup_key = f"{clause_type}:{value.strip().lower()}"
+                if dedup_key in seen:
+                    continue
+                seen.add(dedup_key)
+                span_text = section[max(0, match.start() - _CONTEXT_WINDOW) : match.end() + _CONTEXT_WINDOW]
+                findings.append(
+                    {
+                        "clause_type": clause_type,
+                        "extracted_value": f"{value} {unit}".strip(),
+                        "source_text": span_text.strip(),
+                    }
+                )
+
     return findings
 
 
@@ -145,6 +214,14 @@ def _friendly_clause_label(clause_type: str) -> str:
         "termination_notice": "Termination notice",
         "dispute_resolution": "Dispute resolution",
         "liquidated_damages": "Liquidated damages",
+        "force_majeure": "Force majeure",
+        "warranty": "Warranty period",
+        "insurance": "Insurance requirements",
+        "change_order": "Change order markup",
+        "substantial_completion": "Substantial completion",
+        "delay_damages": "Delay damages",
+        "governing_law": "Governing law",
+        "limitation_of_liability": "Limitation of liability",
     }
     return labels.get(clause_type, clause_type.replace("_", " ").title())
 
