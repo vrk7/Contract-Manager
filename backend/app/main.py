@@ -8,6 +8,7 @@ from pathlib import Path
 import uuid
 
 from fastapi import (
+    APIRouter,
     BackgroundTasks,
     Depends,
     FastAPI,
@@ -75,6 +76,8 @@ limiter = Limiter(key_func=get_remote_address, default_limits=[f"{settings.rate_
 app = FastAPI(title=settings.app_name)
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
+v1 = APIRouter(prefix="/v1")
 
 app.add_middleware(
     CORSMiddleware,
@@ -162,7 +165,7 @@ async def _process_analysis(analysis_id: str) -> None:
             )
 
 
-@app.post("/analyze", response_model=AnalysisStatusResponse)
+@v1.post("/analyze", response_model=AnalysisStatusResponse)
 @limiter.limit(f"{settings.rate_limit_per_minute}/minute")
 async def analyze(request: Request, payload: AnalysisCreateRequest, background_tasks: BackgroundTasks, session: AsyncSession | None = Depends(session_dependency), _auth: None = Depends(verify_api_key)) -> AnalysisStatusResponse:
     contract_text, guardrails = filter_malicious_segments(payload.contract_text)
@@ -212,7 +215,7 @@ async def analyze(request: Request, payload: AnalysisCreateRequest, background_t
     return AnalysisStatusResponse(analysis_id=analysis.id, status=analysis.status)
 
 
-@app.get("/analysis/{analysis_id}", response_model=AnalysisResult | AnalysisStatusResponse)
+@v1.get("/analysis/{analysis_id}", response_model=AnalysisResult | AnalysisStatusResponse)
 async def get_analysis(analysis_id: str, session: AsyncSession | None = Depends(session_dependency), _auth: None = Depends(verify_api_key)):
     if settings.in_memory_mode:
         data = IN_MEMORY_RESULTS.get(analysis_id)
@@ -234,7 +237,7 @@ def _format_sse(event: str, data: Any) -> str:
     return f"event: {event}\ndata: {json.dumps(data)}\n\n"
 
 
-@app.get("/analysis/{analysis_id}/stream")
+@v1.get("/analysis/{analysis_id}/stream")
 @limiter.limit(f"{settings.rate_limit_stream_per_minute}/minute")
 async def stream_analysis(request: Request, analysis_id: str, _auth: None = Depends(verify_api_key_query)):  # noqa: ARG001
     if settings.in_memory_mode:
@@ -253,7 +256,7 @@ async def stream_analysis(request: Request, analysis_id: str, _auth: None = Depe
     return StreamingResponse(event_generator(), media_type="text/event-stream")
 
 
-@app.get("/playbook", response_model=PlaybookResponse)
+@v1.get("/playbook", response_model=PlaybookResponse)
 async def get_current_playbook(session: AsyncSession | None = Depends(session_dependency), _auth: None = Depends(verify_api_key)):
     if settings.in_memory_mode:
         content = settings.resolve_playbook_path().read_text(encoding="utf-8")
@@ -280,7 +283,7 @@ async def get_current_playbook(session: AsyncSession | None = Depends(session_de
     )
 
 
-@app.get("/playbook/versions", response_model=list[PlaybookResponse])
+@v1.get("/playbook/versions", response_model=list[PlaybookResponse])
 async def get_playbook_versions(session: AsyncSession | None = Depends(session_dependency), _auth: None = Depends(verify_api_key)):
     if settings.in_memory_mode:
         content = settings.resolve_playbook_path().read_text(encoding="utf-8")
@@ -296,7 +299,7 @@ async def get_playbook_versions(session: AsyncSession | None = Depends(session_d
     return await list_playbook_versions(session)
 
 
-@app.get("/playbook/versions/{version_id}", response_model=PlaybookResponse)
+@v1.get("/playbook/versions/{version_id}", response_model=PlaybookResponse)
 async def get_playbook_version(version_id: str, session: AsyncSession | None = Depends(session_dependency), _auth: None = Depends(verify_api_key)):
     if settings.in_memory_mode:
         content = settings.resolve_playbook_path().read_text(encoding="utf-8")
@@ -320,7 +323,7 @@ async def get_playbook_version(version_id: str, session: AsyncSession | None = D
     )
 
 
-@app.put("/playbook", response_model=PlaybookResponse)
+@v1.put("/playbook", response_model=PlaybookResponse)
 async def update_playbook(request: PlaybookUpdateRequest, session: AsyncSession | None = Depends(session_dependency), _auth: None = Depends(verify_api_key)):
     if settings.in_memory_mode:
         return PlaybookResponse(
@@ -343,7 +346,7 @@ async def update_playbook(request: PlaybookUpdateRequest, session: AsyncSession 
     )
 
 
-@app.post("/playbook/reindex")
+@v1.post("/playbook/reindex")
 async def reindex_playbook(body: PlaybookReindexRequest, session: AsyncSession | None = Depends(session_dependency), _auth: None = Depends(verify_api_key)):
     if settings.in_memory_mode:
         return {"status": "ok", "version_id": "in-memory"}
@@ -360,3 +363,6 @@ async def reindex_playbook(body: PlaybookReindexRequest, session: AsyncSession |
         raise HTTPException(status_code=404, detail="Playbook version not found")
     await persist_chunks(session, version.id, version.content)
     return {"status": "ok", "version_id": version.id}
+
+
+app.include_router(v1)
