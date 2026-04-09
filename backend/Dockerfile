@@ -16,4 +16,7 @@ COPY standard_terms_playbook.md /app/standard_terms_playbook.md
 ENV PYTHONPATH=/app
 ENV PLAYBOOK_SEED_PATH=/app/standard_terms_playbook.md
 
-CMD ["uvicorn", "backend.app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+COPY alembic.ini /app/alembic.ini
+COPY migrations /app/migrations
+
+CMD ["sh", "-c", "alembic upgrade head && uvicorn backend.app.main:app --host 0.0.0.0 --port 8000"]

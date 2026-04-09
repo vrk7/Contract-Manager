@@ -23,6 +23,8 @@ services:
       PLAYBOOK_SEED_PATH: /app/standard_terms_playbook.md
       RATE_LIMIT_PER_MINUTE: 60
       RATE_LIMIT_STREAM_PER_MINUTE: 60
+    volumes:
+      - chromadata:/app/data/chroma
     depends_on:
       db:
         condition: service_healthy
@@ -51,3 +53,4 @@ services:
 
 volumes:
   pgdata:
+  chromadata:
