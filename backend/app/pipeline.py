@@ -366,11 +366,16 @@ async def run_analysis_pipeline(
             total_usage.output_tokens += len(finding.recommendation) // 4
         else:
             prompt = (
-                "You are validating construction contract clause alignment to the playbook. "
-                f"Clause type: {clause['clause_type']}. Extracted: {clause['extracted_value']}. "
-                f"Playbook guidance: {retrieved_chunks[0].content[:500]}"
+                "You are a construction contract risk advisor. "
+                f"Clause type: {clause['clause_type']}. "
+                f"Extracted value: {clause['extracted_value']}. "
+                f"Playbook standard: {standard}. "
+                f"Detected deviation: {deviation}. "
+                f"Risk level: {risk_level}. "
+                f"Playbook guidance: {retrieved_chunks[0].content[:500]}\n\n"
+                "In 2-3 sentences, explain the specific risk this clause poses and give a concrete negotiation recommendation to bring it in line with the playbook standard."
             )
-            _, usage = await llm_client.complete(prompt, max_tokens=256)
+            llm_response, usage = await llm_client.complete(prompt, max_tokens=256)
             total_usage.input_tokens += usage.input_tokens
             total_usage.output_tokens += usage.output_tokens
             finding = Finding(
@@ -379,7 +384,7 @@ async def run_analysis_pipeline(
                 playbook_standard=standard,
                 deviation=deviation,
                 risk_level=risk_level,  # type: ignore[arg-type]
-                recommendation=f"Negotiate toward playbook guidance. Cite chunks: {citation_ids}.",
+                recommendation=f"{llm_response} (Playbook refs: {citation_ids})",
                 source_text=clause["source_text"],
                 retrieved_chunks=retrieved_chunks,
             )
