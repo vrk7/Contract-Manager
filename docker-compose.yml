@@ -23,6 +23,8 @@ services:
       PLAYBOOK_SEED_PATH: /app/standard_terms_playbook.md
       RATE_LIMIT_PER_MINUTE: 60
       RATE_LIMIT_STREAM_PER_MINUTE: 60
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
+      ANTHROPIC_MODEL: ${ANTHROPIC_MODEL:-claude-sonnet-4-6}
     volumes:
       - chromadata:/app/data/chroma
     depends_on:

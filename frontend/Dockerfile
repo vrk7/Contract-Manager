@@ -9,7 +9,7 @@ ENV VITE_API_BASE=${VITE_API_BASE}
 
 # Install dependencies with a reproducible lockfile and take advantage of
 # Docker layer caching by copying only the lock and manifest first.
-COPY frontend/package.json frontend/package-lock.json frontend/vite.config.js frontend/index.html /app/
+COPY frontend/package.json frontend/package-lock.json frontend/vite.config.ts frontend/tsconfig.json frontend/tsconfig.node.json frontend/index.html /app/
 RUN npm ci
 
 # Copy the source code separately so dependency layers remain cached across
