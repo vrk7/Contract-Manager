@@ -104,13 +104,13 @@ Set `VITE_API_BASE` to point to the backend (e.g., `http://localhost:8000`).
 
 ## API Surface
 
-- `POST /analyze` → `{analysis_id,status}` (async background run). Request: `{contract_text, analysis_type: risks|summary|obligations, playbook_version_id?}`.
-- `GET /analysis/{id}` → final validated result or status.
-- `GET /analysis/{id}/stream` → SSE streaming with JSON payloads (`status`, `partial_finding`, `final`, `error`).
-- `GET /playbook` / `GET /playbook/versions` / `GET /playbook/versions/{id}` — view playbook content and versions.
-- `PUT /playbook` — create a new version (content + optional change note).
-- `POST /playbook/reindex` — rebuild embeddings for a version.
-- `GET /health` — health probe.
+- `POST /v1/analyze` → `{analysis_id,status}` (async background run). Request: `{contract_text, analysis_type: risks|summary|obligations, playbook_version_id?}`.
+- `GET /v1/analysis/{id}` → final validated result or status.
+- `GET /v1/analysis/{id}/stream` → SSE streaming with JSON payloads (`status`, `partial_finding`, `final`, `error`).
+- `GET /v1/playbook` / `GET /v1/playbook/versions` / `GET /v1/playbook/versions/{id}` — view playbook content and versions.
+- `PUT /v1/playbook` — create a new version (content + optional change note).
+- `POST /v1/playbook/reindex` — rebuild embeddings for a version.
+- `GET /health` — health probe (no `/v1/` prefix).
 
 Response schema includes `playbook_version_id`, `guardrail_warnings`, `retrieved_chunks[{chunk_id,content,source,playbook_version_id}]`, and `usage{input_tokens,output_tokens,total_tokens,estimated_cost_usd}` per request.
 
