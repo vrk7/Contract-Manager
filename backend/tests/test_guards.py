@@ -10,11 +10,11 @@ os.environ.setdefault("BYPASS_DB_FOR_TESTS", "true")
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../.."))
 
-from backend.app.guards import (  # noqa: E402
+from backend.app.guards import (
     ensure_retrieval_guardrails,
     filter_malicious_segments,
 )
-from backend.app.schemas import GuardrailWarning  # noqa: E402
+from backend.app.schemas import GuardrailWarning
 
 
 # ---------------------------------------------------------------------------
