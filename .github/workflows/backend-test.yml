@@ -25,6 +25,9 @@ jobs:
       - name: Audit dependencies for known vulnerabilities
         run: pip install pip-audit && pip-audit -r backend/requirements.txt
 
+      - name: Run Bandit SAST scan
+        run: pip install bandit && bandit -r backend/app -ll -q
+
       - name: Run pytest
         env:
           BYPASS_DB_FOR_TESTS: "true"
