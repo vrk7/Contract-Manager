@@ -76,7 +76,13 @@ class AnthropicClient:
             model=self.model,
             max_tokens=max_tokens,
             temperature=0,
-            system=SYSTEM_PROMPT,
+            system=[
+                {
+                    "type": "text",
+                    "text": SYSTEM_PROMPT,
+                    "cache_control": {"type": "ephemeral"},
+                }
+            ],
             messages=[{"role": "user", "content": user_blocks}],
         )
         output_text = "".join([block.text for block in message.content if hasattr(block, "text")])
