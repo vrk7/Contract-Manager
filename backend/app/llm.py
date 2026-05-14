@@ -69,7 +69,11 @@ class AnthropicClient:
 
         user_blocks: list[dict] = []
         if playbook_context:
-            user_blocks.append({"type": "text", "text": f"Playbook reference:\n{playbook_context}"})
+            user_blocks.append({
+                "type": "text",
+                "text": f"Playbook reference:\n{playbook_context}",
+                "cache_control": {"type": "ephemeral"},
+            })
         user_blocks.append({"type": "text", "text": prompt})
 
         message = await self.client.messages.create(
