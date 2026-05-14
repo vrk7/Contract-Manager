@@ -1,0 +1,32 @@
+name: Docker Build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build backend image
+        run: docker build -f backend/Dockerfile -t contract-manager-backend:ci .
+
+      - name: Build frontend image
+        run: docker build -f frontend/Dockerfile -t contract-manager-frontend:ci .
+
+      - name: Smoke test — backend health
+        run: |
+          docker run -d --name backend-ci \
+            -e BYPASS_DB_FOR_TESTS=true \
+            -e INLINE_ANALYSIS=true \
+            -p 8000:8000 \
+            contract-manager-backend:ci \
+            sh -c "uvicorn backend.app.main:app --host 0.0.0.0 --port 8000"
+          sleep 5
+          curl --fail http://localhost:8000/health
+          docker stop backend-ci
