@@ -11,6 +11,19 @@ from .config import get_settings
 logger = logging.getLogger(__name__)
 settings = get_settings()
 
+SYSTEM_PROMPT = (
+    "You are a construction contract risk advisor. "
+    "Analyze contract clauses against playbook standards and identify risks. "
+    "Always cite the specific playbook standard you are comparing against."
+)
+
+COT_INSTRUCTIONS = (
+    "\n\nThink step-by-step:\n"
+    "1. Identify the specific risk this clause poses to the contractor.\n"
+    "2. Compare the extracted value against the playbook standard.\n"
+    "3. State a concrete negotiation action to bring it in line with the standard."
+)
+
 
 @dataclass
 class LLMUsage:
