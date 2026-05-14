@@ -3,8 +3,6 @@ import time
 import sys
 from pathlib import Path
 
-import pytest
-
 # Compatibility shim for Python 3.12 + pydantic v1
 import inspect
 import typing
@@ -31,7 +29,7 @@ typing.ForwardRef._evaluate = _patched_forward_ref  # type: ignore[assignment]
 
 sys.path.append(str(Path(__file__).resolve().parents[2]))
 
-from fastapi.testclient import TestClient
+from fastapi.testclient import TestClient  # noqa: E402
 
 # Configure environment before importing the app
 os.environ["RATE_LIMIT_PER_MINUTE"] = "10"
