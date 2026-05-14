@@ -1,10 +1,7 @@
 from __future__ import annotations
 
-import hashlib
-import logging
-from dataclasses import dataclass
 from pathlib import Path
-from typing import Iterable, Optional
+from typing import Iterable
 
 import chromadb
 import structlog
