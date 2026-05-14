@@ -89,6 +89,15 @@ app.add_middleware(
 )
 
 
+@app.middleware("http")
+async def request_id_middleware(request: Request, call_next):
+    request_id = request.headers.get("X-Request-ID", str(uuid.uuid4()))
+    request.state.request_id = request_id
+    response = await call_next(request)
+    response.headers["X-Request-ID"] = request_id
+    return response
+
+
 @app.get("/", tags=["meta"])
 async def root() -> dict[str, str]:
     """Provide a simple landing response instead of a 404 on the root path."""
