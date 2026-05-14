@@ -1,5 +1,4 @@
 import json
-import logging
 import secrets
 import uuid
 from datetime import datetime
@@ -24,6 +23,8 @@ from slowapi.util import get_remote_address
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+import structlog
+
 from .config import get_settings
 from .database import get_session
 from .logging_config import configure_logging
@@ -43,7 +44,7 @@ from .schemas import (
 )
 
 configure_logging()
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 settings = get_settings()
 IN_MEMORY_RESULTS: dict[str, dict] = {}
 
@@ -161,7 +162,7 @@ async def _process_analysis(analysis_id: str) -> None:
                 {"analysis_id": analysis.id, "result": serialized_result},
             )
         except Exception as exc:
-            logger.exception("Analysis failed: %s", exc)
+            logger.exception("analysis_failed", error=str(exc))
             analysis.status = "failed"
             await session.flush()
             event_bus.publish(
