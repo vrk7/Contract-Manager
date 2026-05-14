@@ -178,6 +178,9 @@ async def _process_analysis(analysis_id: str) -> None:
 @v1.post("/analyze", response_model=AnalysisStatusResponse)
 @limiter.limit(f"{settings.rate_limit_per_minute}/minute")
 async def analyze(request: Request, payload: AnalysisCreateRequest, background_tasks: BackgroundTasks, session: AsyncSession | None = Depends(session_dependency), _auth: None = Depends(verify_api_key)) -> AnalysisStatusResponse:
+    user_ip = request.client.host if request.client else "unknown"
+    request_id = getattr(request.state, "request_id", "unknown")
+    logger.info("analyze_request", user_ip=user_ip, request_id=request_id, analysis_type=payload.analysis_type)
     contract_text, guardrails = filter_malicious_segments(payload.contract_text)
     if settings.in_memory_mode:
         analysis_id = str(uuid.uuid4())
