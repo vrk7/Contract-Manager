@@ -11,7 +11,6 @@ os.environ.setdefault("BYPASS_DB_FOR_TESTS", "true")
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../.."))
 
 from backend.app.guards import (  # noqa: E402
-    INJECTION_PATTERNS,
     ensure_retrieval_guardrails,
     filter_malicious_segments,
 )
