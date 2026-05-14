@@ -7,13 +7,14 @@ from pathlib import Path
 from typing import Iterable, Optional
 
 import chromadb
+import structlog
 from chromadb import Settings as ChromaSettings
 from chromadb.utils.embedding_functions import DefaultEmbeddingFunction
 
 from .config import get_settings
 from .schemas import RetrievedChunk
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 settings = get_settings()
 
 
@@ -68,7 +69,7 @@ class PlaybookRAG:
         try:
             return self._collection(version_id).count()
         except Exception:
-            logger.warning("Unable to read Chroma collection for version %s; treating as empty", version_id)
+            logger.warning("chroma_collection_unreadable", version_id=version_id)
             return 0
             
     def reset_version(self, version_id: str, chunks: Iterable[tuple[str, str]]) -> None:
@@ -77,7 +78,7 @@ class PlaybookRAG:
             collection.delete(where={"version_id": version_id})
         except Exception:
             # collection may be empty
-            logger.debug("No existing embeddings to delete for %s", version_id)
+            logger.debug("no_embeddings_to_delete", version_id=version_id)
         ids = []
         documents = []
         metadatas = []
