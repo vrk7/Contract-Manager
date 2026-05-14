@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import time
 from dataclasses import dataclass
 from typing import Any, Optional
 
@@ -76,6 +77,7 @@ class AnthropicClient:
             })
         user_blocks.append({"type": "text", "text": prompt})
 
+        t0 = time.monotonic()
         message = await self.client.messages.create(
             model=self.model,
             max_tokens=max_tokens,
@@ -89,9 +91,17 @@ class AnthropicClient:
             ],
             messages=[{"role": "user", "content": user_blocks}],
         )
+        duration_ms = int((time.monotonic() - t0) * 1000)
         output_text = "".join([block.text for block in message.content if hasattr(block, "text")])
         usage = LLMUsage(
             message.usage.input_tokens or 0,
             message.usage.output_tokens or 0,
+        )
+        logger.info(
+            "llm_call_complete model=%s duration_ms=%d input_tokens=%d output_tokens=%d",
+            self.model,
+            duration_ms,
+            usage.input_tokens,
+            usage.output_tokens,
         )
         return output_text, usage
