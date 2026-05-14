@@ -19,4 +19,9 @@ ENV PLAYBOOK_SEED_PATH=/app/standard_terms_playbook.md
 COPY alembic.ini /app/alembic.ini
 COPY migrations /app/migrations
 
+RUN addgroup --system appgroup && adduser --system --ingroup appgroup appuser && \
+    mkdir -p /app/data && chown -R appuser:appgroup /app
+
+USER appuser
+
 CMD ["sh", "-c", "alembic upgrade head && uvicorn backend.app.main:app --host 0.0.0.0 --port 8000"]
