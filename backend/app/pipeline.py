@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import asyncio
-import logging
 import re
 
 import structlog
@@ -13,7 +12,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from .guards import ensure_retrieval_guardrails, filter_malicious_segments
 from .llm import COT_INSTRUCTIONS, AnthropicClient, LLMUsage
-from .models import Analysis, PlaybookChunk, PlaybookVersion
+from .models import Analysis, PlaybookVersion
 from .rag import PlaybookRAG, chunk_playbook
 from .schemas import AnalysisResult, Finding, GuardrailWarning, RetrievedChunk, Usage
 
