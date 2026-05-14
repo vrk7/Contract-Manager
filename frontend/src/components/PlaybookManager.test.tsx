@@ -1,11 +1,17 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { vi } from 'vitest';
 import PlaybookManager, { ACTIVE_VERSION_STORAGE_KEY } from './PlaybookManager';
-import axios from 'axios';
+import { api } from '../api';
 
-vi.mock('axios');
+vi.mock('../api', () => ({
+  api: {
+    get: vi.fn(),
+    put: vi.fn(),
+    post: vi.fn(),
+  },
+}));
 
-const mockAxios = axios as any;
+const mockGet = api.get as ReturnType<typeof vi.fn>;
 
 const mockVersions = [
   {
@@ -28,10 +34,10 @@ describe('PlaybookManager', () => {
 
   it('restores the persisted active version when available', async () => {
     localStorage.setItem(ACTIVE_VERSION_STORAGE_KEY, mockVersions[1].id);
-    mockAxios.get.mockResolvedValue({ data: mockVersions });
+    mockGet.mockResolvedValue({ data: mockVersions });
     const onVersionChange = vi.fn();
 
-    render(<PlaybookManager apiBase="/api" onVersionChange={onVersionChange} />);
+    render(<PlaybookManager onVersionChange={onVersionChange} />);
 
     await waitFor(() => expect(screen.getByText(`Active #${mockVersions[1].id}`)).toBeInTheDocument());
     expect(onVersionChange).toHaveBeenCalledWith(mockVersions[1].id);
@@ -39,10 +45,10 @@ describe('PlaybookManager', () => {
   });
 
   it('switches active version when "Use for analysis" is clicked and persists selection', async () => {
-    mockAxios.get.mockResolvedValue({ data: mockVersions });
+    mockGet.mockResolvedValue({ data: mockVersions });
     const onVersionChange = vi.fn();
 
-    render(<PlaybookManager apiBase="/api" onVersionChange={onVersionChange} />);
+    render(<PlaybookManager onVersionChange={onVersionChange} />);
 
     await waitFor(() => expect(screen.getByText(`Active #${mockVersions[0].id}`)).toBeInTheDocument());
     const useButtons = screen.getAllByText('Use for analysis');
