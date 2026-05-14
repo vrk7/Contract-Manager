@@ -2,11 +2,10 @@ from __future__ import annotations
 
 import asyncio
 import re
-
-import structlog
 from datetime import datetime
 from typing import Any, Awaitable, Callable
 
+import structlog
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 

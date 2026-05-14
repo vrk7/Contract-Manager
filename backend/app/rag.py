@@ -68,7 +68,7 @@ class PlaybookRAG:
         except Exception:
             logger.warning("chroma_collection_unreadable", version_id=version_id)
             return 0
-            
+
     def reset_version(self, version_id: str, chunks: Iterable[tuple[str, str]]) -> None:
         collection = self._collection(version_id)
         try:
