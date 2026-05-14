@@ -67,3 +67,30 @@ def finding_missing_chunks():
         "source_text": "indemnify against any and all claims",
         "retrieved_chunks": [],
     }
+
+
+# ---------------------------------------------------------------------------
+# filter_malicious_segments — basic cases
+# ---------------------------------------------------------------------------
+
+def test_clean_text_passes_through_unchanged(clean_contract):
+    sanitized, warnings = filter_malicious_segments(clean_contract)
+    assert sanitized == clean_contract
+    assert warnings == []
+
+
+def test_clean_text_returns_no_warnings(clean_contract):
+    _, warnings = filter_malicious_segments(clean_contract)
+    assert len(warnings) == 0
+
+
+def test_empty_string_is_safe():
+    sanitized, warnings = filter_malicious_segments("")
+    assert sanitized == ""
+    assert warnings == []
+
+
+def test_return_types_are_correct(clean_contract):
+    sanitized, warnings = filter_malicious_segments(clean_contract)
+    assert isinstance(sanitized, str)
+    assert isinstance(warnings, list)
