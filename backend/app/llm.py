@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import time
 from dataclasses import dataclass
-from typing import Optional
+from typing import Any, Optional
 
 import anthropic
 import structlog
@@ -69,7 +69,7 @@ class AnthropicClient:
             approx_output_tokens = len(faux_output) // 4
             return faux_output, LLMUsage(approx_input_tokens, approx_output_tokens)
 
-        user_blocks: list[dict] = []
+        user_blocks: list[Any] = []
         if playbook_context:
             user_blocks.append({
                 "type": "text",

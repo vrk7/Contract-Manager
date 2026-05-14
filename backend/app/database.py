@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from contextlib import asynccontextmanager
 from pathlib import Path
+from typing import AsyncGenerator
 
 from sqlalchemy import event
 from sqlalchemy.engine import make_url
@@ -13,7 +14,7 @@ from .config import get_settings
 
 settings = get_settings()
 connect_args: dict = {}
-pool_class = NullPool
+pool_class: type[NullPool] | type[StaticPool] = NullPool
 url = make_url(settings.database_url)
 
 # Normalize common Postgres shorthand ("postgres+asyncpg") to the SQLAlchemy
@@ -58,7 +59,7 @@ class Base(DeclarativeBase):
 
 
 @asynccontextmanager
-async def get_session() -> AsyncSession:
+async def get_session() -> AsyncGenerator[AsyncSession, None]:
     session: AsyncSession = AsyncSessionLocal()
     try:
         yield session

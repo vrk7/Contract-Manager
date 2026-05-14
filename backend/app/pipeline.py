@@ -308,10 +308,10 @@ async def run_analysis_pipeline(
     if playbook_content_override:
         version_id = "in-memory"
     if not version_id and session:
-        result = await session.execute(
+        db_result = await session.execute(
             select(PlaybookVersion).order_by(PlaybookVersion.created_at.desc())
         )
-        latest = result.scalars().first()
+        latest = db_result.scalars().first()
         if latest:
             version_id = latest.id
             analysis.playbook_version_id = version_id
@@ -319,7 +319,8 @@ async def run_analysis_pipeline(
     rag = PlaybookRAG()
     if playbook_content_override:
         chunks = chunk_playbook(playbook_content_override)
-        rag.reset_version(version_id, [(f"{version_id}-{idx}", text) for idx, text in enumerate(chunks)])
+        vid: str = version_id or "in-memory"
+        rag.reset_version(vid, [(f"{vid}-{idx}", text) for idx, text in enumerate(chunks)])
     findings: list[Finding] = []
     llm_client = AnthropicClient()
     total_usage = LLMUsage(0, 0)

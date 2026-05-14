@@ -2,12 +2,13 @@ from __future__ import annotations
 
 import logging
 import sys
+from typing import Any
 
 import structlog
 
 
 def configure_logging(log_level: int = logging.INFO) -> None:
-    shared_processors = [
+    shared_processors: list[Any] = [
         structlog.stdlib.add_log_level,
         structlog.stdlib.add_logger_name,
         structlog.processors.TimeStamper(fmt="iso", utc=True),

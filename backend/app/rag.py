@@ -52,7 +52,7 @@ class PlaybookRAG:
     def _collection(self, version_id: str):
         return self.client.get_or_create_collection(
             f"{self.collection_name}_{version_id}",
-            embedding_function=self.embed_fn,
+            embedding_function=self.embed_fn,  # type: ignore[arg-type]
         )
 
     def collection_count(self, version_id: str) -> int:

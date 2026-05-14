@@ -72,7 +72,7 @@ def verify_api_key_query(
 limiter = Limiter(key_func=get_remote_address, default_limits=[f"{settings.rate_limit_per_minute}/minute"])
 app = FastAPI(title=settings.app_name)
 app.state.limiter = limiter
-app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)  # type: ignore[arg-type]
 
 v1 = APIRouter(prefix="/v1")
 
@@ -199,6 +199,7 @@ async def analyze(request: Request, payload: AnalysisCreateRequest, background_t
         IN_MEMORY_RESULTS[analysis_id] = json.loads(result.json())
         return AnalysisStatusResponse(analysis_id=analysis_id, status="completed")
 
+    assert session is not None
     analysis = Analysis(
         analysis_type=payload.analysis_type,
         contract_text=contract_text,
@@ -232,6 +233,7 @@ async def get_analysis(analysis_id: str, session: AsyncSession | None = Depends(
             raise HTTPException(status_code=404, detail="Analysis not found")
         return AnalysisResult(**data)
 
+    assert session is not None
     result = await session.execute(select(Analysis).where(Analysis.id == analysis_id))
     analysis = result.scalars().first()
     if not analysis:
@@ -277,6 +279,7 @@ async def get_current_playbook(session: AsyncSession | None = Depends(session_de
             version_label="in-memory",
         )
 
+    assert session is not None
     result = await session.execute(
         select(PlaybookVersion).order_by(PlaybookVersion.created_at.desc())
     )
@@ -305,6 +308,7 @@ async def get_playbook_versions(session: AsyncSession | None = Depends(session_d
                 version_label="in-memory",
             )
         ]
+    assert session is not None
     return await list_playbook_versions(session)
 
 
@@ -319,6 +323,7 @@ async def get_playbook_version(version_id: str, session: AsyncSession | None = D
             change_note="in-memory",
             version_label="in-memory",
         )
+    assert session is not None
     result = await session.execute(select(PlaybookVersion).where(PlaybookVersion.id == version_id))
     version = result.scalars().first()
     if not version:
@@ -342,6 +347,7 @@ async def update_playbook(request: PlaybookUpdateRequest, session: AsyncSession 
             change_note=request.change_note,
             version_label="in-memory",
         )
+    assert session is not None
     version = PlaybookVersion(content=request.content, change_note=request.change_note, version_label=datetime.utcnow().strftime("%Y-%m-%d"))
     session.add(version)
     await session.flush()
@@ -359,6 +365,7 @@ async def update_playbook(request: PlaybookUpdateRequest, session: AsyncSession 
 async def reindex_playbook(body: PlaybookReindexRequest, session: AsyncSession | None = Depends(session_dependency), _auth: None = Depends(verify_api_key)):
     if settings.in_memory_mode:
         return {"status": "ok", "version_id": "in-memory"}
+    assert session is not None
     version_id = body.version_id
     if not version_id:
         result = await session.execute(
