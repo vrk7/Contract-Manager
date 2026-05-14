@@ -22,11 +22,14 @@ jobs:
           python-version: "3.11"
           cache: pip
 
-      - name: Install dependencies
-        run: pip install ruff mypy -r requirements.txt
+      - name: Install linters
+        run: pip install ruff mypy
+
+      - name: Install app dependencies
+        run: pip install -r requirements.txt
 
       - name: Run ruff
         run: ruff check .
 
       - name: Run mypy
-        run: mypy app --ignore-missing-imports
+        run: mypy app
