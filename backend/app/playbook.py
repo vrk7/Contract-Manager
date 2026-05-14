@@ -4,6 +4,7 @@ import logging
 from pathlib import Path
 from typing import Iterable
 
+import structlog
 from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -11,7 +12,7 @@ from .models import PlaybookChunk, PlaybookVersion
 from .rag import PlaybookRAG, chunk_playbook
 from .schemas import PlaybookResponse
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 async def seed_playbook(session: AsyncSession, seed_path: str) -> PlaybookVersion:
@@ -30,7 +31,7 @@ async def seed_playbook(session: AsyncSession, seed_path: str) -> PlaybookVersio
                 rag.reset_version(existing_version.id, [(c.id, c.content) for c in chunks])
             else:
                 await persist_chunks(session, existing_version.id, existing_version.content)
-            logger.info("Rebuilt playbook embeddings for version %s", existing_version.id)
+            logger.info("playbook_embeddings_rebuilt", version_id=existing_version.id)
         return existing_version
     content = Path(seed_path).read_text(encoding="utf-8")
     version = PlaybookVersion(content=content, change_note="Initial seed", version_label="1.0")
