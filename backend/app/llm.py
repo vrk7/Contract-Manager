@@ -50,10 +50,15 @@ class AnthropicClient:
         if self.api_key:
             self.client = anthropic.AsyncAnthropic(api_key=self.api_key, timeout=60.0)
 
-    async def complete(self, prompt: str, max_tokens: int = 512) -> tuple[str, LLMUsage]:
+    async def complete(
+        self,
+        prompt: str,
+        max_tokens: int = 512,
+        playbook_context: str | None = None,
+    ) -> tuple[str, LLMUsage]:
         """
-        Run a lightweight Claude completion. If no API key is configured,
-        return a deterministic heuristic response to keep tests offline.
+        Run a Claude completion with an optional cached playbook context block.
+        Falls back to a deterministic heuristic response when no API key is set.
         """
         if not self.client:
             faux_output = "Heuristic analysis: compare extracted clauses to playbook references."
@@ -62,11 +67,17 @@ class AnthropicClient:
             usage = LLMUsage(approx_input_tokens, approx_output_tokens)
             return faux_output, usage
 
+        user_blocks: list[dict] = []
+        if playbook_context:
+            user_blocks.append({"type": "text", "text": f"Playbook reference:\n{playbook_context}"})
+        user_blocks.append({"type": "text", "text": prompt})
+
         message = await self.client.messages.create(
             model=self.model,
             max_tokens=max_tokens,
             temperature=0,
-            messages=[{"role": "user", "content": prompt}],
+            system=SYSTEM_PROMPT,
+            messages=[{"role": "user", "content": user_blocks}],
         )
         output_text = "".join([block.text for block in message.content if hasattr(block, "text")])
         usage = LLMUsage(
