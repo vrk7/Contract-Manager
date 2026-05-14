@@ -30,6 +30,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from .config import get_settings
 from .database import get_session
+from .logging_config import configure_logging
 from .events import event_bus
 from .guards import filter_malicious_segments
 from .models import Analysis, PlaybookVersion
@@ -45,7 +46,7 @@ from .schemas import (
     PlaybookUpdateRequest,
 )
 
-logging.basicConfig(level=logging.INFO)
+configure_logging()
 logger = logging.getLogger(__name__)
 settings = get_settings()
 IN_MEMORY_RESULTS: dict[str, dict] = {}
