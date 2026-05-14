@@ -10,7 +10,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from .guards import ensure_retrieval_guardrails, filter_malicious_segments
-from .llm import AnthropicClient, LLMUsage
+from .llm import COT_INSTRUCTIONS, AnthropicClient, LLMUsage
 from .models import Analysis, PlaybookChunk, PlaybookVersion
 from .rag import PlaybookRAG, chunk_playbook
 from .schemas import AnalysisResult, Finding, GuardrailWarning, RetrievedChunk, Usage
@@ -373,6 +373,7 @@ async def run_analysis_pipeline(
                 f"Detected deviation: {deviation}. "
                 f"Risk level: {risk_level}.\n\n"
                 "In 2-3 sentences, explain the specific risk and give a concrete negotiation recommendation."
+                + COT_INSTRUCTIONS
             )
             llm_response, usage = await llm_client.complete(
                 prompt, max_tokens=256, playbook_context=playbook_ctx
