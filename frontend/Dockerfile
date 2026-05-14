@@ -17,6 +17,8 @@ RUN npm ci
 COPY frontend/src /app/src
 RUN npm run build
 
-FROM nginx:alpine
+FROM nginx:1.27-alpine
 COPY --from=build /app/dist /usr/share/nginx/html
+RUN addgroup --system appgroup && adduser --system --ingroup appgroup appuser && \
+    chown -R appuser:appgroup /usr/share/nginx/html
 EXPOSE 80
