@@ -6,7 +6,7 @@ from functools import lru_cache
 class Settings:
     app_name: str = "Contract Clause Analyzer"
     anthropic_api_key: str | None = os.getenv("ANTHROPIC_API_KEY")
-    anthropic_model: str = os.getenv("ANTHROPIC_MODEL", "claude-3-opus-20240229")
+    anthropic_model: str = os.getenv("ANTHROPIC_MODEL", "claude-sonnet-4-20250514")
 
     _in_container = os.path.exists("/.dockerenv")
     _default_db = (
