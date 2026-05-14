@@ -428,6 +428,13 @@ async def run_analysis_pipeline(
         estimated_cost_usd=round(total_usage.estimated_cost, 6),
     )
 
+    log.info(
+        "pipeline_complete",
+        finding_count=len(merged_findings),
+        overall_risk=overall,
+        input_tokens=total_usage.input_tokens,
+        output_tokens=total_usage.output_tokens,
+    )
     result = AnalysisResult(
         analysis_id=analysis.id,
         timestamp=datetime.utcnow(),
