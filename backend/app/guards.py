@@ -3,7 +3,11 @@ from __future__ import annotations
 import re
 from typing import Iterable
 
+import structlog
+
 from .schemas import GuardrailWarning
+
+logger = structlog.get_logger(__name__)
 
 INJECTION_PATTERNS: list[re.Pattern] = [
     re.compile(r"ignore (the )?(previous|above) instructions", re.IGNORECASE),
@@ -19,6 +23,7 @@ def filter_malicious_segments(text: str) -> tuple[str, list[GuardrailWarning]]:
     sanitized = text
     for pattern in INJECTION_PATTERNS:
         if pattern.search(text):
+            logger.warning("injection_pattern_detected", pattern=pattern.pattern)
             warnings.append(
                 GuardrailWarning(
                     type="content_filter",
