@@ -6,10 +6,11 @@ from dataclasses import dataclass
 from typing import Optional
 
 import anthropic
+import structlog
 
 from .config import get_settings
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 settings = get_settings()
 
 SYSTEM_PROMPT = (
@@ -51,7 +52,7 @@ class AnthropicClient:
         if self.api_key:
             self.client = anthropic.AsyncAnthropic(api_key=self.api_key, timeout=60.0)
         else:
-            logger.warning("ANTHROPIC_API_KEY not set — LLM calls will use heuristic fallback")
+            logger.warning("anthropic_key_missing", detail="LLM calls will use heuristic fallback")
 
     async def complete(
         self,
@@ -94,15 +95,10 @@ class AnthropicClient:
                 messages=[{"role": "user", "content": user_blocks}],
             )
         except anthropic.APIStatusError as exc:
-            logger.error(
-                "Anthropic API error status=%d model=%s: %s",
-                exc.status_code,
-                self.model,
-                exc.message,
-            )
+            logger.error("anthropic_api_error", status_code=exc.status_code, model=self.model, message=exc.message)
             raise
         except anthropic.APIConnectionError as exc:
-            logger.error("Anthropic connection error model=%s: %s", self.model, exc)
+            logger.error("anthropic_connection_error", model=self.model, error=str(exc))
             raise
 
         duration_ms = int((time.monotonic() - t0) * 1000)
@@ -112,11 +108,11 @@ class AnthropicClient:
             message.usage.output_tokens or 0,
         )
         logger.info(
-            "llm_call_complete model=%s duration_ms=%d input_tokens=%d output_tokens=%d cost_usd=%.6f",
-            self.model,
-            duration_ms,
-            usage.input_tokens,
-            usage.output_tokens,
-            usage.estimated_cost,
+            "llm_call_complete",
+            model=self.model,
+            duration_ms=duration_ms,
+            input_tokens=usage.input_tokens,
+            output_tokens=usage.output_tokens,
+            cost_usd=round(usage.estimated_cost, 6),
         )
         return output_text, usage
