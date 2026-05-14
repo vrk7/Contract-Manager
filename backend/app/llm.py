@@ -3,7 +3,7 @@ from __future__ import annotations
 import logging
 import time
 from dataclasses import dataclass
-from typing import Any, Optional
+from typing import Optional
 
 import anthropic
 
@@ -50,6 +50,8 @@ class AnthropicClient:
         self.client: Optional[anthropic.AsyncAnthropic] = None
         if self.api_key:
             self.client = anthropic.AsyncAnthropic(api_key=self.api_key, timeout=60.0)
+        else:
+            logger.warning("ANTHROPIC_API_KEY not set — LLM calls will use heuristic fallback")
 
     async def complete(
         self,
@@ -65,8 +67,7 @@ class AnthropicClient:
             faux_output = "Heuristic analysis: compare extracted clauses to playbook references."
             approx_input_tokens = len(prompt) // 4
             approx_output_tokens = len(faux_output) // 4
-            usage = LLMUsage(approx_input_tokens, approx_output_tokens)
-            return faux_output, usage
+            return faux_output, LLMUsage(approx_input_tokens, approx_output_tokens)
 
         user_blocks: list[dict] = []
         if playbook_context:
@@ -78,19 +79,32 @@ class AnthropicClient:
         user_blocks.append({"type": "text", "text": prompt})
 
         t0 = time.monotonic()
-        message = await self.client.messages.create(
-            model=self.model,
-            max_tokens=max_tokens,
-            temperature=0,
-            system=[
-                {
-                    "type": "text",
-                    "text": SYSTEM_PROMPT,
-                    "cache_control": {"type": "ephemeral"},
-                }
-            ],
-            messages=[{"role": "user", "content": user_blocks}],
-        )
+        try:
+            message = await self.client.messages.create(
+                model=self.model,
+                max_tokens=max_tokens,
+                temperature=0,
+                system=[
+                    {
+                        "type": "text",
+                        "text": SYSTEM_PROMPT,
+                        "cache_control": {"type": "ephemeral"},
+                    }
+                ],
+                messages=[{"role": "user", "content": user_blocks}],
+            )
+        except anthropic.APIStatusError as exc:
+            logger.error(
+                "Anthropic API error status=%d model=%s: %s",
+                exc.status_code,
+                self.model,
+                exc.message,
+            )
+            raise
+        except anthropic.APIConnectionError as exc:
+            logger.error("Anthropic connection error model=%s: %s", self.model, exc)
+            raise
+
         duration_ms = int((time.monotonic() - t0) * 1000)
         output_text = "".join([block.text for block in message.content if hasattr(block, "text")])
         usage = LLMUsage(
@@ -98,10 +112,11 @@ class AnthropicClient:
             message.usage.output_tokens or 0,
         )
         logger.info(
-            "llm_call_complete model=%s duration_ms=%d input_tokens=%d output_tokens=%d",
+            "llm_call_complete model=%s duration_ms=%d input_tokens=%d output_tokens=%d cost_usd=%.6f",
             self.model,
             duration_ms,
             usage.input_tokens,
             usage.output_tokens,
+            usage.estimated_cost,
         )
         return output_text, usage
