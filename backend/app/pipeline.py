@@ -3,6 +3,8 @@ from __future__ import annotations
 import asyncio
 import logging
 import re
+
+import structlog
 from datetime import datetime
 from typing import Any, Awaitable, Callable
 
@@ -15,7 +17,7 @@ from .models import Analysis, PlaybookChunk, PlaybookVersion
 from .rag import PlaybookRAG, chunk_playbook
 from .schemas import AnalysisResult, Finding, GuardrailWarning, RetrievedChunk, Usage
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 # Contracts longer than this are split into sections before extraction.
@@ -201,7 +203,7 @@ def _compare_with_playbook(
         else:
             deviation, risk_level = "Needs review", "medium"
     except Exception as exc:
-        logger.exception("Comparison error: %s", exc)
+        logger.exception("comparison_error", clause_type=clause.get("clause_type"), error=str(exc))
     return standard, deviation, risk_level
 
 
@@ -286,8 +288,10 @@ async def run_analysis_pipeline(
         if asyncio.iscoroutine(result):
             await result
 
+    log = logger.bind(analysis_id=analysis.id, analysis_type=analysis.analysis_type)
+    log.info("pipeline_start", contract_length=len(analysis.contract_text))
+
     guardrails: list[GuardrailWarning] = list(initial_guardrails or [])
-    # Guardrails: sanitize input
     sanitized_text, extra_warnings = filter_malicious_segments(analysis.contract_text)
     guardrails.extend(extra_warnings)
     analysis.contract_text = sanitized_text
