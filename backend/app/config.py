@@ -1,6 +1,6 @@
 import os
-from pathlib import Path
 from functools import lru_cache
+from pathlib import Path
 
 
 class Settings:
@@ -14,7 +14,7 @@ class Settings:
         if _in_container
         else "sqlite+aiosqlite:///./data/app.db"
     )
-    
+
     database_url: str = os.getenv("DATABASE_URL", _default_db)
     chroma_dir: str = os.getenv("CHROMA_DIR", "./data/chroma")
     rate_limit_per_minute: int = int(os.getenv("RATE_LIMIT_PER_MINUTE", "60"))

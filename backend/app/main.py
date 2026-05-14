@@ -4,6 +4,7 @@ import uuid
 from datetime import datetime
 from typing import Any
 
+import structlog
 from fastapi import (
     APIRouter,
     BackgroundTasks,
@@ -23,13 +24,11 @@ from slowapi.util import get_remote_address
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-import structlog
-
 from .config import get_settings
 from .database import get_session
-from .logging_config import configure_logging
 from .events import event_bus
 from .guards import filter_malicious_segments
+from .logging_config import configure_logging
 from .models import Analysis, PlaybookVersion
 from .pipeline import run_analysis_pipeline
 from .playbook import list_playbook_versions, persist_chunks, seed_playbook
