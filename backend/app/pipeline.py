@@ -365,17 +365,18 @@ async def run_analysis_pipeline(
             total_usage.input_tokens += len(prompt_text) // 4
             total_usage.output_tokens += len(finding.recommendation) // 4
         else:
+            playbook_ctx = " ".join(chunk.content for chunk in retrieved_chunks)
             prompt = (
-                "You are a construction contract risk advisor. "
                 f"Clause type: {clause['clause_type']}. "
                 f"Extracted value: {clause['extracted_value']}. "
                 f"Playbook standard: {standard}. "
                 f"Detected deviation: {deviation}. "
-                f"Risk level: {risk_level}. "
-                f"Playbook guidance: {retrieved_chunks[0].content[:500]}\n\n"
-                "In 2-3 sentences, explain the specific risk this clause poses and give a concrete negotiation recommendation to bring it in line with the playbook standard."
+                f"Risk level: {risk_level}.\n\n"
+                "In 2-3 sentences, explain the specific risk and give a concrete negotiation recommendation."
             )
-            llm_response, usage = await llm_client.complete(prompt, max_tokens=256)
+            llm_response, usage = await llm_client.complete(
+                prompt, max_tokens=256, playbook_context=playbook_ctx
+            )
             total_usage.input_tokens += usage.input_tokens
             total_usage.output_tokens += usage.output_tokens
             finding = Finding(
