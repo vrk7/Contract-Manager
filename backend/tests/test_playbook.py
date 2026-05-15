@@ -50,3 +50,10 @@ async def test_seed_playbook_creates_first_version(session, playbook_file):
     assert version is not None
     assert version.id is not None
     assert "Payment within 30 days" in version.content
+
+
+async def test_list_playbook_versions_returns_all(session, playbook_file):
+    await seed_playbook(session, playbook_file)
+    versions = await list_playbook_versions(session)
+    assert len(versions) == 1
+    assert versions[0].content is not None
