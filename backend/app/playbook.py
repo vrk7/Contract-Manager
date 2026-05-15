@@ -14,7 +14,11 @@ logger = structlog.get_logger(__name__)
 
 
 async def seed_playbook(session: AsyncSession, seed_path: str) -> PlaybookVersion:
-    existing_result = await session.execute(select(PlaybookVersion).order_by(PlaybookVersion.created_at.desc()))
+    existing_result = await session.execute(
+        select(PlaybookVersion)
+        .where(PlaybookVersion.deleted_at.is_(None))
+        .order_by(PlaybookVersion.created_at.desc())
+    )
     existing_version = existing_result.scalars().first()
     if existing_version:
         # Ensure embeddings exist even if Chroma storage was lost between deployments.
@@ -62,7 +66,9 @@ async def persist_chunks(session: AsyncSession, version_id: str, content: str) -
 
 async def list_playbook_versions(session: AsyncSession) -> list[PlaybookResponse]:
     result = await session.execute(
-        select(PlaybookVersion).order_by(PlaybookVersion.created_at.desc())
+        select(PlaybookVersion)
+        .where(PlaybookVersion.deleted_at.is_(None))
+        .order_by(PlaybookVersion.created_at.desc())
     )
     return [
         PlaybookResponse(

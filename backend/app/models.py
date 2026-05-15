@@ -24,6 +24,7 @@ class PlaybookVersion(Base):
     content: Mapped[str] = mapped_column(Text, nullable=False)
     change_note: Mapped[str | None] = mapped_column(String, nullable=True)
     version_label: Mapped[str | None] = mapped_column(String, nullable=True)
+    deleted_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True, index=True)
 
     chunks: Mapped[list["PlaybookChunk"]] = relationship(
         "PlaybookChunk", back_populates="version", cascade="all, delete-orphan"
@@ -63,6 +64,7 @@ class Analysis(Base):
     guardrail_warnings: Mapped[str | None] = mapped_column(Text, nullable=True)
     usage_json: Mapped[str | None] = mapped_column(Text, nullable=True)
     request_id: Mapped[str | None] = mapped_column(String, nullable=True, index=True)
+    deleted_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True, index=True)
 
     version: Mapped[PlaybookVersion | None] = relationship("PlaybookVersion")
 

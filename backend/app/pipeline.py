@@ -309,7 +309,9 @@ async def run_analysis_pipeline(
         version_id = "in-memory"
     if not version_id and session:
         db_result = await session.execute(
-            select(PlaybookVersion).order_by(PlaybookVersion.created_at.desc())
+            select(PlaybookVersion)
+            .where(PlaybookVersion.deleted_at.is_(None))
+            .order_by(PlaybookVersion.created_at.desc())
         )
         latest = db_result.scalars().first()
         if latest:

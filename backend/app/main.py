@@ -236,7 +236,9 @@ async def get_analysis(analysis_id: str, session: AsyncSession | None = Depends(
         return AnalysisResult(**data)
 
     assert session is not None
-    result = await session.execute(select(Analysis).where(Analysis.id == analysis_id))
+    result = await session.execute(
+        select(Analysis).where(Analysis.id == analysis_id, Analysis.deleted_at.is_(None))
+    )
     analysis = result.scalars().first()
     if not analysis:
         raise HTTPException(status_code=404, detail="Analysis not found")
@@ -283,7 +285,9 @@ async def get_current_playbook(session: AsyncSession | None = Depends(session_de
 
     assert session is not None
     result = await session.execute(
-        select(PlaybookVersion).order_by(PlaybookVersion.created_at.desc())
+        select(PlaybookVersion)
+        .where(PlaybookVersion.deleted_at.is_(None))
+        .order_by(PlaybookVersion.created_at.desc())
     )
     version = result.scalars().first()
     if not version:
@@ -326,7 +330,11 @@ async def get_playbook_version(version_id: str, session: AsyncSession | None = D
             version_label="in-memory",
         )
     assert session is not None
-    result = await session.execute(select(PlaybookVersion).where(PlaybookVersion.id == version_id))
+    result = await session.execute(
+        select(PlaybookVersion).where(
+            PlaybookVersion.id == version_id, PlaybookVersion.deleted_at.is_(None)
+        )
+    )
     version = result.scalars().first()
     if not version:
         raise HTTPException(status_code=404, detail="Playbook version not found")
