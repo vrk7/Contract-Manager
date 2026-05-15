@@ -24,3 +24,13 @@ async def test_engine():
         await conn.run_sync(Base.metadata.create_all)
     yield engine
     await engine.dispose()
+
+
+async def test_get_session_yields_async_session(test_engine, monkeypatch):
+    """get_session context manager must yield an AsyncSession."""
+    from backend.app import database as db_mod
+    factory = async_sessionmaker(test_engine, expire_on_commit=False, autoflush=False, autocommit=False)
+    monkeypatch.setattr(db_mod, "AsyncSessionLocal", factory)
+
+    async with db_mod.get_session() as session:
+        assert isinstance(session, AsyncSession)
