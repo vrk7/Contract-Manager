@@ -70,3 +70,11 @@ def test_reset_version_overwrites_existing_chunks(rag):
     new_chunks = [(f"{VERSION_ID}-0", "New payment language.")]
     rag.reset_version(VERSION_ID, new_chunks)
     assert rag.collection_count(VERSION_ID) == 1
+
+
+def test_collection_count_returns_correct_number(rag):
+    assert rag.collection_count(VERSION_ID) == 0
+    rag.reset_version(VERSION_ID, SAMPLE_CHUNKS[:2])
+    assert rag.collection_count(VERSION_ID) == 2
+    rag.reset_version(VERSION_ID, SAMPLE_CHUNKS)
+    assert rag.collection_count(VERSION_ID) == 3
