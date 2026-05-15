@@ -42,3 +42,10 @@ def test_new_rag_collection_is_empty(rag):
 def test_reset_version_stores_chunks(rag):
     rag.reset_version(VERSION_ID, SAMPLE_CHUNKS)
     assert rag.collection_count(VERSION_ID) == len(SAMPLE_CHUNKS)
+
+
+def test_query_returns_results(loaded_rag):
+    results = loaded_rag.query(VERSION_ID, "payment invoice 30 days")
+    assert len(results) > 0
+    assert all(hasattr(r, "chunk_id") for r in results)
+    assert all(hasattr(r, "content") for r in results)
