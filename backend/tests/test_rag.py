@@ -37,3 +37,8 @@ def loaded_rag(rag):
 
 def test_new_rag_collection_is_empty(rag):
     assert rag.collection_count(VERSION_ID) == 0
+
+
+def test_reset_version_stores_chunks(rag):
+    rag.reset_version(VERSION_ID, SAMPLE_CHUNKS)
+    assert rag.collection_count(VERSION_ID) == len(SAMPLE_CHUNKS)
