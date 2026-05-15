@@ -186,6 +186,7 @@ async def analyze(request: Request, payload: AnalysisCreateRequest, background_t
             contract_text=contract_text,
             status="queued",
             playbook_version_id="in-memory",
+            request_id=request_id,
             guardrail_warnings=json.dumps([g.dict() for g in guardrails]) if guardrails else None,
         )
         playbook_content = settings.resolve_playbook_path().read_text(encoding="utf-8")
@@ -205,6 +206,7 @@ async def analyze(request: Request, payload: AnalysisCreateRequest, background_t
         contract_text=contract_text,
         status="queued",
         playbook_version_id=payload.playbook_version_id,
+        request_id=request_id,
         guardrail_warnings=json.dumps([g.dict() for g in guardrails]) if guardrails else None,
     )
     session.add(analysis)

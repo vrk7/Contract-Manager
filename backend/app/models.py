@@ -62,6 +62,7 @@ class Analysis(Base):
     )
     guardrail_warnings: Mapped[str | None] = mapped_column(Text, nullable=True)
     usage_json: Mapped[str | None] = mapped_column(Text, nullable=True)
+    request_id: Mapped[str | None] = mapped_column(String, nullable=True, index=True)
 
     version: Mapped[PlaybookVersion | None] = relationship("PlaybookVersion")
 
