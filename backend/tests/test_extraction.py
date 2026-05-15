@@ -56,3 +56,18 @@ def test_notice_period_pattern(text, expected_value_fragment):
     f = _finding(text, "notice_period")
     assert f is not None, f"notice_period not found in: {text!r}"
     assert expected_value_fragment in f["extracted_value"]
+
+
+@pytest.mark.parametrize("text,clause", [
+    ("Contractor shall indemnify Owner regardless of fault.", "indemnification"),
+    ("Contractor shall indemnify Owner for any and all claims.", "indemnification"),
+])
+def test_indemnification_pattern(text, clause):
+    assert clause in _types(text)
+
+
+def test_indemnification_source_text_contains_contract_snippet():
+    text = "Contractor shall indemnify and hold harmless the Owner regardless of fault for all claims."
+    f = _finding(text, "indemnification")
+    assert f is not None
+    assert len(f["source_text"]) > 0
