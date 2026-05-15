@@ -34,3 +34,14 @@ def test_payment_terms_pattern(text, expected_value_fragment):
     f = _finding(text, "payment_terms")
     assert f is not None, f"payment_terms not found in: {text!r}"
     assert expected_value_fragment in f["extracted_value"]
+
+
+@pytest.mark.parametrize("text,expected_value_fragment", [
+    ("A retainage of 5% shall be withheld.", "5"),
+    ("Retainage 10% until final completion.", "10"),
+    ("Owner shall retain 15% of each invoice.", "15"),
+])
+def test_retainage_pattern(text, expected_value_fragment):
+    f = _finding(text, "retainage")
+    assert f is not None, f"retainage not found in: {text!r}"
+    assert expected_value_fragment in f["extracted_value"]
