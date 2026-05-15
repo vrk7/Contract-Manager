@@ -23,3 +23,14 @@ def _finding(text: str, clause_type: str) -> dict | None:
         if f["clause_type"] == clause_type:
             return f
     return None
+
+
+@pytest.mark.parametrize("text,expected_value_fragment", [
+    ("Owner shall pay within 30 days of invoice.", "30"),
+    ("Payment due within 60 days from receipt.", "60"),
+    ("All invoices settled within 90 days.", "90"),
+])
+def test_payment_terms_pattern(text, expected_value_fragment):
+    f = _finding(text, "payment_terms")
+    assert f is not None, f"payment_terms not found in: {text!r}"
+    assert expected_value_fragment in f["extracted_value"]
