@@ -92,7 +92,7 @@ class PlaybookRAG:
 
     @staticmethod
     def _content_hash(text: str) -> str:
-        return hashlib.md5(text.encode()).hexdigest()[:12]
+        return hashlib.md5(text.encode(), usedforsecurity=False).hexdigest()[:12]  # nosec B324
 
     def reset_version(self, version_id: str, chunks: Iterable[tuple[str, str]]) -> None:
         """Upsert chunks into Chroma, skipping any whose content hash is unchanged."""
