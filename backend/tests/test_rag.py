@@ -33,3 +33,7 @@ def loaded_rag(rag):
     """PlaybookRAG pre-loaded with SAMPLE_CHUNKS."""
     rag.reset_version(VERSION_ID, SAMPLE_CHUNKS)
     return rag
+
+
+def test_new_rag_collection_is_empty(rag):
+    assert rag.collection_count(VERSION_ID) == 0
