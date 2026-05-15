@@ -45,3 +45,11 @@ async def test_get_session_rolls_back_on_exception(test_engine, monkeypatch):
     with pytest.raises(ValueError, match="boom"):
         async with db_mod.get_session() as _session:
             raise ValueError("boom")
+
+
+def test_base_metadata_registers_expected_tables():
+    """ORM metadata must include all core tables."""
+    table_names = set(Base.metadata.tables.keys())
+    assert "analyses" in table_names
+    assert "playbook_versions" in table_names
+    assert "playbook_chunks" in table_names
