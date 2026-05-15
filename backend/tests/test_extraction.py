@@ -113,3 +113,27 @@ def test_insurance_pattern():
     f = _finding(text, "insurance")
     assert f is not None
     assert "1,000,000" in f["extracted_value"]
+
+
+@pytest.mark.parametrize("text,expected_fragment", [
+    ("This agreement is governed by the laws of New York.", "New York"),
+    ("Contract governed by laws of the State of California.", "California"),
+])
+def test_governing_law_pattern(text, expected_fragment):
+    f = _finding(text, "governing_law")
+    assert f is not None, f"governing_law not found in: {text!r}"
+    assert expected_fragment in f["extracted_value"]
+
+
+@pytest.mark.parametrize("text,expected_fragment", [
+    ("Liability shall not exceed $500,000 in aggregate.", "500,000"),
+    ("Total liability not exceed $1,000,000 under this contract.", "1,000,000"),
+])
+def test_limitation_of_liability_pattern(text, expected_fragment):
+    f = _finding(text, "limitation_of_liability")
+    assert f is not None, f"limitation_of_liability not found in: {text!r}"
+    assert expected_fragment in f["extracted_value"]
+
+
+def test_no_false_positives_on_empty_contract():
+    assert _extract_clauses("Please review the attached agreement.") == []
