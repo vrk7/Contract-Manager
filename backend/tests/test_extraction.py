@@ -71,3 +71,23 @@ def test_indemnification_source_text_contains_contract_snippet():
     f = _finding(text, "indemnification")
     assert f is not None
     assert len(f["source_text"]) > 0
+
+
+@pytest.mark.parametrize("text,expected_fragment", [
+    ("Either party may terminate upon 30 calendar days written notice.", "30"),
+    ("Contract terminates upon 14 calendar days notice.", "14"),
+])
+def test_termination_notice_pattern(text, expected_fragment):
+    f = _finding(text, "termination_notice")
+    assert f is not None, f"termination_notice not found in: {text!r}"
+    assert expected_fragment in f["extracted_value"]
+
+
+@pytest.mark.parametrize("text,expected_fragment", [
+    ("Liquidated damages of 1,000 per calendar day of delay.", "1,000"),
+    ("Contractor owes €75,000 per day for late completion.", "75,000"),
+])
+def test_liquidated_damages_pattern(text, expected_fragment):
+    f = _finding(text, "liquidated_damages")
+    assert f is not None, f"liquidated_damages not found in: {text!r}"
+    assert expected_fragment in f["extracted_value"]
