@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import threading
 from pathlib import Path
 from typing import Iterable
@@ -89,22 +90,47 @@ class PlaybookRAG:
                 logger.warning("chroma_collection_unreadable", version_id=version_id)
                 return 0
 
+    @staticmethod
+    def _content_hash(text: str) -> str:
+        return hashlib.md5(text.encode()).hexdigest()[:12]
+
     def reset_version(self, version_id: str, chunks: Iterable[tuple[str, str]]) -> None:
+        """Upsert chunks into Chroma, skipping any whose content hash is unchanged."""
+        chunks_list = list(chunks)
         with self._lock:
             collection = self._collection(version_id)
+
+            # Build a map of existing chunk_id → stored content hash (encoded in metadata).
+            existing_hashes: dict[str, str] = {}
             try:
-                collection.delete(where={"version_id": version_id})
+                existing = collection.get(include=["metadatas"])
+                for eid, meta in zip(existing["ids"], existing["metadatas"] or []):
+                    existing_hashes[eid] = (meta or {}).get("content_hash", "")
             except Exception:
-                # collection may be empty
-                logger.debug("no_embeddings_to_delete", version_id=version_id)
-            ids = []
-            documents = []
-            metadatas = []
-            for chunk_id, text in chunks:
-                ids.append(chunk_id)
-                documents.append(text)
-                metadatas.append({"version_id": version_id})
-            collection.upsert(ids=ids, documents=documents, metadatas=metadatas)
+                pass
+
+            # Determine which chunk IDs are no longer present and should be removed.
+            current_ids = {cid for cid, _ in chunks_list}
+            stale_ids = [eid for eid in existing_hashes if eid not in current_ids]
+            if stale_ids:
+                collection.delete(ids=stale_ids)
+                logger.debug("embeddings_pruned", version_id=version_id, count=len(stale_ids))
+
+            # Only embed chunks whose content has changed.
+            new_ids, new_docs, new_metas = [], [], []
+            for chunk_id, text in chunks_list:
+                h = self._content_hash(text)
+                if existing_hashes.get(chunk_id) == h:
+                    continue
+                new_ids.append(chunk_id)
+                new_docs.append(text)
+                new_metas.append({"version_id": version_id, "content_hash": h})
+
+            if new_ids:
+                collection.upsert(ids=new_ids, documents=new_docs, metadatas=new_metas)
+                logger.debug("embeddings_upserted", version_id=version_id, count=len(new_ids))
+            else:
+                logger.debug("embeddings_unchanged", version_id=version_id)
 
     # L2 distance above which a chunk is considered unrelated and dropped.
     # For unit-normalised embeddings, cosine_sim ≈ 0.35 ↔ L2 ≈ 1.14.
