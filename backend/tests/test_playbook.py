@@ -57,3 +57,11 @@ async def test_list_playbook_versions_returns_all(session, playbook_file):
     versions = await list_playbook_versions(session)
     assert len(versions) == 1
     assert versions[0].content is not None
+
+
+async def test_persist_chunks_stores_records_in_db(session, playbook_file):
+    version = await seed_playbook(session, playbook_file)
+    from sqlalchemy import select
+    result = await session.execute(select(PlaybookChunk).where(PlaybookChunk.version_id == version.id))
+    chunks = result.scalars().all()
+    assert len(chunks) > 0
