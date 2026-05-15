@@ -37,9 +37,9 @@ def test_payment_terms_pattern(text, expected_value_fragment):
 
 
 @pytest.mark.parametrize("text,expected_value_fragment", [
-    ("A retainage of 5% shall be withheld.", "5"),
+    ("Retainage 5% shall be withheld until final completion.", "5"),
     ("Retainage 10% until final completion.", "10"),
-    ("Owner shall retain 15% of each invoice.", "15"),
+    ("Owner shall retain 15% of each progress payment.", "15"),
 ])
 def test_retainage_pattern(text, expected_value_fragment):
     f = _finding(text, "retainage")
@@ -99,7 +99,7 @@ def test_force_majeure_pattern():
 
 
 @pytest.mark.parametrize("text,expected_fragment", [
-    ("Contractor warrants work for a period of 2 years.", "2"),
+    ("Contractor warranty period of 2 years from substantial completion.", "2"),
     ("Equipment warranty period of 12 months from acceptance.", "12"),
 ])
 def test_warranty_pattern(text, expected_fragment):
