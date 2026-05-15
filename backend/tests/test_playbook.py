@@ -74,3 +74,12 @@ async def test_chunk_content_is_retrievable_after_persist(session, playbook_file
     chunks = result.scalars().all()
     combined = " ".join(c.content for c in chunks)
     assert "Payment" in combined or "Retainage" in combined
+
+
+async def test_seed_playbook_is_idempotent_on_second_call(session, playbook_file):
+    """Second seed call returns existing version without creating a duplicate."""
+    v1 = await seed_playbook(session, playbook_file)
+    v2 = await seed_playbook(session, playbook_file)
+    assert v1.id == v2.id
+    versions = await list_playbook_versions(session)
+    assert len(versions) == 1
