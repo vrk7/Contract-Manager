@@ -29,7 +29,7 @@ from .database import get_session
 from .events import event_bus
 from .guards import filter_malicious_segments
 from .logging_config import configure_logging
-from .models import Analysis, PlaybookVersion
+from .models import Analysis, PlaybookVersion, write_audit_log
 from .pipeline import run_analysis_pipeline
 from .playbook import list_playbook_versions, persist_chunks, seed_playbook
 from .schemas import (
@@ -211,6 +211,7 @@ async def analyze(request: Request, payload: AnalysisCreateRequest, background_t
     )
     session.add(analysis)
     await session.flush()
+    await write_audit_log(session, "analyses", analysis.id, "create", changed_by=user_ip)
     if settings.inline_analysis:
         result = await run_analysis_pipeline(session, analysis, initial_guardrails=guardrails)
         analysis.status = "completed"
@@ -361,6 +362,7 @@ async def update_playbook(request: PlaybookUpdateRequest, session: AsyncSession 
     version = PlaybookVersion(content=request.content, change_note=request.change_note, version_label=datetime.utcnow().strftime("%Y-%m-%d"))
     session.add(version)
     await session.flush()
+    await write_audit_log(session, "playbook_versions", version.id, "create")
     await persist_chunks(session, version.id, request.content)
     return PlaybookResponse(
         id=version.id,

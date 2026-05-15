@@ -7,6 +7,7 @@ from typing import Any
 
 from pydantic import BaseModel
 from sqlalchemy import DateTime, ForeignKey, LargeBinary, String, Text
+from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from .database import Base
@@ -89,3 +90,33 @@ class Analysis(Base):
 
     def set_guardrails(self, warnings: Any) -> None:
         self.guardrail_warnings = json.dumps(warnings, default=self._json_serializer)
+
+
+class AuditLog(Base):
+    __tablename__ = "audit_log"
+
+    id: Mapped[str] = mapped_column(String, primary_key=True, default=default_uuid)
+    table_name: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
+    row_id: Mapped[str] = mapped_column(String, nullable=False)
+    action: Mapped[str] = mapped_column(String(16), nullable=False)
+    changed_by: Mapped[str | None] = mapped_column(String, nullable=True)
+    changed_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, index=True)
+    diff_json: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+
+async def write_audit_log(
+    session: AsyncSession,
+    table_name: str,
+    row_id: str,
+    action: str,
+    changed_by: str | None = None,
+    diff: dict | None = None,
+) -> None:
+    entry = AuditLog(
+        table_name=table_name,
+        row_id=row_id,
+        action=action,
+        changed_by=changed_by,
+        diff_json=json.dumps(diff) if diff else None,
+    )
+    session.add(entry)
