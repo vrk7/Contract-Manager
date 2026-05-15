@@ -91,3 +91,25 @@ def test_liquidated_damages_pattern(text, expected_fragment):
     f = _finding(text, "liquidated_damages")
     assert f is not None, f"liquidated_damages not found in: {text!r}"
     assert expected_fragment in f["extracted_value"]
+
+
+def test_force_majeure_pattern():
+    text = "The parties shall not be liable for delays caused by force majeure events."
+    assert "force_majeure" in _types(text)
+
+
+@pytest.mark.parametrize("text,expected_fragment", [
+    ("Contractor warrants work for a period of 2 years.", "2"),
+    ("Equipment warranty period of 12 months from acceptance.", "12"),
+])
+def test_warranty_pattern(text, expected_fragment):
+    f = _finding(text, "warranty")
+    assert f is not None, f"warranty not found in: {text!r}"
+    assert expected_fragment in f["extracted_value"]
+
+
+def test_insurance_pattern():
+    text = "Contractor must maintain insurance coverage of at least $1,000,000 per occurrence."
+    f = _finding(text, "insurance")
+    assert f is not None
+    assert "1,000,000" in f["extracted_value"]
