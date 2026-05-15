@@ -49,3 +49,8 @@ def test_query_returns_results(loaded_rag):
     assert len(results) > 0
     assert all(hasattr(r, "chunk_id") for r in results)
     assert all(hasattr(r, "content") for r in results)
+
+
+def test_query_empty_collection_returns_empty_list(rag):
+    results = rag.query(VERSION_ID, "payment terms")
+    assert results == []
