@@ -89,14 +89,29 @@ class PlaybookRAG:
                 metadatas.append({"version_id": version_id})
             collection.upsert(ids=ids, documents=documents, metadatas=metadatas)
 
+    # L2 distance above which a chunk is considered unrelated and dropped.
+    # For unit-normalised embeddings, cosine_sim ≈ 0.35 ↔ L2 ≈ 1.14.
+    _DISTANCE_THRESHOLD: float = 1.2
+
     def query(self, version_id: str, text: str, k: int = 3) -> list[RetrievedChunk]:
         with self._lock:
             collection = self._collection(version_id)
             if collection.count() == 0:
                 return []
-            result = collection.query(query_texts=[text], n_results=k)
+            result = collection.query(
+                query_texts=[text], n_results=k, include=["documents", "distances"]
+            )
         retrieved: list[RetrievedChunk] = []
+        distances = result.get("distances", [[]])[0]
         for idx, doc in enumerate(result["documents"][0]):
+            distance = distances[idx] if idx < len(distances) else 0.0
+            if distance > self._DISTANCE_THRESHOLD:
+                logger.debug(
+                    "chunk_below_similarity_threshold",
+                    chunk_id=result["ids"][0][idx],
+                    distance=distance,
+                )
+                continue
             retrieved.append(
                 RetrievedChunk(
                     chunk_id=result["ids"][0][idx],
