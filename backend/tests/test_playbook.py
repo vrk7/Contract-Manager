@@ -43,3 +43,10 @@ def playbook_file(tmp_path):
     p = tmp_path / "playbook.md"
     p.write_text("## Payment Terms\n\nPayment within 30 days.\n\n## Retainage\n\nMax 5%.")
     return str(p)
+
+
+async def test_seed_playbook_creates_first_version(session, playbook_file):
+    version = await seed_playbook(session, playbook_file)
+    assert version is not None
+    assert version.id is not None
+    assert "Payment within 30 days" in version.content
