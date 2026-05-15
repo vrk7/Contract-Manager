@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import threading
 from pathlib import Path
 from typing import Iterable
 
@@ -48,6 +49,7 @@ class PlaybookRAG:
         self.client = get_chroma_client()
         self.collection_name = collection_name
         self.embed_fn = DefaultEmbeddingFunction()
+        self._lock = threading.Lock()
 
     def _collection(self, version_id: str):
         return self.client.get_or_create_collection(
@@ -63,33 +65,36 @@ class PlaybookRAG:
         container start with a missing Chroma volume), fall back to zero so
         callers can decide to rebuild embeddings.
         """
-        try:
-            return self._collection(version_id).count()
-        except Exception:
-            logger.warning("chroma_collection_unreadable", version_id=version_id)
-            return 0
+        with self._lock:
+            try:
+                return self._collection(version_id).count()
+            except Exception:
+                logger.warning("chroma_collection_unreadable", version_id=version_id)
+                return 0
 
     def reset_version(self, version_id: str, chunks: Iterable[tuple[str, str]]) -> None:
-        collection = self._collection(version_id)
-        try:
-            collection.delete(where={"version_id": version_id})
-        except Exception:
-            # collection may be empty
-            logger.debug("no_embeddings_to_delete", version_id=version_id)
-        ids = []
-        documents = []
-        metadatas = []
-        for chunk_id, text in chunks:
-            ids.append(chunk_id)
-            documents.append(text)
-            metadatas.append({"version_id": version_id})
-        collection.upsert(ids=ids, documents=documents, metadatas=metadatas)
+        with self._lock:
+            collection = self._collection(version_id)
+            try:
+                collection.delete(where={"version_id": version_id})
+            except Exception:
+                # collection may be empty
+                logger.debug("no_embeddings_to_delete", version_id=version_id)
+            ids = []
+            documents = []
+            metadatas = []
+            for chunk_id, text in chunks:
+                ids.append(chunk_id)
+                documents.append(text)
+                metadatas.append({"version_id": version_id})
+            collection.upsert(ids=ids, documents=documents, metadatas=metadatas)
 
     def query(self, version_id: str, text: str, k: int = 3) -> list[RetrievedChunk]:
-        collection = self._collection(version_id)
-        if collection.count() == 0:
-            return []
-        result = collection.query(query_texts=[text], n_results=k)
+        with self._lock:
+            collection = self._collection(version_id)
+            if collection.count() == 0:
+                return []
+            result = collection.query(query_texts=[text], n_results=k)
         retrieved: list[RetrievedChunk] = []
         for idx, doc in enumerate(result["documents"][0]):
             retrieved.append(
