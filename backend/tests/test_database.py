@@ -34,3 +34,14 @@ async def test_get_session_yields_async_session(test_engine, monkeypatch):
 
     async with db_mod.get_session() as session:
         assert isinstance(session, AsyncSession)
+
+
+async def test_get_session_rolls_back_on_exception(test_engine, monkeypatch):
+    """get_session must roll back and re-raise when the body raises."""
+    from backend.app import database as db_mod
+    factory = async_sessionmaker(test_engine, expire_on_commit=False, autoflush=False, autocommit=False)
+    monkeypatch.setattr(db_mod, "AsyncSessionLocal", factory)
+
+    with pytest.raises(ValueError, match="boom"):
+        async with db_mod.get_session() as _session:
+            raise ValueError("boom")
