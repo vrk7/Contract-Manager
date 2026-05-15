@@ -65,3 +65,12 @@ async def test_persist_chunks_stores_records_in_db(session, playbook_file):
     result = await session.execute(select(PlaybookChunk).where(PlaybookChunk.version_id == version.id))
     chunks = result.scalars().all()
     assert len(chunks) > 0
+
+
+async def test_chunk_content_is_retrievable_after_persist(session, playbook_file):
+    version = await seed_playbook(session, playbook_file)
+    from sqlalchemy import select
+    result = await session.execute(select(PlaybookChunk).where(PlaybookChunk.version_id == version.id))
+    chunks = result.scalars().all()
+    combined = " ".join(c.content for c in chunks)
+    assert "Payment" in combined or "Retainage" in combined
