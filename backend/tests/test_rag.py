@@ -54,3 +54,10 @@ def test_query_returns_results(loaded_rag):
 def test_query_empty_collection_returns_empty_list(rag):
     results = rag.query(VERSION_ID, "payment terms")
     assert results == []
+
+
+def test_query_respects_top_k(loaded_rag):
+    results_k1 = loaded_rag.query(VERSION_ID, "contract clause", k=1)
+    results_k2 = loaded_rag.query(VERSION_ID, "contract clause", k=2)
+    assert len(results_k1) == 1
+    assert len(results_k2) == 2
