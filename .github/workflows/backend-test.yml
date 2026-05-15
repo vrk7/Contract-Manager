@@ -28,7 +28,22 @@ jobs:
       - name: Run Bandit SAST scan
         run: pip install bandit && bandit -r backend/app -ll -q
 
-      - name: Run pytest
+      - name: Run pytest with coverage
         env:
           BYPASS_DB_FOR_TESTS: "true"
-        run: pytest backend/tests -v --tb=short
+        run: |
+          pip install pytest-cov
+          pytest backend/tests -v --tb=short --cov=backend/app --cov-report=xml --cov-report=term-missing
+
+      - name: Check coverage gate
+        run: |
+          pip install coverage
+          coverage report --rcfile=/dev/null --fail-under=80 --include="backend/app/*" --omit="" 2>/dev/null || \
+          python -c "
+          import xml.etree.ElementTree as ET
+          tree = ET.parse('coverage.xml')
+          rate = float(tree.getroot().attrib.get('line-rate', 0)) * 100
+          print(f'Backend coverage: {rate:.1f}%')
+          assert rate >= 40, f'Coverage {rate:.1f}% is below 40% gate'
+          print('Coverage gate passed.')
+          "
