@@ -61,3 +61,12 @@ def test_query_respects_top_k(loaded_rag):
     results_k2 = loaded_rag.query(VERSION_ID, "contract clause", k=2)
     assert len(results_k1) == 1
     assert len(results_k2) == 2
+
+
+def test_reset_version_overwrites_existing_chunks(rag):
+    rag.reset_version(VERSION_ID, SAMPLE_CHUNKS)
+    assert rag.collection_count(VERSION_ID) == 3
+
+    new_chunks = [(f"{VERSION_ID}-0", "New payment language.")]
+    rag.reset_version(VERSION_ID, new_chunks)
+    assert rag.collection_count(VERSION_ID) == 1
