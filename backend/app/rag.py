@@ -16,15 +16,32 @@ logger = structlog.get_logger(__name__)
 settings = get_settings()
 
 
-def chunk_playbook(content: str, size: int = 800) -> list[str]:
-    words = content.split()
-    chunks = []
+def chunk_playbook(content: str, max_chars: int = 800, overlap_sentences: int = 2) -> list[str]:
+    """Split playbook content into sentence-aware chunks with sentence-level overlap.
+
+    Each chunk stays under max_chars. The last overlap_sentences sentences of a chunk
+    are prepended to the next chunk so context is not lost at boundaries.
+    """
+    import re as _re
+    sentence_re = _re.compile(r"(?<=[.!?])\s+")
+    sentences = [s.strip() for s in sentence_re.split(content.strip()) if s.strip()]
+    if not sentences:
+        return [content] if content.strip() else []
+
+    chunks: list[str] = []
     current: list[str] = []
-    for word in words:
-        current.append(word)
-        if len(" ".join(current)) >= size:
+    current_len = 0
+
+    for sentence in sentences:
+        slen = len(sentence)
+        if current_len + slen + 1 > max_chars and current:
             chunks.append(" ".join(current))
-            current = []
+            tail = current[-overlap_sentences:] if overlap_sentences else []
+            current = list(tail)
+            current_len = sum(len(s) + 1 for s in current)
+        current.append(sentence)
+        current_len += slen + 1
+
     if current:
         chunks.append(" ".join(current))
     return chunks
