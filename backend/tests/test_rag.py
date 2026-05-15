@@ -9,7 +9,7 @@ import pytest
 os.environ.setdefault("BYPASS_DB_FOR_TESTS", "true")
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../.."))
 
-from backend.app.rag import PlaybookRAG, chunk_playbook  # noqa: E402
+from backend.app.rag import PlaybookRAG  # noqa: E402
 
 VERSION_ID = "test-v1"
 

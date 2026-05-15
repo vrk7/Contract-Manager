@@ -3,19 +3,17 @@ from __future__ import annotations
 
 import os
 import sys
-from pathlib import Path
-from unittest.mock import MagicMock, patch
 
 import pytest
 import pytest_asyncio
-from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
 os.environ.setdefault("BYPASS_DB_FOR_TESTS", "true")
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../.."))
 
 from backend.app.database import Base  # noqa: E402
-from backend.app.models import PlaybookChunk, PlaybookVersion  # noqa: E402
-from backend.app.playbook import list_playbook_versions, persist_chunks, seed_playbook  # noqa: E402
+from backend.app.models import PlaybookChunk  # noqa: E402
+from backend.app.playbook import list_playbook_versions, seed_playbook  # noqa: E402
 
 _DB_URL = "sqlite+aiosqlite:///:memory:"
 

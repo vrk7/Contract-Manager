@@ -11,7 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_asyn
 os.environ.setdefault("BYPASS_DB_FOR_TESTS", "true")
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../.."))
 
-from backend.app.database import Base, get_session  # noqa: E402
+from backend.app.database import Base  # noqa: E402
 
 
 @pytest_asyncio.fixture
