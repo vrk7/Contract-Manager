@@ -45,3 +45,14 @@ def test_retainage_pattern(text, expected_value_fragment):
     f = _finding(text, "retainage")
     assert f is not None, f"retainage not found in: {text!r}"
     assert expected_value_fragment in f["extracted_value"]
+
+
+@pytest.mark.parametrize("text,expected_value_fragment", [
+    ("Written notice required within 14 days notice of termination.", "14"),
+    ("Party must provide notice within 7 calendar days notice.", "7"),
+    ("Claims must be filed within 21 days notice of the event.", "21"),
+])
+def test_notice_period_pattern(text, expected_value_fragment):
+    f = _finding(text, "notice_period")
+    assert f is not None, f"notice_period not found in: {text!r}"
+    assert expected_value_fragment in f["extracted_value"]
