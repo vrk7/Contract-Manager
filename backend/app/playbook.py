@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 from pathlib import Path
 
 import structlog
@@ -11,6 +12,24 @@ from .rag import PlaybookRAG, chunk_playbook
 from .schemas import PlaybookResponse
 
 logger = structlog.get_logger(__name__)
+
+_HEADING_RE = re.compile(r"^#{1,6}\s+(.+)$", re.MULTILINE)
+
+
+def _extract_section_headings(content: str) -> list[tuple[int, str]]:
+    """Return (char_offset, heading_text) pairs for all markdown headings."""
+    return [(m.start(), m.group(0).strip()) for m in _HEADING_RE.finditer(content)]
+
+
+def _heading_for_offset(offset: int, headings: list[tuple[int, str]]) -> str | None:
+    """Return the most recent heading before the given character offset."""
+    current: str | None = None
+    for pos, heading in headings:
+        if pos <= offset:
+            current = heading
+        else:
+            break
+    return current
 
 
 async def seed_playbook(session: AsyncSession, seed_path: str) -> PlaybookVersion:
@@ -44,18 +63,27 @@ async def seed_playbook(session: AsyncSession, seed_path: str) -> PlaybookVersio
 
 
 async def persist_chunks(session: AsyncSession, version_id: str, content: str) -> None:
-    # remove existing
     await session.execute(delete(PlaybookChunk).where(PlaybookChunk.version_id == version_id))
-    chunks = chunk_playbook(content)
+    raw_chunks = chunk_playbook(content)
+    headings = _extract_section_headings(content)
     rag = PlaybookRAG()
     chunk_records: list[PlaybookChunk] = []
-    for idx, text in enumerate(chunks):
+    search_offset = 0
+    for idx, text in enumerate(raw_chunks):
+        # Locate this chunk in the original content to find its heading context.
+        pos = content.find(text[:40], search_offset)
+        if pos == -1:
+            pos = search_offset
+        else:
+            search_offset = pos + len(text)
+        heading = _heading_for_offset(pos, headings)
+        embedded_text = f"{heading}\n\n{text}" if heading else text
         chunk_id = f"{version_id}-{idx}"
         chunk_records.append(
             PlaybookChunk(
                 id=chunk_id,
                 version_id=version_id,
-                content=text,
+                content=embedded_text,
                 source="standard_terms_playbook.md",
             )
         )
