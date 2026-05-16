@@ -2,7 +2,8 @@ import React, { useRef, useState } from 'react';
 import ErrorBoundary from './components/ErrorBoundary';
 import FindingsList from './components/FindingsList';
 import PlaybookManager from './components/PlaybookManager';
-import { api, streamUrl } from './api';
+import AuthPage from './components/AuthPage';
+import { api, streamUrl, getToken, clearToken } from './api';
 
 type AnalysisType = 'risks' | 'summary' | 'obligations';
 
@@ -52,6 +53,7 @@ interface FinalEvent {
 }
 
 function App() {
+  const [authed, setAuthed] = useState<boolean>(() => !!getToken());
   const [contractText, setContractText] = useState<string>(() => {
     try { return localStorage.getItem('contract_draft') ?? ''; } catch { return ''; }
   });
@@ -141,6 +143,10 @@ function App() {
     URL.revokeObjectURL(url);
   };
 
+  if (!authed) {
+    return <AuthPage onAuth={() => setAuthed(true)} />;
+  }
+
   return (
     <ErrorBoundary>
       {/* ── Sticky nav ── */}
@@ -166,6 +172,13 @@ function App() {
         <div className="nav-end">
           <span className="pill subtle">Secure</span>
           <span className="pill subtle">Real-time</span>
+          <button
+            className="ghost"
+            style={{ fontSize: '12px', padding: '0.28rem 0.7rem' }}
+            onClick={() => { clearToken(); setAuthed(false); }}
+          >
+            Sign out
+          </button>
         </div>
       </nav>
 
