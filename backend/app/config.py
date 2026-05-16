@@ -30,6 +30,7 @@ class Settings:
     )  # approx Claude 3.5 Sonnet pricing
     api_key: str | None = os.getenv("API_KEY")
     debug_mode: bool = os.getenv("DEBUG_MODE", "false").lower() == "true"
+    production_mode: bool = os.getenv("PRODUCTION_MODE", "false").lower() == "true"
     inline_analysis: bool = os.getenv("INLINE_ANALYSIS", "false").lower() == "true"
     in_memory_mode: bool = os.getenv("BYPASS_DB_FOR_TESTS", "false").lower() == "true"
     chroma_telemetry: bool = os.getenv("CHROMA_TELEMETRY", "false").lower() == "true"
