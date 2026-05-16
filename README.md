@@ -4,8 +4,6 @@
 
 FastAPI + React implementation of the multi-step, guardrailed Contract Clause Analyzer that compares construction contract clauses against the provided `standard_terms_playbook.md`, streams structured SSE results, and tracks token cost/usage.
 
-**Live deployment:** http://35.178.58.160/
-
 **Presentation:** https://docs.google.com/presentation/d/1syagMfZAZk1vYFDzh7qJbBLv2VNcMMkSyXZ231POVH4/edit?usp=sharing
 
 The solution reads the playbook and example contracts in `sample_contracts/` and builds a deterministic pipeline: extract clauses → retrieve playbook chunks (Chroma RAG) → compare deviations → score risk → recommend negotiation positions → validate output schema and guardrails.
