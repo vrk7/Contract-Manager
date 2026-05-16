@@ -206,12 +206,25 @@ async def _process_analysis(analysis_id: str) -> None:
             )
 
 
+_idempotency_header = APIKeyHeader(name="Idempotency-Key", auto_error=False)
+
+
 @v1.post("/analyze", response_model=AnalysisStatusResponse)
 @limiter.limit(f"{settings.rate_limit_per_minute}/minute")
-async def analyze(request: Request, payload: AnalysisCreateRequest, background_tasks: BackgroundTasks, session: AsyncSession | None = Depends(session_dependency), _auth: None = Depends(verify_api_key)) -> AnalysisStatusResponse:
+async def analyze(request: Request, payload: AnalysisCreateRequest, background_tasks: BackgroundTasks, session: AsyncSession | None = Depends(session_dependency), _auth: None = Depends(verify_api_key), idempotency_key: str | None = Security(_idempotency_header)) -> AnalysisStatusResponse:
     user_ip = request.client.host if request.client else "unknown"
     request_id = getattr(request.state, "request_id", "unknown")
     logger.info("analyze_request", user_ip=user_ip, request_id=request_id, analysis_type=payload.analysis_type)
+
+    if idempotency_key and session and not settings.in_memory_mode:
+        existing = await session.execute(
+            select(Analysis).where(Analysis.request_id == idempotency_key, Analysis.deleted_at.is_(None))
+        )
+        dup = existing.scalars().first()
+        if dup:
+            logger.info("idempotency_hit", idempotency_key=idempotency_key, analysis_id=dup.id)
+            return AnalysisStatusResponse(analysis_id=dup.id, status=dup.status)
+
     contract_text, guardrails = filter_malicious_segments(payload.contract_text)
     if settings.in_memory_mode:
         analysis_id = str(uuid.uuid4())
@@ -241,7 +254,7 @@ async def analyze(request: Request, payload: AnalysisCreateRequest, background_t
         contract_text=contract_text,
         status="queued",
         playbook_version_id=payload.playbook_version_id,
-        request_id=request_id,
+        request_id=idempotency_key or request_id,
         guardrail_warnings=json.dumps([g.dict() for g in guardrails]) if guardrails else None,
     )
     session.add(analysis)
