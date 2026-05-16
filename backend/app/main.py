@@ -28,6 +28,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from .cache import AnalysisCache, analysis_cache
 from .config import get_settings
+from .middleware import RequestTimingMiddleware
 from .database import get_session
 from .events import event_bus
 from .guards import filter_malicious_segments
@@ -83,6 +84,7 @@ app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)  # ty
 
 v1 = APIRouter(prefix="/v1")
 
+app.add_middleware(RequestTimingMiddleware)
 app.add_middleware(GZipMiddleware, minimum_size=1024)
 _cors_origins = (
     [o.strip() for o in os.environ.get("CORS_ORIGINS", "").split(",") if o.strip()]
