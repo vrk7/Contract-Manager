@@ -15,13 +15,19 @@ except ImportError:
 import chromadb
 import structlog
 from chromadb import Settings as ChromaSettings
-from chromadb.utils.embedding_functions import DefaultEmbeddingFunction
+from chromadb.utils.embedding_functions import FastEmbedEmbeddingFunction
 
 from .config import get_settings
 from .schemas import RetrievedChunk
 
 logger = structlog.get_logger(__name__)
 settings = get_settings()
+
+# BGE-small is 384-dim like MiniLM but significantly better on legal/domain text.
+# Changing this tag forces Chroma to use new collection names, triggering a fresh
+# embed of all chunks on next startup (seed_playbook detects empty collections).
+_EMBED_MODEL = "BAAI/bge-small-en-v1.5"
+_EMBED_TAG = "bge_small_v1"  # bump this string whenever the model changes
 
 
 _SECTION_HEADING_RE = __import__("re").compile(
@@ -106,12 +112,14 @@ class PlaybookRAG:
     def __init__(self, collection_name: str = "playbook") -> None:
         self.client = get_chroma_client()
         self.collection_name = collection_name
-        self.embed_fn = DefaultEmbeddingFunction()
+        self.embed_fn = FastEmbedEmbeddingFunction(model_name=_EMBED_MODEL)
         self._lock = threading.Lock()
 
     def _collection(self, version_id: str):
+        # Collection name includes _EMBED_TAG so a model change automatically
+        # routes to a fresh, empty collection and triggers re-embedding on startup.
         return self.client.get_or_create_collection(
-            f"{self.collection_name}_{version_id}",
+            f"{self.collection_name}_{version_id}_{_EMBED_TAG}",
             embedding_function=self.embed_fn,  # type: ignore[arg-type]
         )
 
