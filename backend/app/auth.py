@@ -5,7 +5,7 @@ from typing import Optional
 
 import jwt
 import structlog
-from fastapi import Depends, HTTPException, Query, Security, status
+from fastapi import HTTPException, Query, Security, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from passlib.context import CryptContext
 
