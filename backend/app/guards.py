@@ -23,7 +23,12 @@ INJECTION_PATTERNS: list[re.Pattern] = [
     re.compile(r"override (your )?(safety|guidelines|instructions)", re.IGNORECASE),
 ]
 
-_ZERO_WIDTH_RE = re.compile(r"[​-‏‪-‮⁠-⁯﻿]")
+_ZERO_WIDTH_RE = re.compile(
+    "[" + chr(0x200B) + "-" + chr(0x200F)
+    + chr(0x202A) + "-" + chr(0x202E)
+    + chr(0x2060) + "-" + chr(0x206F)
+    + chr(0xFEFF) + "]"
+)
 
 MAX_INPUT_CHARS = 5_000_000
 

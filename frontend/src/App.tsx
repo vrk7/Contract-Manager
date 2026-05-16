@@ -182,7 +182,7 @@ function App() {
             </div>
             <textarea
               value={contractText}
-              onChange={(e) => { setContractText(e.target.value); try { localStorage.setItem('contract_draft', e.target.value); } catch {} }}
+              onChange={(e) => { setContractText(e.target.value); try { localStorage.setItem('contract_draft', e.target.value); } catch (_) { /* quota exceeded or private browsing */ } }}
               onKeyDown={handleKeyDown}
               placeholder="Paste contract text here (Ctrl+Enter to analyze)"
             />
