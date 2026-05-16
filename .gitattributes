@@ -1,0 +1,8 @@
+# Normalize line endings to LF on commit
+* text=auto eol=lf
+
+# Force binary files to not be modified
+*.png binary
+*.jpg binary
+*.pdf binary
+*.db  binary
