@@ -8,7 +8,7 @@ from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from .models import PlaybookChunk, PlaybookVersion
-from .rag import PlaybookRAG, chunk_playbook
+from .rag import PlaybookRAG, chunk_playbook_with_headings
 from .schemas import PlaybookResponse
 
 logger = structlog.get_logger(__name__)
@@ -64,7 +64,7 @@ async def seed_playbook(session: AsyncSession, seed_path: str) -> PlaybookVersio
 
 async def persist_chunks(session: AsyncSession, version_id: str, content: str) -> None:
     await session.execute(delete(PlaybookChunk).where(PlaybookChunk.version_id == version_id))
-    raw_chunks = chunk_playbook(content)
+    raw_chunks = chunk_playbook_with_headings(content)
     headings = _extract_section_headings(content)
     rag = PlaybookRAG()
     chunk_records: list[PlaybookChunk] = []
@@ -77,7 +77,9 @@ async def persist_chunks(session: AsyncSession, version_id: str, content: str) -
         else:
             search_offset = pos + len(text)
         heading = _heading_for_offset(pos, headings)
-        embedded_text = f"{heading}\n\n{text}" if heading else text
+        # chunk_playbook_with_headings already prepends [Section: ...] but we
+        # keep the fallback here for any chunks that didn't get a heading injected.
+        embedded_text = text if text.startswith("[Section:") else (f"{heading}\n\n{text}" if heading else text)
         chunk_id = f"{version_id}-{idx}"
         chunk_records.append(
             PlaybookChunk(
