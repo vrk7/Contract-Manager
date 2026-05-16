@@ -35,6 +35,8 @@ class Settings:
     in_memory_mode: bool = os.getenv("BYPASS_DB_FOR_TESTS", "false").lower() == "true"
     chroma_telemetry: bool = os.getenv("CHROMA_TELEMETRY", "false").lower() == "true"
     data_retention_days: int = int(os.getenv("DATA_RETENTION_DAYS", "90"))
+    llm_timeout_seconds: float = float(os.getenv("LLM_TIMEOUT_SECONDS", "60"))
+    llm_max_retries: int = int(os.getenv("LLM_MAX_RETRIES", "2"))
 
     def resolve_playbook_path(self) -> Path:
         """
