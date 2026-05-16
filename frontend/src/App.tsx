@@ -107,6 +107,8 @@ function App() {
     });
   };
 
+  const isLoading = !!status && status !== 'Stream disconnected. Please refresh and try again.' && !result;
+
   const handleAnalyze = async () => {
     setResult(null);
     setWarnings([]);
@@ -262,6 +264,13 @@ function App() {
                   <p className="eyebrow">Estimated cost</p>
                   <p className="metric">${usage.estimated_cost_usd}</p>
                 </div>
+              </div>
+            )}
+            {isLoading && !result?.findings?.length && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginTop: '0.5rem' }}>
+                {[1, 2, 3].map((i) => (
+                  <div key={i} style={{ height: '72px', borderRadius: '10px', background: 'linear-gradient(90deg, #e2e8f0 25%, #f1f5f9 50%, #e2e8f0 75%)', backgroundSize: '200% 100%', animation: 'shimmer 1.4s infinite' }} />
+                ))}
               </div>
             )}
             <FindingsList findings={result?.findings || []} onClear={() => { setResult(null); setWarnings([]); setUsage(null); setStatus(null); }} />
