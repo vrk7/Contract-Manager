@@ -333,7 +333,7 @@ async def list_analyses(
 
 
 @v1.get("/analysis/{analysis_id}", response_model=AnalysisResult | AnalysisStatusResponse)
-async def get_analysis(analysis_id: str, session: AsyncSession | None = Depends(session_dependency), _auth: None = Depends(verify_api_key)):
+async def get_analysis(analysis_id: str, request: Request, session: AsyncSession | None = Depends(session_dependency), _auth: None = Depends(verify_api_key)):
     if settings.in_memory_mode:
         data = IN_MEMORY_RESULTS.get(analysis_id)
         if not data:
@@ -348,8 +348,14 @@ async def get_analysis(analysis_id: str, session: AsyncSession | None = Depends(
     if not analysis:
         raise HTTPException(status_code=404, detail="Analysis not found")
     if analysis.result_json:
+        import hashlib as _hl
+        etag = _hl.md5(analysis.result_json.encode(), usedforsecurity=False).hexdigest()
+        if request.headers.get("If-None-Match") == etag:
+            from fastapi.responses import Response as _Resp
+            return _Resp(status_code=304, headers={"ETag": etag})
+        from fastapi.responses import JSONResponse as _JSON
         result_data = json.loads(analysis.result_json)
-        return AnalysisResult(**result_data)
+        return _JSON(content=result_data, headers={"ETag": etag})
     return AnalysisStatusResponse(analysis_id=analysis.id, status=analysis.status)
 
 
