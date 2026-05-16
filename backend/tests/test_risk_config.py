@@ -8,7 +8,12 @@ os.environ.setdefault("BYPASS_DB_FOR_TESTS", "true")
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../.."))
 
 import pytest
-from backend.app.risk_config import score_numeric, DEFAULT_RISK_CONFIG, get_config_for_jurisdiction  # noqa: E402
+from backend.app.risk_config import (  # noqa: E402
+    DEFAULT_RISK_CONFIG,
+    get_config_for_jurisdiction,
+    list_supported_clause_types,
+    score_numeric,
+)
 
 
 class TestPaymentTerms:
@@ -58,10 +63,16 @@ class TestNoticePeriod:
 
 class TestCurePeriod:
     def test_30_days_is_low(self):
+        # 30 days to cure is fine — low risk
         assert score_numeric("cure_period", 30) == "low"
 
-    def test_20_days_is_medium(self):
-        assert score_numeric("cure_period", 20) == "medium"
+    def test_10_days_is_high(self):
+        # 10 days cure ≤ medium_max (14) → high risk
+        assert score_numeric("cure_period", 10) == "high"
+
+    def test_5_days_is_critical(self):
+        # 5 days cure ≤ high_max (7) → critical
+        assert score_numeric("cure_period", 5) == "critical"
 
 
 def test_unknown_clause_type_returns_medium():
@@ -82,7 +93,8 @@ class TestJurisdictionOverrides:
 
     def test_ca_more_lenient_payment_terms(self):
         ca_config = get_config_for_jurisdiction("CA")
-        assert score_numeric("payment_terms", 61, ca_config) == "medium"
+        # CA: medium_max=60 so 50 > 45 (low_max) but ≤ 60 → medium
+        assert score_numeric("payment_terms", 50, ca_config) == "medium"
 
     def test_none_jurisdiction_returns_default(self):
         config = get_config_for_jurisdiction(None)
@@ -96,3 +108,23 @@ class TestJurisdictionOverrides:
         lower = get_config_for_jurisdiction("de")
         upper = get_config_for_jurisdiction("DE")
         assert lower == upper
+
+
+class TestListSupportedClauseTypes:
+    def test_returns_list(self):
+        result = list_supported_clause_types()
+        assert isinstance(result, list)
+
+    def test_payment_terms_included(self):
+        assert "payment_terms" in list_supported_clause_types()
+
+    def test_retainage_included(self):
+        assert "retainage" in list_supported_clause_types()
+
+    def test_sorted_alphabetically(self):
+        result = list_supported_clause_types()
+        assert result == sorted(result)
+
+    def test_no_duplicates(self):
+        result = list_supported_clause_types()
+        assert len(result) == len(set(result))

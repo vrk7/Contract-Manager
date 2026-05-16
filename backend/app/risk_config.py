@@ -61,7 +61,7 @@ def score_numeric(clause_type: str, value: float, config: dict[str, ClauseRiskTh
     if not cfg:
         return "medium"
 
-    if clause_type in {"payment_terms", "retainage", "cure_period"}:
+    if clause_type in {"payment_terms", "retainage"}:
         if cfg.high_max is not None and value > cfg.high_max:
             return "critical"
         if cfg.medium_max is not None and value > cfg.medium_max:
@@ -69,8 +69,8 @@ def score_numeric(clause_type: str, value: float, config: dict[str, ClauseRiskTh
         if cfg.low_max is not None and value > cfg.low_max:
             return "medium"
         return "low"
-    elif clause_type in {"notice_period", "termination_notice"}:
-        # Lower is worse for notice periods
+    elif clause_type in {"notice_period", "termination_notice", "cure_period"}:
+        # Lower is worse for notice/cure periods
         if cfg.high_max is not None and value <= cfg.high_max:
             return "critical"
         if cfg.medium_max is not None and value <= cfg.medium_max:
