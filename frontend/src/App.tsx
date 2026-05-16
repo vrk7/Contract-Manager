@@ -205,11 +205,18 @@ function App() {
             <div className="card-header">
               <div>
                 <p className="eyebrow">Step 2</p>
-                <h3>Results</h3>
+                <h3>Results {result && <span style={{ fontWeight: 400, fontSize: '0.85rem', color: '#888' }}>({result.findings.length} finding{result.findings.length !== 1 ? 's' : ''})</span>}</h3>
               </div>
-              {result?.overall_risk_score && (
-                <span className={riskBadgeClass(result.overall_risk_score)}>Overall: {result.overall_risk_score}</span>
-              )}
+              <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                {result?.overall_risk_score && (
+                  <span className={riskBadgeClass(result.overall_risk_score)}>Overall: {result.overall_risk_score}</span>
+                )}
+                {result && (
+                  <button onClick={handleExportJson} style={{ fontSize: '0.75rem', padding: '0.25rem 0.6rem' }}>
+                    Export JSON
+                  </button>
+                )}
+              </div>
             </div>
             {result?.overall_risk_score && (
               <p className="muted">Risk posture calculated from detected clauses and deviations.</p>
