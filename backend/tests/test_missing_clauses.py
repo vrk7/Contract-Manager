@@ -7,7 +7,7 @@ import sys
 os.environ.setdefault("BYPASS_DB_FOR_TESTS", "true")
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../.."))
 
-from backend.app.pipeline import detect_missing_clauses, _extract_clauses  # noqa: E402
+from backend.app.pipeline import detect_missing_clauses, detect_cross_references, _extract_clauses  # noqa: E402
 from backend.app.schemas import Finding, RetrievedChunk  # noqa: E402
 
 
@@ -89,3 +89,35 @@ def test_cure_period_pattern():
 def test_assignment_rights_pattern():
     text = "Contractor may not assign this agreement without prior written consent of Owner."
     assert "assignment_rights" in _types(text)
+
+
+# ---------------------------------------------------------------------------
+# Cross-reference detection
+# ---------------------------------------------------------------------------
+
+def test_cross_reference_notwithstanding_detected():
+    f = _finding("payment_terms")
+    f.source_text = "Notwithstanding Section 12.1, payment shall be due within 30 days."
+    warnings = detect_cross_references([f])
+    assert any(w.type == "cross_reference" for w in warnings)
+
+
+def test_cross_reference_subject_to_detected():
+    f = _finding("indemnification")
+    f.source_text = "Subject to Article 5.3, contractor indemnifies all losses."
+    warnings = detect_cross_references([f])
+    assert any(w.type == "cross_reference" for w in warnings)
+
+
+def test_no_cross_reference_for_plain_clause():
+    f = _finding("force_majeure")
+    f.source_text = "Force majeure events excuse performance delays."
+    warnings = detect_cross_references([f])
+    assert warnings == []
+
+
+def test_cross_reference_triggered_by_is_clause_type():
+    f = _finding("payment_terms")
+    f.source_text = "As provided in Section 7.2, payment due in 60 days."
+    warnings = detect_cross_references([f])
+    assert warnings[0].triggered_by == "payment_terms"
