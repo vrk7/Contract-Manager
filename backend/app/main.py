@@ -11,9 +11,12 @@ from fastapi import (
     BackgroundTasks,
     Depends,
     FastAPI,
+    File,
+    Form,
     HTTPException,
     Query,
     Request,
+    UploadFile,
 )
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
@@ -180,6 +183,37 @@ async def health_deep() -> dict[str, Any]:
     return {"status": overall, "checks": checks}
 
 
+_UPLOAD_MAX_BYTES = 20 * 1024 * 1024  # 20 MB
+
+
+def _extract_pdf_text(data: bytes) -> str:
+    import io
+    import pdfplumber
+    with pdfplumber.open(io.BytesIO(data)) as pdf:
+        return "\n\n".join(page.extract_text() or "" for page in pdf.pages)
+
+
+def _extract_docx_text(data: bytes) -> str:
+    import io
+    from docx import Document
+    doc = Document(io.BytesIO(data))
+    return "\n\n".join(p.text for p in doc.paragraphs if p.text.strip())
+
+
+async def _read_upload_as_text(file: UploadFile) -> str:
+    data = await file.read(_UPLOAD_MAX_BYTES + 1)
+    if len(data) > _UPLOAD_MAX_BYTES:
+        raise HTTPException(status_code=413, detail="File exceeds 20 MB limit.")
+    name = (file.filename or "").lower()
+    if name.endswith(".pdf"):
+        return _extract_pdf_text(data)
+    if name.endswith(".docx"):
+        return _extract_docx_text(data)
+    if name.endswith(".txt") or name.endswith(".md"):
+        return data.decode("utf-8", errors="replace")
+    raise HTTPException(status_code=415, detail="Unsupported file type. Upload PDF, DOCX, or TXT.")
+
+
 _PIPELINE_TIMEOUT_SECS = 600.0
 
 
@@ -313,6 +347,63 @@ async def analyze(request: Request, payload: AnalysisCreateRequest, background_t
         await session.flush()
         return AnalysisStatusResponse(analysis_id=analysis.id, status=analysis.status)
 
+    await session.commit()
+    background_tasks.add_task(_process_analysis, analysis.id)
+    return AnalysisStatusResponse(analysis_id=analysis.id, status=analysis.status)
+
+
+@v1.post("/analyze/upload", response_model=AnalysisStatusResponse)
+@limiter.limit(f"{settings.rate_limit_per_minute}/minute")
+async def analyze_upload(
+    request: Request,
+    background_tasks: BackgroundTasks,
+    file: UploadFile = File(...),
+    analysis_type: str = Form(...),
+    playbook_version_id: str | None = Form(default=None),
+    session: AsyncSession | None = Depends(session_dependency),
+    current_user_id: str | None = Depends(get_current_user_id),
+) -> AnalysisStatusResponse:
+    if analysis_type not in ("risks", "summary", "obligations"):
+        raise HTTPException(status_code=422, detail="analysis_type must be risks, summary, or obligations")
+    contract_text = await _read_upload_as_text(file)
+    if len(contract_text.strip()) < 10:
+        raise HTTPException(status_code=422, detail="Extracted text is too short to analyze.")
+    contract_text, guardrails = filter_malicious_segments(contract_text)
+
+    user_ip = request.client.host if request.client else "unknown"
+    request_id = getattr(request.state, "request_id", str(uuid.uuid4()))
+    logger.info("upload_analyze_request", user_ip=user_ip, request_id=request_id, analysis_type=analysis_type, filename=file.filename)
+
+    if settings.in_memory_mode:
+        analysis_id = str(uuid.uuid4())
+        fake_analysis = Analysis(
+            id=analysis_id,
+            analysis_type=analysis_type,
+            contract_text=contract_text,
+            status="queued",
+            playbook_version_id="in-memory",
+            request_id=request_id,
+            guardrail_warnings=json.dumps([g.dict() for g in guardrails]) if guardrails else None,
+        )
+        playbook_content = settings.resolve_playbook_path().read_text(encoding="utf-8")
+        result = await run_analysis_pipeline(None, fake_analysis, playbook_content_override=playbook_content, initial_guardrails=guardrails)
+        fake_analysis.status = "completed"
+        IN_MEMORY_RESULTS[analysis_id] = json.loads(result.json())
+        return AnalysisStatusResponse(analysis_id=analysis_id, status="completed")
+
+    assert session is not None
+    analysis = Analysis(
+        analysis_type=analysis_type,
+        contract_text=contract_text,
+        status="queued",
+        playbook_version_id=playbook_version_id,
+        request_id=request_id,
+        guardrail_warnings=json.dumps([g.dict() for g in guardrails]) if guardrails else None,
+        user_id=current_user_id,
+    )
+    session.add(analysis)
+    await session.flush()
+    await write_audit_log(session, "analyses", analysis.id, "create", changed_by=user_ip)
     await session.commit()
     background_tasks.add_task(_process_analysis, analysis.id)
     return AnalysisStatusResponse(analysis_id=analysis.id, status=analysis.status)
