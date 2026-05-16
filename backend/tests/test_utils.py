@@ -8,11 +8,15 @@ os.environ.setdefault("BYPASS_DB_FOR_TESTS", "true")
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../.."))
 
 from backend.app.utils import (  # noqa: E402
+    clamp,
     content_hash,
     extract_first_number,
     normalize_text,
+    redact_pii,
+    sentence_count,
     slugify,
     truncate_to_tokens,
+    word_count,
 )
 
 
@@ -81,3 +85,57 @@ class TestSlugify:
         result = slugify("  test  ")
         assert not result.startswith("-")
         assert not result.endswith("-")
+
+
+class TestRedactPii:
+    def test_redacts_email(self):
+        assert "[EMAIL]" in redact_pii("Contact us at user@example.com for details.")
+
+    def test_redacts_ssn(self):
+        assert "[SSN]" in redact_pii("My SSN is 123-45-6789.")
+
+    def test_no_pii_unchanged(self):
+        text = "Payment terms are net 30 days."
+        assert redact_pii(text) == text
+
+    def test_multiple_emails_all_redacted(self):
+        result = redact_pii("From: a@b.com To: c@d.com")
+        assert "a@b.com" not in result
+        assert "c@d.com" not in result
+
+
+class TestWordCount:
+    def test_basic_sentence(self):
+        assert word_count("hello world foo") == 3
+
+    def test_empty_string(self):
+        assert word_count("") == 0
+
+    def test_single_word(self):
+        assert word_count("hello") == 1
+
+
+class TestSentenceCount:
+    def test_multiple_sentences(self):
+        assert sentence_count("Hello. World. Foo.") == 3
+
+    def test_empty_string_zero(self):
+        assert sentence_count("") == 0
+
+    def test_no_punctuation_counts_as_one(self):
+        assert sentence_count("no punctuation here") == 1
+
+
+class TestClamp:
+    def test_within_range(self):
+        assert clamp(0.5, 0.0, 1.0) == 0.5
+
+    def test_below_lo(self):
+        assert clamp(-1.0, 0.0, 1.0) == 0.0
+
+    def test_above_hi(self):
+        assert clamp(2.0, 0.0, 1.0) == 1.0
+
+    def test_at_boundary(self):
+        assert clamp(0.0, 0.0, 1.0) == 0.0
+        assert clamp(1.0, 0.0, 1.0) == 1.0
