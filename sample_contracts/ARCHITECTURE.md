@@ -32,48 +32,54 @@ On startup, it seeds `standard_terms_playbook.md` into the DB and Chroma.
 
 ### The Analysis Lifecycle
 
-#### Step 1 — `POST /v1/analyze`
+#### Step 1 — `POST /v1/analyze` or `POST /v1/analyze/upload`
 
-- Immediately sanitizes input through `guards.py`
-- Creates an `Analysis` DB record with `status="queued"`
-- Returns `{analysis_id, status}` right away (async, non-blocking)
-- Kicks off `_process_analysis()` as a FastAPI `BackgroundTask`
+- `/v1/analyze` accepts JSON `{contract_text, analysis_type, playbook_version_id?}`
+- `/v1/analyze/upload` accepts multipart form (`file`, `analysis_type`, `playbook_version_id?`); `_read_upload_as_text()` in `main.py` dispatches to `_extract_pdf_text()` (pdfplumber) or `_extract_docx_text()` (python-docx) depending on extension; 20 MB limit enforced before parsing
+- Both paths immediately sanitize input through `guards.py`, create an `Analysis` DB record with `status="queued"`, return `{analysis_id, status}` right away (async, non-blocking), and kick off `_process_analysis()` as a FastAPI `BackgroundTask`
+- `_process_analysis()` wraps the pipeline in `asyncio.wait_for(timeout=600s)`; on `TimeoutError` the analysis is marked `failed` and an `error` SSE event is published
 
 #### Step 2 — `_process_analysis()` → `pipeline.py`
 
 This is the core pipeline, executed in sequence:
 
 ```
-contract_text
+contract_text  (from JSON body or extracted from PDF/DOCX/TXT upload)
   ↓
 [guards.py] filter_malicious_segments()
   — regex-strips prompt injection attempts ("ignore previous instructions", etc.)
   ↓
-[pipeline.py] _extract_clauses()
-  — 15 regex patterns match clause types: payment_terms, retainage, notice_period,
-    indemnification, termination_notice, dispute_resolution, liquidated_damages,
-    force_majeure, warranty, insurance, change_order, substantial_completion,
-    delay_damages, governing_law, limitation_of_liability
-  — contracts >30,000 chars are split into overlapping sections first
+[pipeline.py] _extract_clauses_from_section()  ← called per section
+  — 21 regex patterns: payment_terms, retainage, notice_period, indemnification,
+    termination_notice, dispute_resolution, liquidated_damages, force_majeure,
+    warranty, insurance, change_order, substantial_completion, delay_damages,
+    governing_law, limitation_of_liability, non_compete, ip_assignment,
+    data_privacy, exclusivity, cure_period, assignment_rights
+  — contracts >30,000 chars split into overlapping 10,000-char sections first
   — each match captures ±300 chars of surrounding context as source_text
+  — emits a "status" SSE event after each section ("Scanning section N/M")
   ↓
-[rag.py] PlaybookRAG.hybrid_query()
-  — for each clause, runs semantic search (ChromaDB) + BM25 keyword search in parallel
-  — semantic results take priority; BM25 fills remaining slots up to k=3
-  — union is deduplicated by chunk_id
-  — returns empty list → clause is skipped (no retrieval = no finding)
+[rag.py] PlaybookRAG.hybrid_query()  ← Pass 1: run for ALL extracted clauses
+  — semantic search (ChromaDB) + BM25 keyword search; union deduplicated by chunk_id
+  — returns empty list → clause skipped (no retrieval = no finding)
   ↓
-[pipeline.py] _compare_with_playbook()
-  — heuristic scoring: compares extracted numeric values against playbook ranges
+[pipeline.py] _compare_with_playbook()  ← Pass 1: heuristic-score ALL clauses
+  — compares extracted numeric values against playbook ranges
   — produces: playbook_standard, deviation, risk_level (low/medium/high/critical)
+  — all clauses sorted by risk descending; top _MAX_LLM_FINDINGS=30 go to LLM
+  — remaining clauses emitted immediately as heuristic-only findings (confidence=0.3)
   ↓
-[llm.py] AnthropicClient  ← called for ALL three analysis types via Anthropic tool_use
-  — risks    → analyze_risk()     → LLMFindingOutput  (risk_level, deviation_summary, recommendation, confidence)
-  — summary  → summarize_clause() → LLMSummaryOutput  (plain_language, key_terms, risk_flag)
-  — obligations → extract_obligations() → LLMObligationOutput (obligations[], party, deadline, consequence)
-  — tool_choice={"type":"tool"} forces Claude to always emit structured JSON, never free text
-  — prompt includes retrieved playbook chunks injected with cache_control ephemeral for prompt caching
-  — falls back to empty typed schema objects if ANTHROPIC_API_KEY is absent (tests run offline)
+[pipeline.py] _call_llm_for_clause()  ← Pass 2: concurrent LLM enrichment, top-30 only
+  — asyncio.as_completed + Semaphore(5): up to 5 LLM calls run in parallel
+  — each call wrapped in asyncio.wait_for(timeout=45s)
+  — TimeoutError → heuristic fallback finding (confidence=0.25), pipeline continues
+  — [llm.py] AnthropicClient called via Anthropic tool_use:
+      risks        → analyze_risk()        → LLMFindingOutput  (risk_level, deviation_summary, recommendation, confidence)
+      summary      → summarize_clause()    → LLMSummaryOutput  (plain_language, key_terms, risk_flag)
+      obligations  → extract_obligations() → LLMObligationOutput (obligations[], party, deadline, consequence)
+  — tool_choice={"type":"tool"} forces structured JSON output, never free text
+  — retrieved playbook chunks injected with cache_control ephemeral for prompt caching
+  — falls back to empty typed schema objects if ANTHROPIC_API_KEY is absent (tests offline)
   ↓
 [pipeline.py] _merge_findings()
   — deduplicates by clause_type, keeps highest-risk version
@@ -175,8 +181,10 @@ Vite + React + TypeScript. No component library — dark glassmorphism design in
 
 **`App.tsx`** — checks `getToken()` on mount; renders `AuthPage` if absent, otherwise the main app. Contains a sign-out button that calls `clearToken()`. Two tabs:
 
-1. **Analyzer tab**: textarea → `POST /v1/analyze` → open `EventSource` on stream URL → render findings progressively via `partial_finding` events
+1. **Analyzer tab**: drag-and-drop file zone (PDF/DOCX/TXT) or textarea → `POST /v1/analyze/upload` (file) or `POST /v1/analyze` (text) → open `EventSource` on stream URL → render findings progressively via `partial_finding` events; `status` events show per-section scanning progress
 2. **Playbook tab**: `PlaybookManager.tsx` — CRUD for playbook versions
+
+**`api.ts`** — axios instance + `streamUrl()` helper + `analyzeUpload()` which POSTs multipart `FormData` to `/v1/analyze/upload`.
 
 **`FindingsList.tsx`** — renders per-clause results with risk badges, confidence %, and retrieved evidence chunks
 
@@ -207,3 +215,7 @@ Volumes:
 6. **Guardrail-as-filter**: findings without retrieval evidence are silently dropped — prevents grounded-looking hallucinations from leaking through
 7. **Two-phase SSE**: client streams partial results during analysis rather than polling for a final result — better UX for long contracts
 8. **In-memory mode**: `BYPASS_DB_FOR_TESTS=true` bypasses all DB/Chroma I/O — tests run fully offline with no setup
+9. **Two-pass triage for large contracts**: all clauses are heuristic-scored first (no LLM); only the top 30 by risk level reach the LLM — caps cost and latency regardless of contract length
+10. **Concurrent LLM dispatch**: `asyncio.as_completed` + `Semaphore(5)` runs up to 5 LLM calls in parallel; 30 clauses at 5s each finishes in ~30s instead of ~150s serial
+11. **Layered timeouts**: 45s per-clause `asyncio.wait_for` (falls back to heuristic finding) + 600s global pipeline cap (marks analysis failed) — no analysis can hang indefinitely
+12. **File upload with server-side text extraction**: `pdfplumber` (PDF) and `python-docx` (DOCX) extract text server-side, removing the need to paste large documents into the UI

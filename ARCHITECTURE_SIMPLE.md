@@ -64,6 +64,8 @@ Backend (FastAPI, port 8000)
 ## What Happens Step by Step When You Click "Analyze"
 
 ### Step 1 — Your contract is sent to the server
+- You can either **paste text** into the box or **upload a file** (PDF, DOCX, or TXT up to 20 MB)
+- If you upload a file, the server reads it and extracts the text automatically — no copy-pasting needed
 - The backend immediately creates a record in the database saying "analysis queued"
 - It sends back an ID right away (it doesn't make you wait)
 - It starts processing your contract in the background
@@ -74,7 +76,7 @@ Backend (FastAPI, port 8000)
 - Any suspicious text is replaced with `[filtered]`
 
 ### Step 3 — Finding clauses in your contract
-- The app scans your contract using 15 search patterns (like a very smart CTRL+F)
+- The app scans your contract using 21 search patterns (like a very smart CTRL+F)
 - It looks for these specific clause types:
 
 | Clause | What it looks for |
@@ -94,8 +96,15 @@ Backend (FastAPI, port 8000)
 | Delay damages | "delay damages $10,000" |
 | Governing law | "governed by the laws of California" |
 | Limitation of liability | "liability shall not exceed $500,000" |
+| Non-compete | "non-compete / competing business" |
+| IP assignment | "intellectual property assigned / work made for hire" |
+| Data privacy | "personal data / GDPR / data breach" |
+| Exclusivity | "exclusive right / exclusive supplier" |
+| Cure period | "cure period of 30 days" |
+| Assignment rights | "assignment of this contract" |
 
 - If your contract is very long (over 30,000 characters, roughly 6 pages), it's split into overlapping chunks so nothing gets missed
+- After each chunk is scanned, the app sends a progress update to your browser ("Scanning section 3/12") so you can see it working in real time
 - For each match, it also grabs the surrounding text (300 characters on each side) so there's context
 
 ### Step 4 — Looking up the rulebook
@@ -118,6 +127,11 @@ Backend (FastAPI, port 8000)
   - Broad indemnification language → **Critical**
 - It produces: what the playbook standard is, what the deviation is, and a risk level
 
+### Step 5½ — Smart triage (new for large contracts)
+- Before calling Claude at all, the app sorts every found clause by its heuristic risk score (from Step 5)
+- **Only the top 30 highest-risk clauses go to Claude** — the rest get a "heuristic assessment only" label and are included in the results immediately, without waiting for any AI call
+- This means a 200-page contract with 50 matching clauses only makes 30 AI calls, not 50
+
 ### Step 6 — Calling Claude AI (all 3 modes)
 - For **all three analysis types**, the app calls Claude (claude-sonnet-4-6)
 - Claude is told to fill in a specific form (called a "tool") — this guarantees it always returns structured data, never free-form text:
@@ -125,6 +139,8 @@ Backend (FastAPI, port 8000)
   - **Summary mode** → fills in: plain-language description, key terms, whether it's a risk flag
   - **Obligations mode** → fills in: list of required actions, responsible party, deadline, consequence
 - The retrieved playbook chunks are included in the prompt so Claude compares against your actual standards
+- Up to 5 clauses are sent to Claude **at the same time** (not one-by-one) — this makes analysis of large contracts roughly 5× faster
+- Each individual AI call has a 45-second time limit; if it exceeds that, the clause falls back to a heuristic result automatically and the analysis continues
 - If no API key is set (like in tests), it returns empty placeholder values instead of calling Claude
 
 ### Step 7 — Cleaning up duplicates
@@ -140,10 +156,10 @@ Backend (FastAPI, port 8000)
 ### Step 9 — Results stream to your browser
 - As each clause is processed, the result is immediately sent to your browser (you don't wait for all of them)
 - Your browser receives 4 types of messages:
-  - **status** — "extracting clauses...", "running analysis..."
-  - **partial_finding** — one clause result, appears as each one finishes
+  - **status** — "Scanning section 3/12", "LLM analysis for 28 clauses; 5 assessed heuristically", etc.
+  - **partial_finding** — one clause result, appears the moment it finishes (heuristic-only results arrive first, LLM results arrive as they complete)
   - **final** — the complete result with overall risk score
-  - **error** — if something goes wrong
+  - **error** — if something goes wrong (including a timeout if analysis exceeds 10 minutes)
 - This is called **SSE (Server-Sent Events)** — like a live news feed from the server to your browser
 
 ---
@@ -266,3 +282,9 @@ The guardrail filter drops any finding that isn't backed by actual contract text
 
 ### 8. Everything is async
 The server never blocks waiting for one thing to finish before starting another. Database reads, AI calls, and file operations all happen concurrently, making the server fast under load.
+
+### 9. Large contracts don't explode the cost or the time
+A 200-page contract might produce 50+ matching clauses. Without limits, that means 50+ AI calls running one after another — potentially 4+ minutes. The app solves this three ways: (1) only the 30 riskiest clauses go to the AI, (2) those 30 run 5 at a time instead of one at a time, (3) a 10-minute hard timeout stops any runaway analysis from hanging forever.
+
+### 10. Upload a file instead of pasting text
+Nobody copies and pastes a 200-page PDF. The app lets you drag a PDF, DOCX, or TXT file directly onto the page. The server reads it and pulls out the text — you never have to touch the content manually.

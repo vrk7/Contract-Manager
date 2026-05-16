@@ -107,8 +107,9 @@ Set `VITE_API_BASE` to point to the backend (e.g., `http://localhost:8000`).
 - `POST /v1/auth/register` → `{id, email, created_at}` (201). Request: `{email, password}`.
 - `POST /v1/auth/login` → `{access_token, token_type}`. Request: `{email, password}`.
 - `POST /v1/analyze` → `{analysis_id,status}` (async). Requires `Authorization: Bearer <token>`. Request: `{contract_text, analysis_type: risks|summary|obligations, playbook_version_id?}`.
+- `POST /v1/analyze/upload` → `{analysis_id,status}` (async). Multipart form: `file` (PDF/DOCX/TXT, max 20 MB), `analysis_type`, `playbook_version_id?`. Server extracts text then runs the same pipeline.
 - `GET /v1/analysis/{id}` → final validated result or status.
-- `GET /v1/analysis/{id}/stream` → SSE streaming (`status`, `partial_finding`, `final`, `error`). Accepts `?token=` for EventSource.
+- `GET /v1/analysis/{id}/stream` → SSE streaming (`status`, `partial_finding`, `final`, `error`). Accepts `?token=` for EventSource. `status` events include per-section scan progress for large contracts.
 - `GET /v1/playbook` / `GET /v1/playbook/versions` / `GET /v1/playbook/versions/{id}` — view playbook content and versions.
 - `PUT /v1/playbook` — create a new version (content + optional change note).
 - `POST /v1/playbook/reindex` — rebuild embeddings for a version.
@@ -120,7 +121,7 @@ Response schema includes `playbook_version_id`, `guardrail_warnings`, `retrieved
 
 ## Agent Architecture & Guardrails
 
-- **Multi-step pipeline:** sanitize → clause extraction → RAG retrieval (hybrid Chroma + BM25) → deviation scoring vs playbook text → Claude tool_use structured output (all 3 analysis types) → Pydantic validation → guardrail pruning of ungrounded findings.
+- **Multi-step pipeline:** sanitize → clause extraction with per-section SSE progress → RAG retrieval (hybrid Chroma + BM25) → heuristic scoring of all clauses (Pass 1) → concurrent LLM enrichment of top-30 by risk via `asyncio.as_completed` + `Semaphore(5)` (Pass 2) → Pydantic validation → guardrail pruning of ungrounded findings. Per-clause 45s timeout falls back to heuristic; global 10-min pipeline cap marks analysis failed.
 - **Playbook grounding:** playbook ingested from file/DB, chunked, and embedded; retrieval attaches chunk metadata to every finding.
 - **Guardrails:** content filtering for prompt injection, strict Pydantic schema validation, per-IP rate limiting (slowapi), and grounding checks (drop findings missing source_text or retrieved_chunks, emit warnings).
 - **Streaming:** SSE emits structured JSON-only events.
@@ -133,8 +134,10 @@ Response schema includes `playbook_version_id`, `guardrail_warnings`, `retrieved
 
 - Login / register gate (JWT-based; token stored in localStorage).
 - Dark glassmorphism UI — deep navy background, frosted-glass cards, purple accent.
+- **File upload with drag-and-drop** — drop a PDF, DOCX, or TXT (up to 20 MB) directly onto the input card; server extracts text automatically via `pdfplumber` / `python-docx`.
 - Paste contract text, pick analysis type, kick off async analysis (Ctrl+Enter shortcut).
-- Live SSE stream of findings with risk badges, confidence scores, and guardrail warnings.
+- Live SSE stream of findings — per-section scan progress, then findings appearing one by one as each clause completes.
+- Risk badges, confidence scores, and guardrail warnings per finding.
 - Usage/cost display per analysis.
 - Export results as JSON.
 - Playbook management: view current content, edit/save new version (versioning), list versions, trigger reindex, select version for analysis.
@@ -258,7 +261,6 @@ The app should be reachable via HTTP or HTTPS depending on configuration.
 
 - Deeper clause extraction coverage (NER/regex hybrid and model-assisted spans).
 - Richer deviation calculations parsed directly from playbook tables instead of heuristics.
-- Move background processing to a task queue (Celery/RQ) for higher throughput.
 - Per-user analysis history and scoped playbook access.
 
 ---

@@ -81,25 +81,28 @@ All routes are prefixed `/v1/` except health probes at root:
 - `POST /v1/auth/register` — create account `{email, password}` → `{id, email, created_at}`
 - `POST /v1/auth/login` — `{email, password}` → `{access_token, token_type}`
 - `POST /v1/analyze` → returns `{analysis_id, status}` immediately; requires `Authorization: Bearer <token>`
+- `POST /v1/analyze/upload` → multipart form upload (`file`, `analysis_type`, `playbook_version_id?`); accepts PDF, DOCX, TXT up to 20 MB; extracts text then runs the same pipeline as `/v1/analyze`
 - `GET /v1/analysis/{id}` → poll for result (`AnalysisResult`) or status (`AnalysisStatusResponse`)
 - `GET /v1/analysis/{id}/stream` → SSE stream; events: `status`, `partial_finding`, `final`, `error`; accepts `?token=` for EventSource (can't send headers)
 - `GET /v1/playbook`, `PUT /v1/playbook` — read/update current playbook
 - `GET /v1/playbook/versions`, `GET /v1/playbook/versions/{id}` — version history
 - `POST /v1/playbook/reindex` — rebuild Chroma embeddings for a playbook version
 
-**Typical client flow:** POST `/v1/analyze` → open `EventSource` on `/v1/analysis/{id}/stream` → receive `partial_finding` events as clauses are processed → `final` event with complete result.
+**Typical client flow:** POST `/v1/analyze` (or `/v1/analyze/upload` for files) → open `EventSource` on `/v1/analysis/{id}/stream` → receive `status` events per section scanned, then `partial_finding` events as each clause completes → `final` event with complete result.
 
 ### Backend (`backend/app/`)
 
 The analysis flow is a deterministic pipeline in `pipeline.py`:
 
 1. **`guards.py`** — sanitize input, detect prompt injection, emit `GuardrailWarning`s
-2. **`pipeline.py:_extract_clauses`** — regex-based extraction using 15 clause patterns: `payment_terms`, `retainage`, `notice_period`, `indemnification`, `termination_notice`, `dispute_resolution`, `liquidated_damages`, `force_majeure`, `warranty`, `insurance`, `change_order`, `substantial_completion`, `delay_damages`, `governing_law`, `limitation_of_liability`. Contracts >30 000 chars are split into overlapping sections first.
+2. **`pipeline.py:_extract_clauses_from_section`** — regex-based extraction using 21 clause patterns across overlapping sections; a `status` SSE event is emitted after each section so clients see scanning progress. Contracts >30 000 chars are split into overlapping sections first. Patterns: `payment_terms`, `retainage`, `notice_period`, `indemnification`, `termination_notice`, `dispute_resolution`, `liquidated_damages`, `force_majeure`, `warranty`, `insurance`, `change_order`, `substantial_completion`, `delay_damages`, `governing_law`, `limitation_of_liability`, `non_compete`, `ip_assignment`, `data_privacy`, `exclusivity`, `cure_period`, `assignment_rights`.
 3. **`rag.py:PlaybookRAG`** — in-memory Chroma-backed retrieval; queries playbook chunks per extracted clause
-4. **`pipeline.py:_compare_with_playbook`** — heuristic deviation scoring against retrieved chunk text → `risk_level` (low/medium/high/critical)
-5. **`llm.py:AnthropicClient`** — called for all 3 analysis types via Anthropic tool_use (`analyze_risk`, `summarize_clause`, `extract_obligations`); heuristic fallback used when no API key is set
+4. **`pipeline.py:_compare_with_playbook` (Pass 1)** — heuristic deviation scoring for **all** extracted clauses; results sorted by risk descending; top 30 (`_MAX_LLM_FINDINGS`) go to the LLM, remainder get heuristic-only `Finding` objects at `confidence=0.3`
+5. **`pipeline.py:_call_llm_for_clause` (Pass 2)** — concurrent LLM enrichment for the top-30 batch via `asyncio.as_completed` + `Semaphore(5)`; each call is wrapped in `asyncio.wait_for(timeout=45s)` — timeout falls back to heuristic finding rather than failing; heuristic fallback used when no API key is set
 6. **`pipeline.py:_merge_findings`** — deduplicates findings by clause type, keeps highest-risk version
 7. **`guards.py:ensure_retrieval_guardrails`** — drops findings missing `source_text` or `retrieved_chunks`
+
+**Large-contract safeguards:** `_PIPELINE_TIMEOUT_SECS = 600` global timeout in `_process_analysis` (wraps the entire pipeline in `asyncio.wait_for`); emits an `error` SSE event and marks the analysis `failed` on expiry.
 
 **Playbook versioning:** `playbook.py` manages `PlaybookVersion` and `PlaybookChunk` DB records. On startup, `main.py:startup_event` seeds `standard_terms_playbook.md` → DB → Chroma. `PUT /v1/playbook` creates immutable new versions.
 
@@ -115,6 +118,8 @@ The analysis flow is a deterministic pipeline in `pipeline.py`:
 ### Frontend (`frontend/src/`)
 
 Vite + React + TypeScript. Uses `axios` for API calls and native `EventSource` for SSE. No UI component library — dark glassmorphism design in `styles.css`. Key components: `AuthPage.tsx` (login/register gate), `FindingsList.tsx` (renders risk findings), `PlaybookManager.tsx` (playbook CRUD). JWT token stored in `localStorage`; axios interceptor attaches `Authorization: Bearer` on every request. Tests use Vitest + `@testing-library/react`.
+
+File upload: `App.tsx` includes a drag-and-drop zone + Browse button (accepts `.pdf`, `.docx`, `.txt`). When a file is selected it calls `analyzeUpload()` in `api.ts` which POSTs multipart to `/v1/analyze/upload`; otherwise the textarea path posts JSON to `/v1/analyze`.
 
 ### Deployment
 
