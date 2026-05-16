@@ -192,9 +192,9 @@ function App() {
               <label className="input-label" htmlFor="analysisType">
                 Analysis type
                 <select id="analysisType" value={analysisType} onChange={(e) => setAnalysisType(e.target.value as AnalysisType)}>
-                  <option value="risks">Risks</option>
-                  <option value="summary">Summary</option>
-                  <option value="obligations">Obligations</option>
+                  <option value="risks" title="Identify deviations from your playbook and score their risk level">Risks — identify deviations and score risk</option>
+                  <option value="summary" title="Plain-language summary of each clause for non-legal stakeholders">Summary — plain-language clause overview</option>
+                  <option value="obligations" title="Extract concrete actions each party is obligated to perform">Obligations — extract required actions</option>
                 </select>
               </label>
             </div>
