@@ -269,6 +269,32 @@ _REQUIRED_CLAUSE_TYPES: frozenset[str] = frozenset({
 })
 
 
+_CROSS_REF_PATTERN = re.compile(
+    r"notwithstanding\s+(?:Section|Article|Clause)\s+[\d.]+|"
+    r"subject\s+to\s+(?:Section|Article|Clause)\s+[\d.]+|"
+    r"as\s+provided\s+in\s+(?:Section|Article|Clause)\s+[\d.]+",
+    re.IGNORECASE,
+)
+
+
+def detect_cross_references(findings: list[Finding]) -> list[GuardrailWarning]:
+    """Flag findings whose source text references other contract sections."""
+    warnings: list[GuardrailWarning] = []
+    for finding in findings:
+        if _CROSS_REF_PATTERN.search(finding.source_text):
+            warnings.append(
+                GuardrailWarning(
+                    type="cross_reference",
+                    message=(
+                        f"Clause '{finding.clause_type}' references another section — "
+                        "review interaction with the referenced clause."
+                    ),
+                    triggered_by=finding.clause_type,
+                )
+            )
+    return warnings
+
+
 def detect_missing_clauses(findings: list[Finding]) -> list[GuardrailWarning]:
     """Return a warning for each required clause type absent from findings."""
     found_types = {f.clause_type for f in findings}
@@ -518,6 +544,8 @@ async def run_analysis_pipeline(
 
     missing_warnings = detect_missing_clauses(merged_findings)
     guardrails.extend(missing_warnings)
+    cross_ref_warnings = detect_cross_references(merged_findings)
+    guardrails.extend(cross_ref_warnings)
 
     if not merged_findings:
         overall = "unknown"
