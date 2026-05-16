@@ -35,6 +35,8 @@ from .pipeline import run_analysis_pipeline
 from .playbook import list_playbook_versions, persist_chunks, seed_playbook
 from .schemas import (
     AnalysisCreateRequest,
+    AnalysisListItem,
+    AnalysisListResponse,
     AnalysisResult,
     AnalysisStatusResponse,
     GuardrailWarning,
@@ -259,6 +261,62 @@ async def analyze(request: Request, payload: AnalysisCreateRequest, background_t
 
     background_tasks.add_task(_process_analysis, analysis.id)
     return AnalysisStatusResponse(analysis_id=analysis.id, status=analysis.status)
+
+
+@v1.get("/analyses", response_model=AnalysisListResponse)
+async def list_analyses(
+    status: str | None = Query(default=None),
+    analysis_type: str | None = Query(default=None),
+    cursor: str | None = Query(default=None),
+    limit: int = Query(default=20, ge=1, le=100),
+    session: AsyncSession | None = Depends(session_dependency),
+    _auth: None = Depends(verify_api_key),
+) -> AnalysisListResponse:
+    if settings.in_memory_mode:
+        return AnalysisListResponse(items=[], next_cursor=None, total=0)
+
+    assert session is not None
+    query = select(Analysis).where(Analysis.deleted_at.is_(None))
+    if status:
+        query = query.where(Analysis.status == status)
+    if analysis_type:
+        query = query.where(Analysis.analysis_type == analysis_type)
+    if cursor:
+        query = query.where(Analysis.created_at < cursor)
+    query = query.order_by(Analysis.created_at.desc()).limit(limit + 1)
+
+    db_result = await session.execute(query)
+    rows = db_result.scalars().all()
+
+    has_more = len(rows) > limit
+    page = rows[:limit]
+    next_cursor = str(page[-1].created_at) if has_more and page else None
+
+    items = []
+    for row in page:
+        overall = None
+        if row.result_json:
+            try:
+                overall = json.loads(row.result_json).get("overall_risk_score")
+            except Exception:
+                pass
+        items.append(AnalysisListItem(
+            analysis_id=row.id,
+            status=row.status,
+            analysis_type=row.analysis_type,
+            created_at=row.created_at,
+            overall_risk_score=overall,
+        ))
+
+    count_query = select(Analysis).where(Analysis.deleted_at.is_(None))
+    if status:
+        count_query = count_query.where(Analysis.status == status)
+    if analysis_type:
+        count_query = count_query.where(Analysis.analysis_type == analysis_type)
+    count_result = await session.execute(count_query)
+    total = len(count_result.scalars().all())
+
+    return AnalysisListResponse(items=items, next_cursor=next_cursor, total=total)
 
 
 @v1.get("/analysis/{analysis_id}", response_model=AnalysisResult | AnalysisStatusResponse)
