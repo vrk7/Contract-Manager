@@ -1,7 +1,6 @@
 import asyncio
 import json
 import os
-import secrets
 import uuid
 from datetime import datetime
 from typing import Any
@@ -15,18 +14,23 @@ from fastapi import (
     HTTPException,
     Query,
     Request,
-    Security,
 )
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import StreamingResponse
-from fastapi.security import APIKeyHeader
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from slowapi.util import get_remote_address
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from .auth import (
+    create_access_token,
+    get_current_user_id,
+    get_current_user_id_from_query,
+    hash_password,
+    verify_password,
+)
 from .cache import AnalysisCache, analysis_cache
 from .config import get_settings
 from .database import get_session
@@ -34,7 +38,7 @@ from .events import event_bus
 from .guards import filter_malicious_segments
 from .logging_config import configure_logging
 from .middleware import RequestTimingMiddleware
-from .models import Analysis, PlaybookVersion, write_audit_log
+from .models import Analysis, PlaybookVersion, User, write_audit_log
 from .pipeline import run_analysis_pipeline
 from .playbook import list_playbook_versions, persist_chunks, seed_playbook
 from .schemas import (
@@ -47,6 +51,10 @@ from .schemas import (
     PlaybookReindexRequest,
     PlaybookResponse,
     PlaybookUpdateRequest,
+    Token,
+    UserCreate,
+    UserLogin,
+    UserResponse,
 )
 
 configure_logging()
@@ -54,29 +62,6 @@ logger = structlog.get_logger(__name__)
 settings = get_settings()
 IN_MEMORY_RESULTS: dict[str, dict] = {}
 
-_api_key_header = APIKeyHeader(name="X-API-Key", auto_error=False)
-
-
-def verify_api_key(key: str | None = Security(_api_key_header)) -> None:
-    """Validate X-API-Key header. Required when API_KEY is set or PRODUCTION_MODE=true."""
-    if settings.production_mode and not settings.api_key:
-        raise HTTPException(status_code=500, detail="API_KEY must be set in PRODUCTION_MODE")
-    if not settings.api_key:
-        return
-    if not key or not secrets.compare_digest(key, settings.api_key):
-        raise HTTPException(status_code=401, detail="Invalid or missing API key")
-
-
-def verify_api_key_query(
-    header_key: str | None = Security(_api_key_header),
-    query_key: str | None = Query(default=None, alias="api_key"),
-) -> None:
-    """Same as verify_api_key but also accepts ?api_key= for EventSource streams."""
-    if not settings.api_key:
-        return
-    provided = header_key or query_key
-    if not provided or not secrets.compare_digest(provided, settings.api_key):
-        raise HTTPException(status_code=401, detail="Invalid or missing API key")
 
 limiter = Limiter(key_func=get_remote_address, default_limits=[f"{settings.rate_limit_per_minute}/minute"])
 app = FastAPI(title=settings.app_name)
@@ -96,7 +81,7 @@ app.add_middleware(
     allow_origins=_cors_origins if _cors_origins else ["http://localhost:5173"],
     allow_credentials=not settings.production_mode,
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allow_headers=["Content-Type", "X-API-Key", "X-Request-ID", "Idempotency-Key"],
+    allow_headers=["Content-Type", "Authorization", "X-Request-ID", "Idempotency-Key"],
 )
 
 
@@ -240,14 +225,12 @@ async def _process_analysis(analysis_id: str) -> None:
             )
 
 
-_idempotency_header = APIKeyHeader(name="Idempotency-Key", auto_error=False)
-
-
 @v1.post("/analyze", response_model=AnalysisStatusResponse)
 @limiter.limit(f"{settings.rate_limit_per_minute}/minute")
-async def analyze(request: Request, payload: AnalysisCreateRequest, background_tasks: BackgroundTasks, session: AsyncSession | None = Depends(session_dependency), _auth: None = Depends(verify_api_key), idempotency_key: str | None = Security(_idempotency_header)) -> AnalysisStatusResponse:
+async def analyze(request: Request, payload: AnalysisCreateRequest, background_tasks: BackgroundTasks, session: AsyncSession | None = Depends(session_dependency), current_user_id: str | None = Depends(get_current_user_id)) -> AnalysisStatusResponse:
     user_ip = request.client.host if request.client else "unknown"
     request_id = getattr(request.state, "request_id", "unknown")
+    idempotency_key: str | None = request.headers.get("Idempotency-Key")
     logger.info("analyze_request", user_ip=user_ip, request_id=request_id, analysis_type=payload.analysis_type)
 
     cache_key = AnalysisCache.make_key(
@@ -300,6 +283,7 @@ async def analyze(request: Request, payload: AnalysisCreateRequest, background_t
         playbook_version_id=payload.playbook_version_id,
         request_id=idempotency_key or request_id,
         guardrail_warnings=json.dumps([g.dict() for g in guardrails]) if guardrails else None,
+        user_id=current_user_id,
     )
     session.add(analysis)
     await session.flush()
@@ -328,7 +312,7 @@ async def list_analyses(
     cursor: str | None = Query(default=None),
     limit: int = Query(default=20, ge=1, le=100),
     session: AsyncSession | None = Depends(session_dependency),
-    _auth: None = Depends(verify_api_key),
+    _uid: str | None = Depends(get_current_user_id),
 ) -> AnalysisListResponse:
     if settings.in_memory_mode:
         return AnalysisListResponse(items=[], next_cursor=None, total=0)
@@ -378,7 +362,7 @@ async def list_analyses(
 
 
 @v1.get("/analysis/{analysis_id}", response_model=AnalysisResult | AnalysisStatusResponse)
-async def get_analysis(analysis_id: str, request: Request, session: AsyncSession | None = Depends(session_dependency), _auth: None = Depends(verify_api_key)):
+async def get_analysis(analysis_id: str, request: Request, session: AsyncSession | None = Depends(session_dependency), _uid: str | None = Depends(get_current_user_id)):
     if settings.in_memory_mode:
         data = IN_MEMORY_RESULTS.get(analysis_id)
         if not data:
@@ -409,7 +393,7 @@ def _format_sse(event: str, data: Any) -> str:
 
 
 @v1.delete("/analysis/{analysis_id}", status_code=204)
-async def delete_analysis(analysis_id: str, session: AsyncSession | None = Depends(session_dependency), _auth: None = Depends(verify_api_key)):
+async def delete_analysis(analysis_id: str, session: AsyncSession | None = Depends(session_dependency), _uid: str | None = Depends(get_current_user_id)):
     """Soft-delete an analysis by setting deleted_at."""
     if settings.in_memory_mode:
         IN_MEMORY_RESULTS.pop(analysis_id, None)
@@ -429,7 +413,7 @@ async def delete_analysis(analysis_id: str, session: AsyncSession | None = Depen
 
 @v1.get("/analysis/{analysis_id}/stream")
 @limiter.limit(f"{settings.rate_limit_stream_per_minute}/minute")
-async def stream_analysis(request: Request, analysis_id: str, _auth: None = Depends(verify_api_key_query)):  # noqa: ARG001
+async def stream_analysis(request: Request, analysis_id: str, _uid: str | None = Depends(get_current_user_id_from_query)):  # noqa: ARG001
     if settings.in_memory_mode:
         data = IN_MEMORY_RESULTS.get(analysis_id)
         if not data:
@@ -447,7 +431,7 @@ async def stream_analysis(request: Request, analysis_id: str, _auth: None = Depe
 
 
 @v1.get("/playbook", response_model=PlaybookResponse)
-async def get_current_playbook(session: AsyncSession | None = Depends(session_dependency), _auth: None = Depends(verify_api_key)):
+async def get_current_playbook(session: AsyncSession | None = Depends(session_dependency), _uid: str | None = Depends(get_current_user_id)):
     if settings.in_memory_mode:
         content = settings.resolve_playbook_path().read_text(encoding="utf-8")
         return PlaybookResponse(
@@ -477,7 +461,7 @@ async def get_current_playbook(session: AsyncSession | None = Depends(session_de
 
 
 @v1.get("/playbook/versions", response_model=list[PlaybookResponse])
-async def get_playbook_versions(session: AsyncSession | None = Depends(session_dependency), _auth: None = Depends(verify_api_key)):
+async def get_playbook_versions(session: AsyncSession | None = Depends(session_dependency), _uid: str | None = Depends(get_current_user_id)):
     if settings.in_memory_mode:
         content = settings.resolve_playbook_path().read_text(encoding="utf-8")
         return [
@@ -494,7 +478,7 @@ async def get_playbook_versions(session: AsyncSession | None = Depends(session_d
 
 
 @v1.get("/playbook/versions/{version_id}", response_model=PlaybookResponse)
-async def get_playbook_version(version_id: str, session: AsyncSession | None = Depends(session_dependency), _auth: None = Depends(verify_api_key)):
+async def get_playbook_version(version_id: str, session: AsyncSession | None = Depends(session_dependency), _uid: str | None = Depends(get_current_user_id)):
     if settings.in_memory_mode:
         content = settings.resolve_playbook_path().read_text(encoding="utf-8")
         return PlaybookResponse(
@@ -523,7 +507,7 @@ async def get_playbook_version(version_id: str, session: AsyncSession | None = D
 
 
 @v1.put("/playbook", response_model=PlaybookResponse)
-async def update_playbook(request: PlaybookUpdateRequest, session: AsyncSession | None = Depends(session_dependency), _auth: None = Depends(verify_api_key)):
+async def update_playbook(request: PlaybookUpdateRequest, session: AsyncSession | None = Depends(session_dependency), _uid: str | None = Depends(get_current_user_id)):
     if settings.in_memory_mode:
         return PlaybookResponse(
             id="in-memory",
@@ -548,7 +532,7 @@ async def update_playbook(request: PlaybookUpdateRequest, session: AsyncSession 
 
 
 @v1.delete("/gdpr/erase/{analysis_id}", status_code=204)
-async def gdpr_erase(analysis_id: str, session: AsyncSession | None = Depends(session_dependency), _auth: None = Depends(verify_api_key)):
+async def gdpr_erase(analysis_id: str, session: AsyncSession | None = Depends(session_dependency), _uid: str | None = Depends(get_current_user_id)):
     """GDPR right-to-erasure: permanently delete contract text from an analysis."""
     if settings.in_memory_mode:
         IN_MEMORY_RESULTS.pop(analysis_id, None)
@@ -567,7 +551,7 @@ async def gdpr_erase(analysis_id: str, session: AsyncSession | None = Depends(se
 
 
 @v1.post("/playbook/reindex")
-async def reindex_playbook(body: PlaybookReindexRequest, session: AsyncSession | None = Depends(session_dependency), _auth: None = Depends(verify_api_key)):
+async def reindex_playbook(body: PlaybookReindexRequest, session: AsyncSession | None = Depends(session_dependency), _uid: str | None = Depends(get_current_user_id)):
     if settings.in_memory_mode:
         return {"status": "ok", "version_id": "in-memory"}
     assert session is not None
@@ -586,4 +570,39 @@ async def reindex_playbook(body: PlaybookReindexRequest, session: AsyncSession |
     return {"status": "ok", "version_id": version.id}
 
 
+auth_router = APIRouter(prefix="/v1/auth", tags=["auth"])
+
+
+@auth_router.post("/register", response_model=UserResponse, status_code=201)
+async def register(payload: UserCreate, session: AsyncSession | None = Depends(session_dependency)):
+    if settings.in_memory_mode:
+        raise HTTPException(status_code=501, detail="Auth not available in test mode")
+    assert session is not None
+    existing = await session.execute(select(User).where(User.email == payload.email))
+    if existing.scalars().first():
+        raise HTTPException(status_code=400, detail="Email already registered")
+    user = User(email=payload.email, hashed_password=hash_password(payload.password))
+    session.add(user)
+    await session.flush()
+    logger.info("user_registered", user_id=user.id)
+    return UserResponse(id=user.id, email=user.email, created_at=user.created_at)
+
+
+@auth_router.post("/login", response_model=Token)
+async def login(payload: UserLogin, session: AsyncSession | None = Depends(session_dependency)):
+    if settings.in_memory_mode:
+        raise HTTPException(status_code=501, detail="Auth not available in test mode")
+    assert session is not None
+    result = await session.execute(
+        select(User).where(User.email == payload.email, User.is_active.is_(True))
+    )
+    user = result.scalars().first()
+    if not user or not verify_password(payload.password, user.hashed_password):
+        raise HTTPException(status_code=401, detail="Invalid credentials")
+    token = create_access_token(user.id)
+    logger.info("user_login", user_id=user.id)
+    return Token(access_token=token)
+
+
+app.include_router(auth_router)
 app.include_router(v1)
