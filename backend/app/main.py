@@ -316,6 +316,7 @@ async def analyze(request: Request, payload: AnalysisCreateRequest, background_t
         await session.flush()
         return AnalysisStatusResponse(analysis_id=analysis.id, status=analysis.status)
 
+    await session.commit()
     background_tasks.add_task(_process_analysis, analysis.id)
     return AnalysisStatusResponse(analysis_id=analysis.id, status=analysis.status)
 

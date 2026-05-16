@@ -15,7 +15,7 @@ class EventBus:
 
     def publish(self, analysis_id: str, event: str, data: Any) -> None:
         listeners = self.listeners.get(analysis_id, [])
-        logger.debug("event_published", analysis_id=analysis_id, event=event, listener_count=len(listeners))
+        logger.debug("event_published", analysis_id=analysis_id, event_type=event, listener_count=len(listeners))
         for queue in listeners:
             queue.put_nowait({"event": event, "data": data})
 
