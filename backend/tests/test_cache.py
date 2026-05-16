@@ -61,3 +61,38 @@ def test_overwrite_existing_key():
     cache.set("k1", "first")
     cache.set("k1", "second")
     assert cache.get("k1") == "second"
+
+
+def test_delete_removes_entry():
+    cache = AnalysisCache()
+    cache.set("k1", "val")
+    assert cache.delete("k1") is True
+    assert cache.get("k1") is None
+
+
+def test_delete_missing_key_returns_false():
+    cache = AnalysisCache()
+    assert cache.delete("nonexistent") is False
+
+
+def test_size_tracks_entries():
+    cache = AnalysisCache()
+    assert cache.size() == 0
+    cache.set("k1", 1)
+    cache.set("k2", 2)
+    assert cache.size() == 2
+
+
+def test_size_after_delete():
+    cache = AnalysisCache()
+    cache.set("k1", 1)
+    cache.set("k2", 2)
+    cache.delete("k1")
+    assert cache.size() == 1
+
+
+def test_size_after_clear():
+    cache = AnalysisCache()
+    cache.set("k1", 1)
+    cache.clear()
+    assert cache.size() == 0
