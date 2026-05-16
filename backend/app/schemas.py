@@ -28,6 +28,8 @@ class Finding(BaseModel):
     recommendation: str
     source_text: str
     retrieved_chunks: list[RetrievedChunk] = Field(default_factory=list)
+    confidence: float = Field(default=0.5, ge=0.0, le=1.0)
+    section: Optional[str] = None
 
 
 class Usage(BaseModel):
