@@ -10,12 +10,14 @@ You paste a construction contract into a webpage. The app reads through it, find
 
 ### 1. The Webpage (Frontend)
 - Built with React (a popular way to build websites)
-- Just a simple page with a text box and two tabs: **Analyzer** and **Playbook**
-- No fancy UI library — just plain CSS styling
-- Has 3 key files:
+- Dark, professional design — deep navy background with frosted-glass panels and a purple accent color
+- Has a login/register screen before you can use the app (accounts are stored in the database)
+- Once logged in: two tabs — **Analyzer** and **Playbook**
+- Has 4 key files:
+  - `AuthPage.tsx` — the login/register screen
   - `App.tsx` — the main page with the text box, buttons, and results
   - `FindingsList.tsx` — shows each clause result with a color-coded risk badge
-  - `api.ts` — handles talking to the backend
+  - `api.ts` — handles talking to the backend (automatically adds your login token to every request)
 
 ### 2. The Server (Backend)
 - Built with Python (FastAPI framework)
@@ -32,8 +34,9 @@ You paste a construction contract into a webpage. The app reads through it, find
 
 ```
 You (Browser)
-  → types contract text
-  → hits "Start Analysis"
+  → create account / log in  →  receive a login token (JWT)
+  → paste contract text
+  → hit "Start Analysis" (token sent automatically with every request)
   → results appear one by one as they're found
 
 Nginx (the doorman, port 80)
@@ -41,16 +44,18 @@ Nginx (the doorman, port 80)
   → sends API requests to the Backend
 
 Frontend (React, port 5173)
-  → shows the UI
-  → sends your contract to the Backend
+  → shows login screen if not authenticated
+  → shows the main UI once logged in
+  → sends your contract to the Backend with your token
   → listens for results in real time
 
 Backend (FastAPI, port 8000)
+  → verifies your login token
   → receives your contract
   → runs the analysis pipeline
   → reads/writes to SQL database
   → reads the rulebook from ChromaDB
-  → calls Claude AI (for risk mode only)
+  → calls Claude AI (for all 3 analysis modes)
   → streams results back to your browser
 ```
 
@@ -95,8 +100,11 @@ Backend (FastAPI, port 8000)
 
 ### Step 4 — Looking up the rulebook
 - For each clause found, it searches the **Playbook** (your company's standard terms)
-- The Playbook is stored in ChromaDB as chunks of ~800 words each
-- It finds the top 3 most relevant playbook chunks using **semantic search** (meaning-based, not keyword-based)
+- The Playbook is stored in ChromaDB as sentence-aware chunks (~800 characters each), each labelled with its section heading
+- It uses **two search methods at once** and combines the results:
+  - **Semantic search** — finds chunks that *mean* the same thing, even if the words are different
+  - **BM25 keyword search** — finds chunks that share exact legal terms with the clause
+- Top 3 unique chunks are kept (semantic results get priority)
 - If nothing relevant is found in the playbook → that clause is skipped entirely
 
 ### Step 5 — Scoring the risk
@@ -110,11 +118,14 @@ Backend (FastAPI, port 8000)
   - Broad indemnification language → **Critical**
 - It produces: what the playbook standard is, what the deviation is, and a risk level
 
-### Step 6 — Calling Claude AI (only in "Risks" mode)
-- If you selected **Risks** as your analysis type, the app calls Claude (claude-sonnet-4-6)
-- It sends Claude the clause type, what was extracted, the playbook standard, and the deviation
-- Claude writes a 2-3 sentence explanation of the risk and a concrete negotiation tip
-- If no API key is set (like in tests), it just uses a simple fallback message instead of calling Claude
+### Step 6 — Calling Claude AI (all 3 modes)
+- For **all three analysis types**, the app calls Claude (claude-sonnet-4-6)
+- Claude is told to fill in a specific form (called a "tool") — this guarantees it always returns structured data, never free-form text:
+  - **Risks mode** → fills in: risk level, deviation summary, recommendation, confidence score
+  - **Summary mode** → fills in: plain-language description, key terms, whether it's a risk flag
+  - **Obligations mode** → fills in: list of required actions, responsible party, deadline, consequence
+- The retrieved playbook chunks are included in the prompt so Claude compares against your actual standards
+- If no API key is set (like in tests), it returns empty placeholder values instead of calling Claude
 
 ### Step 7 — Cleaning up duplicates
 - Some clauses might be found multiple times (especially in long contracts)
@@ -150,33 +161,39 @@ Backend (FastAPI, port 8000)
 
 ## The 3 Analysis Modes Explained Simply
 
-| Mode | What you get | Calls Claude AI? | Speed |
-|---|---|---|---|
-| **Summary** | "Payment timing: 90 days" — just states what it found | No | Fast |
-| **Obligations** | "Ensure compliance with payment timing (90 days)" — tells you what to do | No | Fast |
-| **Risks** | Full explanation of why it's risky + negotiation advice | Yes | Slower (AI call per clause) |
+All three modes call Claude AI — the difference is what you ask it to focus on.
+
+| Mode | What you get | What Claude fills in |
+|---|---|---|
+| **Summary** | Plain-language description of each clause + key terms | plain_language, key_terms, risk_flag |
+| **Obligations** | Required actions, who's responsible, deadline, consequence | obligations[], party, deadline, consequence |
+| **Risks** | Why it's risky, how it deviates from the playbook, negotiation advice, confidence score | risk_level, deviation_summary, recommendation, confidence |
 
 ---
 
 ## How Data is Saved
 
-### SQL Database (3 tables)
+### SQL Database (4 tables)
+
+**users table** — one row per registered account
+- Stores: email, password (scrambled using bcrypt — never stored as plain text), active status, created date
 
 **analyses table** — one row per analysis job
-- Stores: the contract text, analysis type, status (queued / running / completed / failed), the full result, any safety warnings, token usage and cost
+- Stores: the contract text, analysis type, status (queued / running / completed / failed), the full result, any safety warnings, token usage and cost, and which user ran it
 
 **playbook_versions table** — one row per version of your rulebook
 - Stores: the full markdown content, when it was created, a version label, a change note
 - Versions are immutable — never edited, only new ones added
 
 **playbook_chunks table** — one row per chunk of a playbook version
-- Stores: the 800-word chunk text, which version it belongs to, optional raw embedding bytes
+- Stores: the chunk text (with its section heading prepended), which version it belongs to
 
 ### ChromaDB (the smart search database)
-- One collection per playbook version, named `playbook_{version_id}`
-- Uses a local AI model (sentence-transformers) to turn text into numbers (embeddings)
+- One collection per playbook version, e.g. `playbook_{version_id}_bge_small_v1`
+- Uses a local AI model (`BAAI/bge-small-en-v1.5`, ~130 MB, downloaded once via fastembed) to turn text into numbers (embeddings)
 - No external API needed for this — runs entirely on your machine
 - When you search, it finds the 3 most semantically similar chunks
+- If the model changes, the version tag in the collection name changes too — the old collection is left alone and a fresh one is built automatically
 
 ---
 
@@ -196,9 +213,13 @@ Backend (FastAPI, port 8000)
 - Any finding without a matching playbook chunk → **dropped**
 - This ensures every result shown to you is backed by real evidence
 
-### API Security
-- Optional `X-API-Key` header on all routes (set via `API_KEY` env var)
-- SSE stream also accepts `?api_key=` in the URL (browsers can't set headers on EventSource)
+### Account & Login Security
+- You must register and log in before using the app
+- Passwords are never stored — only a bcrypt hash (a one-way scramble)
+- After login you receive a **JWT token** (a signed string) that proves who you are
+- Every request to the API includes this token in an `Authorization: Bearer` header — the server checks it without touching the database
+- Tokens expire after 24 hours (configurable)
+- The live results stream uses `?token=` in the URL because browsers can't send headers to a live stream
 - Rate limiting: 60 requests/minute per IP on analyze and stream endpoints
 
 ---
@@ -225,17 +246,23 @@ Two persistent storage volumes:
 ### 1. Results appear as they're found, not all at once
 Instead of waiting for the entire contract to be analyzed before showing anything, each clause result is sent to your browser the moment it's ready. This feels much faster for long contracts.
 
-### 2. AI is only used when actually needed
-For Summary and Obligations modes, no AI is called at all — just simple rule-based logic. This makes them instant and free. Claude is only called for Risks mode, where the nuanced explanation actually matters.
+### 2. Claude is told to fill in a form, not write an essay
+For all 3 modes, Claude is given a strict JSON "tool" schema and told it *must* fill it in. This guarantees the output is always structured and machine-readable — no more trying to parse free-form text with regex.
 
-### 3. Everything runs without a database in tests
+### 3. Two search methods are better than one
+The rulebook search combines meaning-based (semantic) and keyword-based (BM25) search. Semantic search finds clauses paraphrased differently; BM25 catches exact legal terms. Together they miss fewer matches.
+
+### 4. Logins don't hit the database on every request
+Once you log in, you get a self-contained token (JWT) that the server can verify mathematically — without looking anything up in the database. This keeps the API fast and simple to scale.
+
+### 5. Everything runs without a database in tests
 Setting `BYPASS_DB_FOR_TESTS=true` makes the whole app run in memory with no database or ChromaDB needed. Tests run instantly with no setup.
 
-### 4. The rulebook is versioned like code
+### 6. The rulebook is versioned like code
 Every time you update the playbook, the old version is kept forever. You can always see what standard was in place when a specific contract was analyzed.
 
-### 5. No result shows up without evidence
+### 7. No result shows up without evidence
 The guardrail filter drops any finding that isn't backed by actual contract text and a matching playbook chunk. This prevents the AI from showing confident-looking results that aren't grounded in reality.
 
-### 6. Everything is async
+### 8. Everything is async
 The server never blocks waiting for one thing to finish before starting another. Database reads, AI calls, and file operations all happen concurrently, making the server fast under load.
