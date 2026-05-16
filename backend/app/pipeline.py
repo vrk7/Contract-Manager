@@ -107,42 +107,42 @@ def _split_into_sections(text: str, max_size: int = 10_000) -> list[str]:
     return sections
 
 
+def _extract_clauses_from_section(section: str, seen: set[str]) -> list[dict[str, str]]:
+    """Extract clause matches from a single section, deduplicating via shared seen set."""
+    findings: list[dict[str, str]] = []
+    for clause_type, pattern, unit in _PATTERNS:
+        for match in re.finditer(pattern, section, flags=re.IGNORECASE):
+            value = next((g for g in match.groups() if g is not None), None) if match.groups() else None
+            value = value or match.group(0)
+            dedup_key = f"{clause_type}:{value.strip().lower()}"
+            if dedup_key in seen:
+                continue
+            seen.add(dedup_key)
+            span_text = section[max(0, match.start() - _CONTEXT_WINDOW) : match.end() + _CONTEXT_WINDOW]
+            section_label = _section_label_at(section, match.start())
+            findings.append(
+                {
+                    "clause_type": clause_type,
+                    "extracted_value": f"{value} {unit}".strip(),
+                    "source_text": span_text.strip(),
+                    "section": section_label,
+                }
+            )
+    return findings
+
+
 def _extract_clauses(contract_text: str) -> list[dict[str, str]]:
-    """
-    Extract clause matches from contract text using regex patterns.
-    Large contracts are split into overlapping sections first so that
-    heading-level context is preserved and no matches fall through gaps.
-    """
+    """Extract clause matches from contract text using regex patterns."""
     sections = (
         _split_into_sections(contract_text)
         if len(contract_text) > _LARGE_CONTRACT_THRESHOLD
         else [contract_text]
     )
-
-    findings: list[dict[str, str]] = []
     seen: set[str] = set()
-
+    out: list[dict[str, str]] = []
     for section in sections:
-        for clause_type, pattern, unit in _PATTERNS:
-            for match in re.finditer(pattern, section, flags=re.IGNORECASE):
-                value = next((g for g in match.groups() if g is not None), None) if match.groups() else None
-                value = value or match.group(0)
-                dedup_key = f"{clause_type}:{value.strip().lower()}"
-                if dedup_key in seen:
-                    continue
-                seen.add(dedup_key)
-                span_text = section[max(0, match.start() - _CONTEXT_WINDOW) : match.end() + _CONTEXT_WINDOW]
-                section_label = _section_label_at(section, match.start())
-                findings.append(
-                    {
-                        "clause_type": clause_type,
-                        "extracted_value": f"{value} {unit}".strip(),
-                        "source_text": span_text.strip(),
-                        "section": section_label,
-                    }
-                )
-
-    return findings
+        out.extend(_extract_clauses_from_section(section, seen))
+    return out
 
 
 def _compare_with_playbook(
@@ -411,12 +411,26 @@ async def run_analysis_pipeline(
     if session:
         await session.flush()
 
-    # Clause extraction
-    extracted_clauses = _extract_clauses(sanitized_text)
-    await _emit(
-        "status",
-        {"analysis_id": analysis.id, "status": "extracting", "message": "Extracted clauses"},
+    # Clause extraction with per-section progress
+    _sections = (
+        _split_into_sections(sanitized_text)
+        if len(sanitized_text) > _LARGE_CONTRACT_THRESHOLD
+        else [sanitized_text]
     )
+    _total_sections = len(_sections)
+    _seen: set[str] = set()
+    extracted_clauses: list[dict[str, str]] = []
+    for _i, _section in enumerate(_sections):
+        extracted_clauses.extend(_extract_clauses_from_section(_section, _seen))
+        await _emit(
+            "status",
+            {
+                "analysis_id": analysis.id,
+                "status": "extracting",
+                "message": f"Scanning section {_i + 1}/{_total_sections}",
+                "progress": round((_i + 1) / _total_sections * 100),
+            },
+        )
 
     # Determine playbook version
     version_id = analysis.playbook_version_id
