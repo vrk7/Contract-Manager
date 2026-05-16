@@ -376,22 +376,23 @@ async def run_analysis_pipeline(
                 f"Extracted value: {clause['extracted_value']}. "
                 f"Playbook standard: {standard}. "
                 f"Detected deviation: {deviation}. "
-                f"Risk level: {risk_level}.\n\n"
-                "In 2-3 sentences, explain the specific risk and give a concrete negotiation recommendation."
+                f"Risk level (heuristic): {risk_level}."
                 + COT_INSTRUCTIONS
             )
-            llm_response, usage = await llm_client.complete(
-                prompt, max_tokens=256, playbook_context=playbook_ctx
+            structured_out, usage = await llm_client.complete_structured(
+                prompt, max_tokens=384, playbook_context=playbook_ctx
             )
             total_usage.input_tokens += usage.input_tokens
             total_usage.output_tokens += usage.output_tokens
+            final_risk = structured_out.risk_level if structured_out.risk_level != "unknown" else risk_level
+            final_deviation = structured_out.deviation_summary or deviation
             finding = Finding(
                 clause_type=clause["clause_type"],
                 extracted_value=clause["extracted_value"],
                 playbook_standard=standard,
-                deviation=deviation,
-                risk_level=risk_level,  # type: ignore[arg-type]
-                recommendation=f"{llm_response} (Playbook refs: {citation_ids})",
+                deviation=final_deviation,
+                risk_level=final_risk,  # type: ignore[arg-type]
+                recommendation=f"{structured_out.recommendation} (Playbook refs: {citation_ids})",
                 source_text=clause["source_text"],
                 retrieved_chunks=retrieved_chunks,
             )
