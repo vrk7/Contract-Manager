@@ -104,9 +104,49 @@ class AnalysisListResponse(BaseModel):
 
 
 class LLMFindingOutput(BaseModel):
-    """Structured output schema expected from Claude when analysis_type=risks."""
+    """Structured output from Claude for risks analysis (via tool_use)."""
 
     risk_level: Literal["critical", "high", "medium", "low", "acceptable", "unknown"] = "medium"
     deviation_summary: str = ""
     recommendation: str = ""
     confidence: float = Field(default=0.5, ge=0.0, le=1.0)
+
+
+class LLMSummaryOutput(BaseModel):
+    """Structured output from Claude for summary analysis (via tool_use)."""
+
+    plain_language: str = ""
+    key_terms: list[str] = Field(default_factory=list)
+    risk_flag: bool = False
+
+
+class LLMObligationOutput(BaseModel):
+    """Structured output from Claude for obligations analysis (via tool_use)."""
+
+    obligations: list[str] = Field(default_factory=list)
+    party: str = "contractor"
+    deadline: Optional[str] = None
+    consequence: Optional[str] = None
+
+
+# ── Auth schemas ─────────────────────────────────────────────────────────────
+
+class UserCreate(BaseModel):
+    email: str = Field(min_length=3, max_length=255)
+    password: str = Field(min_length=8, max_length=128)
+
+
+class UserLogin(BaseModel):
+    email: str
+    password: str
+
+
+class Token(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
+
+
+class UserResponse(BaseModel):
+    id: str
+    email: str
+    created_at: datetime
