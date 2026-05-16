@@ -517,6 +517,25 @@ async def update_playbook(request: PlaybookUpdateRequest, session: AsyncSession 
     )
 
 
+@v1.delete("/gdpr/erase/{analysis_id}", status_code=204)
+async def gdpr_erase(analysis_id: str, session: AsyncSession | None = Depends(session_dependency), _auth: None = Depends(verify_api_key)):
+    """GDPR right-to-erasure: permanently delete contract text from an analysis."""
+    if settings.in_memory_mode:
+        IN_MEMORY_RESULTS.pop(analysis_id, None)
+        return
+
+    assert session is not None
+    result = await session.execute(select(Analysis).where(Analysis.id == analysis_id))
+    analysis = result.scalars().first()
+    if not analysis:
+        raise HTTPException(status_code=404, detail="Analysis not found")
+    analysis.contract_text = "[erased]"
+    analysis.result_json = None
+    analysis.deleted_at = datetime.utcnow()
+    await write_audit_log(session, "analyses", analysis_id, "gdpr_erase")
+    await session.flush()
+
+
 @v1.post("/playbook/reindex")
 async def reindex_playbook(body: PlaybookReindexRequest, session: AsyncSession | None = Depends(session_dependency), _auth: None = Depends(verify_api_key)):
     if settings.in_memory_mode:
