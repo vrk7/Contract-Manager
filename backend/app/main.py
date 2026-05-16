@@ -1,4 +1,5 @@
 import json
+import os
 import secrets
 import uuid
 from datetime import datetime
@@ -82,12 +83,17 @@ app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)  # ty
 v1 = APIRouter(prefix="/v1")
 
 app.add_middleware(GZipMiddleware, minimum_size=1024)
+_cors_origins = (
+    [o.strip() for o in os.environ.get("CORS_ORIGINS", "").split(",") if o.strip()]
+    if settings.production_mode
+    else ["*"]
+)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_origins=_cors_origins,
+    allow_credentials=not settings.production_mode,
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allow_headers=["Content-Type", "X-API-Key", "X-Request-ID", "Idempotency-Key"],
 )
 
 
