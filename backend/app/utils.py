@@ -38,3 +38,29 @@ def slugify(text: str) -> str:
     text = normalize_text(text).lower()
     text = re.sub(r"[^a-z0-9]+", "-", text)
     return text.strip("-")
+
+
+def redact_pii(text: str) -> str:
+    """Replace common PII patterns with placeholder tokens for safe logging."""
+    # Email addresses
+    text = re.sub(r"[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}", "[EMAIL]", text)
+    # US phone numbers
+    text = re.sub(r"\b(\+?1[\s.-]?)?(\(?\d{3}\)?[\s.-]?)?\d{3}[\s.-]?\d{4}\b", "[PHONE]", text)
+    # Social security numbers
+    text = re.sub(r"\b\d{3}-\d{2}-\d{4}\b", "[SSN]", text)
+    return text
+
+
+def word_count(text: str) -> int:
+    """Return the approximate word count of text."""
+    return len(text.split())
+
+
+def sentence_count(text: str) -> int:
+    """Return the approximate sentence count of text."""
+    return len(re.findall(r"[.!?]+", text)) or (1 if text.strip() else 0)
+
+
+def clamp(value: float, lo: float, hi: float) -> float:
+    """Clamp value to [lo, hi]."""
+    return max(lo, min(hi, value))
