@@ -81,3 +81,51 @@ def test_collection_count_returns_correct_number(rag):
     assert rag.collection_count(VERSION_ID) == 2
     rag.reset_version(VERSION_ID, SAMPLE_CHUNKS)
     assert rag.collection_count(VERSION_ID) == 3
+
+
+def test_reset_version_skips_unchanged_chunks(rag):
+    rag.reset_version(VERSION_ID, SAMPLE_CHUNKS)
+    count_before = rag.collection_count(VERSION_ID)
+    rag.reset_version(VERSION_ID, SAMPLE_CHUNKS)
+    assert rag.collection_count(VERSION_ID) == count_before
+
+
+def test_reset_version_updates_changed_chunk(rag):
+    rag.reset_version(VERSION_ID, SAMPLE_CHUNKS)
+    updated = [
+        (SAMPLE_CHUNKS[0][0], "Updated payment text: 60 days."),
+        SAMPLE_CHUNKS[1],
+        SAMPLE_CHUNKS[2],
+    ]
+    rag.reset_version(VERSION_ID, updated)
+    results = rag.query(VERSION_ID, "60 days payment")
+    contents = [r.content for r in results]
+    assert any("60 days" in c for c in contents)
+
+
+def test_distance_threshold_filters_unrelated_chunks(loaded_rag):
+    results = loaded_rag.query(VERSION_ID, "quantum physics neutron star galaxy")
+    for r in results:
+        assert r.playbook_version_id == VERSION_ID
+
+
+def test_multiple_versions_are_isolated(tmp_path, monkeypatch):
+    from backend.app import rag as rag_mod
+    monkeypatch.setattr(rag_mod.settings, "chroma_dir", str(tmp_path / "chroma"))
+    rag = PlaybookRAG()
+    v1_chunks = [("v1-0", "Payment terms: 30 days net.")]
+    v2_chunks = [("v2-0", "Payment terms: 60 days net.")]
+    rag.reset_version("v1", v1_chunks)
+    rag.reset_version("v2", v2_chunks)
+    assert rag.collection_count("v1") == 1
+    assert rag.collection_count("v2") == 1
+
+
+def test_retrieved_chunk_has_required_fields(loaded_rag):
+    results = loaded_rag.query(VERSION_ID, "retainage withheld")
+    assert len(results) > 0
+    chunk = results[0]
+    assert chunk.chunk_id
+    assert chunk.content
+    assert chunk.source == "playbook"
+    assert chunk.playbook_version_id == VERSION_ID
