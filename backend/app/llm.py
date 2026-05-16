@@ -167,7 +167,7 @@ class AnthropicClient:
 
         t0 = time.monotonic()
         try:
-            message = await self.client.messages.create(
+            message = await self.client.messages.create(  # type: ignore[call-overload]
                 model=self.model,
                 max_tokens=max_tokens,
                 temperature=0,
