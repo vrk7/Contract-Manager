@@ -226,6 +226,32 @@ def _friendly_clause_label(clause_type: str) -> str:
     return labels.get(clause_type, clause_type.replace("_", " ").title())
 
 
+_REQUIRED_CLAUSE_TYPES: frozenset[str] = frozenset({
+    "payment_terms",
+    "force_majeure",
+    "limitation_of_liability",
+    "indemnification",
+    "dispute_resolution",
+    "termination_notice",
+})
+
+
+def detect_missing_clauses(findings: list[Finding]) -> list[GuardrailWarning]:
+    """Return a warning for each required clause type absent from findings."""
+    found_types = {f.clause_type for f in findings}
+    warnings: list[GuardrailWarning] = []
+    for clause_type in sorted(_REQUIRED_CLAUSE_TYPES):
+        if clause_type not in found_types:
+            warnings.append(
+                GuardrailWarning(
+                    type="missing_clause",
+                    message=f"Standard clause '{clause_type}' was not found in the contract.",
+                    triggered_by=clause_type,
+                )
+            )
+    return warnings
+
+
 def _overall_risk(findings: list[Finding]) -> str:
     levels = ["unknown", "acceptable", "low", "medium", "high", "critical"]
     max_idx = 0
@@ -426,6 +452,9 @@ async def run_analysis_pipeline(
         if f.source_text
         and f.retrieved_chunks
     ]
+
+    missing_warnings = detect_missing_clauses(merged_findings)
+    guardrails.extend(missing_warnings)
 
     if not merged_findings:
         overall = "unknown"
