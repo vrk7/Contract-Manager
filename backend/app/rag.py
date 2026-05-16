@@ -5,6 +5,13 @@ import threading
 from pathlib import Path
 from typing import Iterable
 
+try:
+    from rank_bm25 import BM25Okapi as _BM25
+    _BM25_AVAILABLE = True
+except ImportError:
+    _BM25 = None  # type: ignore[assignment,misc]
+    _BM25_AVAILABLE = False
+
 import chromadb
 import structlog
 from chromadb import Settings as ChromaSettings
@@ -168,6 +175,54 @@ class PlaybookRAG:
     # L2 distance above which a chunk is considered unrelated and dropped.
     # For unit-normalised embeddings, cosine_sim ≈ 0.35 ↔ L2 ≈ 1.14.
     _DISTANCE_THRESHOLD: float = 1.2
+
+    def bm25_query(self, version_id: str, text: str, k: int = 3) -> list[RetrievedChunk]:
+        """
+        BM25 keyword search over stored chunks for a given playbook version.
+        Returns up to k results sorted by BM25 score descending.
+        Falls back to empty list if rank_bm25 is not installed.
+        """
+        if not _BM25_AVAILABLE:
+            return []
+        with self._lock:
+            try:
+                collection = self._collection(version_id)
+                all_docs = collection.get(include=["documents"])
+                ids = all_docs.get("ids", [])
+                docs = all_docs.get("documents") or []
+            except Exception:
+                return []
+        if not docs:
+            return []
+        tokenized = [doc.lower().split() for doc in docs]
+        bm25 = _BM25(tokenized)
+        scores = bm25.get_scores(text.lower().split())
+        top_indices = sorted(range(len(scores)), key=lambda i: scores[i], reverse=True)[:k]
+        return [
+            RetrievedChunk(
+                chunk_id=ids[i],
+                content=docs[i],
+                source="playbook",
+                playbook_version_id=version_id,
+            )
+            for i in top_indices
+            if scores[i] > 0
+        ]
+
+    def hybrid_query(self, version_id: str, text: str, k: int = 3) -> list[RetrievedChunk]:
+        """
+        Union semantic (Chroma) and BM25 results, deduplicated by chunk_id.
+        Semantic results take priority; BM25 fills remaining slots.
+        """
+        semantic = self.query(version_id, text, k=k)
+        bm25 = self.bm25_query(version_id, text, k=k)
+        seen: set[str] = {r.chunk_id for r in semantic}
+        combined = list(semantic)
+        for chunk in bm25:
+            if chunk.chunk_id not in seen:
+                combined.append(chunk)
+                seen.add(chunk.chunk_id)
+        return combined[:k]
 
     def query(self, version_id: str, text: str, k: int = 3) -> list[RetrievedChunk]:
         with self._lock:
