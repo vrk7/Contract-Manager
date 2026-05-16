@@ -14,6 +14,7 @@ from backend.app.pipeline import (  # noqa: E402
     _merge_findings,
     _overall_risk,
     _split_into_sections,
+    amplify_inter_clause_risks,
 )
 from backend.app.schemas import Finding, RetrievedChunk  # noqa: E402
 
@@ -147,6 +148,41 @@ class TestOverallRisk:
     def test_all_low_returns_low(self):
         findings = [_finding("a", "low"), _finding("b", "low")]
         assert _overall_risk(findings) == "low"
+
+
+class TestAmplifyInterClauseRisks:
+    def test_high_payment_and_high_retainage_both_upgrade(self):
+        findings = [
+            _finding("payment_terms", "high"),
+            _finding("retainage", "high"),
+        ]
+        result = amplify_inter_clause_risks(findings)
+        risk_map = {f.clause_type: f.risk_level for f in result}
+        assert risk_map["payment_terms"] == "critical"
+        assert risk_map["retainage"] == "critical"
+
+    def test_low_payment_and_high_retainage_no_upgrade(self):
+        findings = [
+            _finding("payment_terms", "low"),
+            _finding("retainage", "high"),
+        ]
+        result = amplify_inter_clause_risks(findings)
+        risk_map = {f.clause_type: f.risk_level for f in result}
+        assert risk_map["payment_terms"] == "low"
+
+    def test_single_finding_no_amplification(self):
+        findings = [_finding("payment_terms", "high")]
+        result = amplify_inter_clause_risks(findings)
+        assert result[0].risk_level == "high"
+
+    def test_already_critical_stays_critical(self):
+        findings = [
+            _finding("payment_terms", "critical"),
+            _finding("retainage", "critical"),
+        ]
+        result = amplify_inter_clause_risks(findings)
+        risk_map = {f.clause_type: f.risk_level for f in result}
+        assert risk_map["payment_terms"] == "critical"
 
 
 class TestSplitIntoSections:
