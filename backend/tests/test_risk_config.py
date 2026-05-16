@@ -8,7 +8,7 @@ os.environ.setdefault("BYPASS_DB_FOR_TESTS", "true")
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../.."))
 
 import pytest
-from backend.app.risk_config import score_numeric, DEFAULT_RISK_CONFIG  # noqa: E402
+from backend.app.risk_config import score_numeric, DEFAULT_RISK_CONFIG, get_config_for_jurisdiction  # noqa: E402
 
 
 class TestPaymentTerms:
@@ -70,3 +70,29 @@ def test_unknown_clause_type_returns_medium():
 
 def test_zero_value_returns_low_for_payment_terms():
     assert score_numeric("payment_terms", 0) == "low"
+
+
+class TestJurisdictionOverrides:
+    def test_de_stricter_payment_terms(self):
+        de_config = get_config_for_jurisdiction("DE")
+        assert score_numeric("payment_terms", 35, de_config) == "medium"
+
+    def test_default_accepts_35_days(self):
+        assert score_numeric("payment_terms", 35) == "low"
+
+    def test_ca_more_lenient_payment_terms(self):
+        ca_config = get_config_for_jurisdiction("CA")
+        assert score_numeric("payment_terms", 61, ca_config) == "medium"
+
+    def test_none_jurisdiction_returns_default(self):
+        config = get_config_for_jurisdiction(None)
+        assert "payment_terms" in config
+
+    def test_unknown_jurisdiction_returns_default(self):
+        config = get_config_for_jurisdiction("XX")
+        assert config == DEFAULT_RISK_CONFIG
+
+    def test_case_insensitive_jurisdiction(self):
+        lower = get_config_for_jurisdiction("de")
+        upper = get_config_for_jurisdiction("DE")
+        assert lower == upper
