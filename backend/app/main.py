@@ -52,7 +52,9 @@ _api_key_header = APIKeyHeader(name="X-API-Key", auto_error=False)
 
 
 def verify_api_key(key: str | None = Security(_api_key_header)) -> None:
-    """Validate X-API-Key header. Skipped when API_KEY env var is not set (local dev)."""
+    """Validate X-API-Key header. Required when API_KEY is set or PRODUCTION_MODE=true."""
+    if settings.production_mode and not settings.api_key:
+        raise HTTPException(status_code=500, detail="API_KEY must be set in PRODUCTION_MODE")
     if not settings.api_key:
         return
     if not key or not secrets.compare_digest(key, settings.api_key):
