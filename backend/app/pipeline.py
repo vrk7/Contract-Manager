@@ -13,6 +13,7 @@ from .guards import ensure_retrieval_guardrails, filter_malicious_segments
 from .llm import COT_INSTRUCTIONS, AnthropicClient, LLMUsage
 from .models import Analysis, PlaybookVersion
 from .rag import PlaybookRAG, chunk_playbook
+from .risk_config import DEFAULT_RISK_CONFIG, score_numeric
 from .schemas import AnalysisResult, Finding, GuardrailWarning, RetrievedChunk, Usage
 
 logger = structlog.get_logger(__name__)
@@ -154,12 +155,12 @@ def _compare_with_playbook(
     text = " ".join(chunk.content for chunk in retrieved)
     try:
         value_num = None
-        if clause["clause_type"] in {"payment_terms", "notice_period", "termination_notice"}:
-            digits = re.findall(r"(\d+)", clause["extracted_value"])
-            value_num = int(digits[0]) if digits else None
-        if clause["clause_type"] == "retainage":
-            digits = re.findall(r"(\d+)", clause["extracted_value"])
-            value_num = int(digits[0]) if digits else None
+        digits = re.findall(r"(\d+)", clause["extracted_value"])
+        if digits:
+            value_num = float(digits[0])
+
+        if value_num is not None and clause["clause_type"] in DEFAULT_RISK_CONFIG:
+            risk_level = score_numeric(clause["clause_type"], value_num)
 
         if clause["clause_type"] == "payment_terms" and value_num is not None:
             standard_match = re.search(r"(\d+)[-–](\d+)\s*days", text)
