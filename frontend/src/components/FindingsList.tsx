@@ -15,6 +15,8 @@ interface Finding {
   recommendation?: string;
   source_text?: string;
   retrieved_chunks?: RetrievedChunk[];
+  confidence?: number;
+  section?: string;
 }
 
 interface FindingsListProps {
@@ -136,6 +138,18 @@ export default function FindingsList({ findings, onClear }: FindingsListProps) {
                   <p className="label">Playbook standard</p>
                   <p className="fact-value">{f.playbook_standard || '—'}</p>
                 </div>
+                {f.section && (
+                  <div className="fact">
+                    <p className="label">Section</p>
+                    <p className="fact-value">{f.section}</p>
+                  </div>
+                )}
+                {f.confidence !== undefined && (
+                  <div className="fact">
+                    <p className="label">Confidence</p>
+                    <p className="fact-value">{Math.round(f.confidence * 100)}%</p>
+                  </div>
+                )}
               </div>
 
               <div className="recommendation-block">
