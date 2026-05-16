@@ -363,6 +363,25 @@ def _format_sse(event: str, data: Any) -> str:
     return f"event: {event}\ndata: {json.dumps(data)}\n\n"
 
 
+@v1.delete("/analysis/{analysis_id}", status_code=204)
+async def delete_analysis(analysis_id: str, session: AsyncSession | None = Depends(session_dependency), _auth: None = Depends(verify_api_key)):
+    """Soft-delete an analysis by setting deleted_at."""
+    if settings.in_memory_mode:
+        IN_MEMORY_RESULTS.pop(analysis_id, None)
+        return
+
+    assert session is not None
+    result = await session.execute(
+        select(Analysis).where(Analysis.id == analysis_id, Analysis.deleted_at.is_(None))
+    )
+    analysis = result.scalars().first()
+    if not analysis:
+        raise HTTPException(status_code=404, detail="Analysis not found")
+    analysis.deleted_at = datetime.utcnow()
+    await write_audit_log(session, "analyses", analysis_id, "delete")
+    await session.flush()
+
+
 @v1.get("/analysis/{analysis_id}/stream")
 @limiter.limit(f"{settings.rate_limit_stream_per_minute}/minute")
 async def stream_analysis(request: Request, analysis_id: str, _auth: None = Depends(verify_api_key_query)):  # noqa: ARG001
