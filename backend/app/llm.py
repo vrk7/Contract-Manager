@@ -57,9 +57,14 @@ class AnthropicClient:
     def __init__(self) -> None:
         self.api_key = settings.anthropic_api_key
         self.model = settings.anthropic_model
+        self.max_retries = settings.llm_max_retries
         self.client: Optional[anthropic.AsyncAnthropic] = None
         if self.api_key:
-            self.client = anthropic.AsyncAnthropic(api_key=self.api_key, timeout=60.0)
+            self.client = anthropic.AsyncAnthropic(
+                api_key=self.api_key,
+                timeout=settings.llm_timeout_seconds,
+                max_retries=self.max_retries,
+            )
         else:
             logger.warning("anthropic_key_missing", detail="LLM calls will use heuristic fallback")
 
