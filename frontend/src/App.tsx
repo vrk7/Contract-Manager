@@ -1,6 +1,7 @@
 import React, { useRef, useState } from 'react';
-import PlaybookManager from './components/PlaybookManager';
+import ErrorBoundary from './components/ErrorBoundary';
 import FindingsList from './components/FindingsList';
+import PlaybookManager from './components/PlaybookManager';
 import { api, streamUrl } from './api';
 
 type AnalysisType = 'risks' | 'summary' | 'obligations';
@@ -129,6 +130,7 @@ function App() {
   };
 
   return (
+    <ErrorBoundary>
     <div className="container">
       <header className="page-header">
         <div>
@@ -249,6 +251,7 @@ function App() {
         </div>
       )}
     </div>
+    </ErrorBoundary>
   );
 }
 
