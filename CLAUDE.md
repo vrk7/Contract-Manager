@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What This Is
 
-A Contract Clause Analyzer: FastAPI backend + Vite/React frontend that extracts clauses from construction contracts, compares them against a standard terms playbook via Chroma RAG, and streams structured SSE results with risk scoring. Uses the Anthropic SDK (Claude) for the `risks` analysis type; `summary` and `obligations` use heuristic-only pipelines.
+A Contract Clause Analyzer: FastAPI backend + Vite/React frontend that extracts clauses from construction contracts, compares them against a standard terms playbook via Chroma RAG, and streams structured SSE results with risk scoring. All three analysis types (`risks`, `summary`, `obligations`) call Claude via Anthropic tool_use for guaranteed structured output; heuristic fallback is used when no API key is present (tests).
 
 ## Commands
 
@@ -59,9 +59,10 @@ Copy from `.env.example`. Key vars:
 
 | Variable | Default | Notes |
 |---|---|---|
-| `ANTHROPIC_API_KEY` | — | Required for `risks` analysis type; tests use offline fallback |
+| `ANTHROPIC_API_KEY` | — | Required for all 3 analysis types; tests use offline heuristic fallback |
 | `ANTHROPIC_MODEL` | `claude-3-opus-20240229` | Override to use a different Claude model (default is outdated) |
-| `API_KEY` | — | When set, all routes require `X-API-Key` header; SSE stream also accepts `?api_key=` |
+| `JWT_SECRET_KEY` | random hex (auto-generated) | Signs JWT tokens; set explicitly in production for persistence across restarts |
+| `JWT_EXPIRE_MINUTES` | `1440` | Token lifetime (default 24 h) |
 | `DATABASE_URL` | SQLite locally, Postgres in Docker | Auto-detected via `/.dockerenv` |
 | `CHROMA_DIR` | `./data/chroma` | Persistent embedding store |
 | `PLAYBOOK_SEED_PATH` | `./standard_terms_playbook.md` | Seeded into DB + Chroma on startup |
@@ -77,9 +78,11 @@ Copy from `.env.example`. Key vars:
 All routes are prefixed `/v1/` except health probes at root:
 
 - `GET /` and `GET /health` — health probes (no auth required)
-- `POST /v1/analyze` → returns `{analysis_id, status}` immediately; pipeline runs as a background task
+- `POST /v1/auth/register` — create account `{email, password}` → `{id, email, created_at}`
+- `POST /v1/auth/login` — `{email, password}` → `{access_token, token_type}`
+- `POST /v1/analyze` → returns `{analysis_id, status}` immediately; requires `Authorization: Bearer <token>`
 - `GET /v1/analysis/{id}` → poll for result (`AnalysisResult`) or status (`AnalysisStatusResponse`)
-- `GET /v1/analysis/{id}/stream` → SSE stream; events: `status`, `partial_finding`, `final`, `error`
+- `GET /v1/analysis/{id}/stream` → SSE stream; events: `status`, `partial_finding`, `final`, `error`; accepts `?token=` for EventSource (can't send headers)
 - `GET /v1/playbook`, `PUT /v1/playbook` — read/update current playbook
 - `GET /v1/playbook/versions`, `GET /v1/playbook/versions/{id}` — version history
 - `POST /v1/playbook/reindex` — rebuild Chroma embeddings for a playbook version
@@ -94,7 +97,7 @@ The analysis flow is a deterministic pipeline in `pipeline.py`:
 2. **`pipeline.py:_extract_clauses`** — regex-based extraction using 15 clause patterns: `payment_terms`, `retainage`, `notice_period`, `indemnification`, `termination_notice`, `dispute_resolution`, `liquidated_damages`, `force_majeure`, `warranty`, `insurance`, `change_order`, `substantial_completion`, `delay_damages`, `governing_law`, `limitation_of_liability`. Contracts >30 000 chars are split into overlapping sections first.
 3. **`rag.py:PlaybookRAG`** — in-memory Chroma-backed retrieval; queries playbook chunks per extracted clause
 4. **`pipeline.py:_compare_with_playbook`** — heuristic deviation scoring against retrieved chunk text → `risk_level` (low/medium/high/critical)
-5. **`llm.py:AnthropicClient`** — called only for `analysis_type=risks`; heuristic fallback used in tests
+5. **`llm.py:AnthropicClient`** — called for all 3 analysis types via Anthropic tool_use (`analyze_risk`, `summarize_clause`, `extract_obligations`); heuristic fallback used when no API key is set
 6. **`pipeline.py:_merge_findings`** — deduplicates findings by clause type, keeps highest-risk version
 7. **`guards.py:ensure_retrieval_guardrails`** — drops findings missing `source_text` or `retrieved_chunks`
 
@@ -111,7 +114,7 @@ The analysis flow is a deterministic pipeline in `pipeline.py`:
 
 ### Frontend (`frontend/src/`)
 
-Vite + React + TypeScript. Uses `axios` for API calls and native `EventSource` for SSE. No UI component library — plain CSS in `styles.css`. Key components: `FindingsList.tsx` (renders risk findings), `PlaybookManager.tsx` (playbook CRUD). Tests use Vitest + `@testing-library/react`.
+Vite + React + TypeScript. Uses `axios` for API calls and native `EventSource` for SSE. No UI component library — dark glassmorphism design in `styles.css`. Key components: `AuthPage.tsx` (login/register gate), `FindingsList.tsx` (renders risk findings), `PlaybookManager.tsx` (playbook CRUD). JWT token stored in `localStorage`; axios interceptor attaches `Authorization: Bearer` on every request. Tests use Vitest + `@testing-library/react`.
 
 ### Deployment
 

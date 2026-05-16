@@ -29,7 +29,7 @@ The solution reads the playbook and example contracts in `sample_contracts/` and
 
 - Python 3.11+
 - Node 18+
-- `chromadb` downloads the `all-MiniLM-L6-v2` embedding model on first run (network required).
+- `fastembed` downloads the `BAAI/bge-small-en-v1.5` embedding model on first run (network required, ~130 MB).
 
 ### Backend
 
@@ -66,6 +66,10 @@ Environment variables are defined in `.env.example`. Key values (sample `.env`):
 ANTHROPIC_API_KEY=sk-...
 ANTHROPIC_MODEL=claude-sonnet-4-20250514
 
+# Auth (JWT)
+JWT_SECRET_KEY=change-me-in-production   # auto-generated random hex if unset; set explicitly so tokens survive restarts
+JWT_EXPIRE_MINUTES=1440                  # 24 hours
+
 # Persistence + embeddings
 DATABASE_URL=sqlite+aiosqlite:///./data/app.db   # or postgres+asyncpg://analyzer:analyzer@db:5432/analyzer
 CHROMA_DIR=./data/chroma
@@ -78,17 +82,13 @@ DEBUG_MODE=false
 
 # Frontend -> backend base URL
 VITE_API_BASE=http://localhost:8000
-
-# API key auth — set the same value on both sides. Leave unset to disable auth (local dev).
-API_KEY=
-VITE_API_KEY=
 ```
 
-- `ANTHROPIC_API_KEY` / `ANTHROPIC_MODEL` – Claude via official SDK (optional; offline heuristic fallback used in tests).
-- `DATABASE_URL` – defaults to Postgres (`postgres+asyncpg://...`) targeting the `db` service in `docker-compose` (and automatically when running inside the container); outside Docker, the app falls back to SQLite unless you set `DATABASE_URL` yourself.
+- `ANTHROPIC_API_KEY` / `ANTHROPIC_MODEL` – Claude via official SDK; used for all 3 analysis types via tool_use. Offline heuristic fallback is used when unset (tests).
+- `JWT_SECRET_KEY` – signs user tokens. Auto-generated on startup if not set, but tokens then invalidate on every restart. Set a fixed value in any persistent deployment.
+- `DATABASE_URL` – defaults to Postgres (`postgres+asyncpg://...`) targeting the `db` service in `docker-compose`; outside Docker the app falls back to SQLite unless you set `DATABASE_URL` yourself.
 - `CHROMA_DIR` – persistent embedding store.
 - `RATE_LIMIT_PER_MINUTE` / `RATE_LIMIT_STREAM_PER_MINUTE` – slowapi per-IP throttles.
-- `API_KEY` / `VITE_API_KEY` – shared API key for authentication. Set the same value on both backend and frontend. Leave unset to disable auth (local dev / tests).
 
 ### Frontend
 
@@ -104,13 +104,15 @@ Set `VITE_API_BASE` to point to the backend (e.g., `http://localhost:8000`).
 
 ## API Surface
 
-- `POST /v1/analyze` → `{analysis_id,status}` (async background run). Request: `{contract_text, analysis_type: risks|summary|obligations, playbook_version_id?}`.
+- `POST /v1/auth/register` → `{id, email, created_at}` (201). Request: `{email, password}`.
+- `POST /v1/auth/login` → `{access_token, token_type}`. Request: `{email, password}`.
+- `POST /v1/analyze` → `{analysis_id,status}` (async). Requires `Authorization: Bearer <token>`. Request: `{contract_text, analysis_type: risks|summary|obligations, playbook_version_id?}`.
 - `GET /v1/analysis/{id}` → final validated result or status.
-- `GET /v1/analysis/{id}/stream` → SSE streaming with JSON payloads (`status`, `partial_finding`, `final`, `error`).
+- `GET /v1/analysis/{id}/stream` → SSE streaming (`status`, `partial_finding`, `final`, `error`). Accepts `?token=` for EventSource.
 - `GET /v1/playbook` / `GET /v1/playbook/versions` / `GET /v1/playbook/versions/{id}` — view playbook content and versions.
 - `PUT /v1/playbook` — create a new version (content + optional change note).
 - `POST /v1/playbook/reindex` — rebuild embeddings for a version.
-- `GET /health` — health probe (no `/v1/` prefix).
+- `GET /health` — health probe (no auth, no `/v1/` prefix).
 
 Response schema includes `playbook_version_id`, `guardrail_warnings`, `retrieved_chunks[{chunk_id,content,source,playbook_version_id}]`, and `usage{input_tokens,output_tokens,total_tokens,estimated_cost_usd}` per request.
 
@@ -118,7 +120,7 @@ Response schema includes `playbook_version_id`, `guardrail_warnings`, `retrieved
 
 ## Agent Architecture & Guardrails
 
-- **Multi-step pipeline:** sanitize → clause extraction → RAG retrieval (Chroma) → deviation scoring vs playbook text → LLM validation (Claude SDK, heuristic fallback) → Pydantic validation → guardrail pruning of ungrounded findings.
+- **Multi-step pipeline:** sanitize → clause extraction → RAG retrieval (hybrid Chroma + BM25) → deviation scoring vs playbook text → Claude tool_use structured output (all 3 analysis types) → Pydantic validation → guardrail pruning of ungrounded findings.
 - **Playbook grounding:** playbook ingested from file/DB, chunked, and embedded; retrieval attaches chunk metadata to every finding.
 - **Guardrails:** content filtering for prompt injection, strict Pydantic schema validation, per-IP rate limiting (slowapi), and grounding checks (drop findings missing source_text or retrieved_chunks, emit warnings).
 - **Streaming:** SSE emits structured JSON-only events.
@@ -129,9 +131,12 @@ Response schema includes `playbook_version_id`, `guardrail_warnings`, `retrieved
 
 ## Frontend Features
 
-- Paste/upload contract text, pick analysis type, kick off async analysis.
-- Live SSE stream of findings with risk badges and guardrail warnings.
-- Usage/cost display.
+- Login / register gate (JWT-based; token stored in localStorage).
+- Dark glassmorphism UI — deep navy background, frosted-glass cards, purple accent.
+- Paste contract text, pick analysis type, kick off async analysis (Ctrl+Enter shortcut).
+- Live SSE stream of findings with risk badges, confidence scores, and guardrail warnings.
+- Usage/cost display per analysis.
+- Export results as JSON.
 - Playbook management: view current content, edit/save new version (versioning), list versions, trigger reindex, select version for analysis.
 
 ---
@@ -176,6 +181,7 @@ Example: `arctis-api-prod-web-euw2b-01` follows this convention (`arctis` app, A
    1. Create `.env` in the project root using `nano` or `vi` (open a new env file in an editor).
    2. Include:
       - `ANTHROPIC_API_KEY`
+      - `JWT_SECRET_KEY` (set a fixed random value so tokens survive restarts)
       - `DATABASE_URL=postgres+asyncpg://analyzer:analyzer@db:5432/analyzer`
       - `RATE_LIMIT_PER_MINUTE=60`
       - `RATE_LIMIT_STREAM_PER_MINUTE=60`
@@ -253,6 +259,6 @@ The app should be reachable via HTTP or HTTPS depending on configuration.
 - Deeper clause extraction coverage (NER/regex hybrid and model-assisted spans).
 - Richer deviation calculations parsed directly from playbook tables instead of heuristics.
 - Move background processing to a task queue (Celery/RQ) for higher throughput.
-- Add CI/CD and IaC for cloud reproducibility.
+- Per-user analysis history and scoped playbook access.
 
 ---
