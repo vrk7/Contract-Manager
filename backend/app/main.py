@@ -115,8 +115,11 @@ async def security_headers_middleware(request: Request, call_next):
 
 @app.middleware("http")
 async def request_id_middleware(request: Request, call_next):
+    import structlog.contextvars as _ctxvars
     request_id = request.headers.get("X-Request-ID", str(uuid.uuid4()))
     request.state.request_id = request_id
+    _ctxvars.clear_contextvars()
+    _ctxvars.bind_contextvars(request_id=request_id)
     response = await call_next(request)
     response.headers["X-Request-ID"] = request_id
     return response
