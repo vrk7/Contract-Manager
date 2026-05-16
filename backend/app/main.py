@@ -180,6 +180,9 @@ async def health_deep() -> dict[str, Any]:
     return {"status": overall, "checks": checks}
 
 
+_PIPELINE_TIMEOUT_SECS = 600.0
+
+
 async def _process_analysis(analysis_id: str) -> None:
     async with get_session() as session:
         result = await session.execute(select(Analysis).where(Analysis.id == analysis_id))
@@ -198,8 +201,9 @@ async def _process_analysis(analysis_id: str) -> None:
                     initial_guardrails = [GuardrailWarning(**w) for w in json.loads(analysis.guardrail_warnings)]
                 except Exception:
                     initial_guardrails = []
-            pipeline_result = await run_analysis_pipeline(
-                session, analysis, streamer=streamer, initial_guardrails=initial_guardrails
+            pipeline_result = await asyncio.wait_for(
+                run_analysis_pipeline(session, analysis, streamer=streamer, initial_guardrails=initial_guardrails),
+                timeout=_PIPELINE_TIMEOUT_SECS,
             )
             analysis.status = "completed"
             serialized_result = json.loads(pipeline_result.json())
@@ -213,6 +217,15 @@ async def _process_analysis(analysis_id: str) -> None:
                 analysis.id,
                 "final",
                 {"analysis_id": analysis.id, "result": serialized_result},
+            )
+        except asyncio.TimeoutError:
+            logger.error("analysis_timeout", analysis_id=analysis_id, timeout=_PIPELINE_TIMEOUT_SECS)
+            analysis.status = "failed"
+            await session.flush()
+            event_bus.publish(
+                analysis.id,
+                "error",
+                {"analysis_id": analysis.id, "error": "Analysis timed out after 10 minutes. Try a shorter contract."},
             )
         except Exception as exc:
             logger.exception("analysis_failed", error=str(exc))
