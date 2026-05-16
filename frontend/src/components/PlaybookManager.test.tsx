@@ -44,14 +44,14 @@ describe('PlaybookManager', () => {
     expect(screen.getByDisplayValue(mockVersions[1].content)).toBeInTheDocument();
   });
 
-  it('switches active version when "Use for analysis" is clicked and persists selection', async () => {
+  it('switches active version when "Use" is clicked and persists selection', async () => {
     mockGet.mockResolvedValue({ data: mockVersions });
     const onVersionChange = vi.fn();
 
     render(<PlaybookManager onVersionChange={onVersionChange} />);
 
     await waitFor(() => expect(screen.getByText(`Active #${mockVersions[0].id}`)).toBeInTheDocument());
-    const useButtons = screen.getAllByText('Use for analysis');
+    const useButtons = screen.getAllByText('Use');
     fireEvent.click(useButtons[1]);
 
     await waitFor(() => expect(screen.getByText(`Active #${mockVersions[1].id}`)).toBeInTheDocument());

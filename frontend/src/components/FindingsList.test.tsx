@@ -25,7 +25,7 @@ const makeFinding = (override: Partial<{
 describe('FindingsList', () => {
   it('renders empty state message when list is empty', () => {
     render(<FindingsList findings={[]} />);
-    expect(screen.getByText(/No findings yet/)).toBeTruthy();
+    expect(screen.getByText(/findings will appear here/i)).toBeTruthy();
   });
 
   it('renders clause type label for each finding', () => {
@@ -57,16 +57,16 @@ describe('FindingsList', () => {
 
   it('expands finding body on header click', () => {
     render(<FindingsList findings={[makeFinding()]} />);
-    const header = screen.getByTitle('Click to expand');
+    const header = screen.getByTitle('Expand');
     fireEvent.click(header);
     expect(screen.getByText('No action required.')).toBeTruthy();
   });
 
   it('collapses finding on second click', () => {
     render(<FindingsList findings={[makeFinding()]} />);
-    const header = screen.getByTitle('Click to expand');
+    const header = screen.getByTitle('Expand');
     fireEvent.click(header);
-    fireEvent.click(screen.getByTitle('Click to collapse'));
+    fireEvent.click(screen.getByTitle('Collapse'));
     expect(screen.queryByText('No action required.')).toBeNull();
   });
 
@@ -124,7 +124,7 @@ describe('FindingsList', () => {
 
   it('displays confidence percentage when provided', () => {
     render(<FindingsList findings={[makeFinding({ confidence: 0.85 } as any)]} />);
-    fireEvent.click(screen.getByTitle('Click to expand'));
+    fireEvent.click(screen.getByTitle('Expand'));
     expect(screen.getByText('85%')).toBeTruthy();
   });
 
