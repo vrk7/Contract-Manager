@@ -37,6 +37,8 @@ class Settings:
     data_retention_days: int = int(os.getenv("DATA_RETENTION_DAYS", "90"))
     llm_timeout_seconds: float = float(os.getenv("LLM_TIMEOUT_SECONDS", "60"))
     llm_max_retries: int = int(os.getenv("LLM_MAX_RETRIES", "2"))
+    log_level: str = os.getenv("LOG_LEVEL", "INFO")
+    log_format: str = os.getenv("LOG_FORMAT", "json")
 
     def resolve_playbook_path(self) -> Path:
         """
