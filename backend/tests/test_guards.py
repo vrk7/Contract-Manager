@@ -13,6 +13,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../.."))
 from backend.app.guards import (
     ensure_retrieval_guardrails,
     filter_malicious_segments,
+    score_text_complexity,
 )
 from backend.app.schemas import GuardrailWarning
 
@@ -224,3 +225,31 @@ def test_oversized_input_is_truncated():
     sanitized, warnings = filter_malicious_segments(text)
     assert len(sanitized) == MAX_INPUT_CHARS
     assert any(w.type == "input_too_large" for w in warnings)
+
+
+# ---------------------------------------------------------------------------
+# score_text_complexity
+# ---------------------------------------------------------------------------
+
+def test_complexity_returns_required_keys():
+    result = score_text_complexity("Payment shall be made within 30 days.")
+    assert "word_count" in result
+    assert "sentence_count" in result
+    assert "avg_words_per_sentence" in result
+    assert "long_word_ratio" in result
+
+
+def test_complexity_word_count():
+    result = score_text_complexity("one two three four five")
+    assert result["word_count"] == 5
+
+
+def test_complexity_sentence_count():
+    result = score_text_complexity("First sentence. Second sentence. Third.")
+    assert result["sentence_count"] == 3
+
+
+def test_complexity_empty_string_safe():
+    result = score_text_complexity("")
+    assert result["word_count"] == 0
+    assert result["long_word_ratio"] == 0.0
