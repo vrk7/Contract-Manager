@@ -55,7 +55,10 @@ class AnalysisCreateRequest(BaseModel):
 
     @validator("contract_text")
     def normalize_text(cls, v: str) -> str:
-        return v.strip()
+        v = v.strip()
+        if not v.isprintable() and len([c for c in v if ord(c) < 32 and c not in "\t\n\r"]) > len(v) * 0.1:
+            raise ValueError("Contract text appears to contain binary or non-text content")
+        return v
 
 
 class AnalysisStatusResponse(BaseModel):
