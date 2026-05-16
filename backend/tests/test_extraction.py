@@ -137,3 +137,70 @@ def test_limitation_of_liability_pattern(text, expected_fragment):
 
 def test_no_false_positives_on_empty_contract():
     assert _extract_clauses("Please review the attached agreement.") == []
+
+
+@pytest.mark.parametrize("text,expected_fragment", [
+    ("Change order markup of 10 percent overhead and profit.", "10"),
+    ("All change orders shall include a fee of 15 percent.", "15"),
+])
+def test_change_order_pattern(text, expected_fragment):
+    f = _finding(text, "change_order")
+    assert f is not None, f"change_order not found in: {text!r}"
+    assert expected_fragment in f["extracted_value"]
+
+
+@pytest.mark.parametrize("text,expected_fragment", [
+    ("Substantial completion shall be achieved by June 1, 2025.", "June 1, 2025"),
+    ("Project requires substantial completion within 180 days of notice to proceed.", "180 days"),
+])
+def test_substantial_completion_pattern(text, expected_fragment):
+    f = _finding(text, "substantial_completion")
+    assert f is not None, f"substantial_completion not found in: {text!r}"
+    assert expected_fragment.split()[0] in f["extracted_value"]
+
+
+@pytest.mark.parametrize("text,expected_fragment", [
+    ("Delay damages shall be $5,000 per day of delay.", "5,000"),
+    ("Liquidated damages for delay are $10,000 per calendar day.", "10,000"),
+])
+def test_delay_damages_pattern(text, expected_fragment):
+    f = _finding(text, "delay_damages")
+    assert f is not None, f"delay_damages not found in: {text!r}"
+    assert expected_fragment in f["extracted_value"]
+
+
+def test_dispute_resolution_pattern():
+    text = "All disputes shall be resolved by arbitration in New York."
+    f = _finding(text, "dispute_resolution")
+    assert f is not None
+    assert "New York" in f["extracted_value"]
+
+
+def test_source_text_contains_context_window():
+    text = (
+        "The parties agree that all invoices shall be paid within 45 days of receipt. "
+        "Late payments shall accrue interest at 1.5% per month."
+    )
+    f = _finding(text, "payment_terms")
+    assert f is not None
+    assert len(f["source_text"]) > len("within 45 days")
+
+
+def test_deduplication_prevents_duplicate_clause_types():
+    text = "Pay within 30 days. Also pay within 30 days."
+    findings = _extract_clauses(text)
+    payment_findings = [f for f in findings if f["clause_type"] == "payment_terms"]
+    assert len(payment_findings) == 1
+
+
+def test_multiple_clause_types_extracted():
+    text = (
+        "Payment within 30 days. Retainage 10%. "
+        "Force majeure events suspend performance. "
+        "Liability shall not exceed $500,000."
+    )
+    types = _types(text)
+    assert "payment_terms" in types
+    assert "retainage" in types
+    assert "force_majeure" in types
+    assert "limitation_of_liability" in types
