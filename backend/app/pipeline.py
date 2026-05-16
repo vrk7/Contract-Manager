@@ -341,34 +341,49 @@ async def run_analysis_pipeline(
             f"Playbook excerpts: {' '.join(chunk.content for chunk in retrieved_chunks)}"
         )
         if analysis.analysis_type == "summary":
-            summary_text = f"{_friendly_clause_label(clause['clause_type'])}: {clause['extracted_value']}"
+            playbook_ctx = " ".join(chunk.content for chunk in retrieved_chunks)
+            summary_prompt = (
+                f"Summarize this contract clause for a project manager in 1-2 plain sentences.\n"
+                f"Clause type: {clause['clause_type']}. Extracted: {clause['extracted_value']}.\n"
+                f"Playbook standard: {standard}. Deviation: {deviation}."
+            )
+            llm_response, usage = await llm_client.complete(
+                summary_prompt, max_tokens=128, playbook_context=playbook_ctx
+            )
+            total_usage.input_tokens += usage.input_tokens
+            total_usage.output_tokens += usage.output_tokens
             finding = Finding(
                 clause_type=clause["clause_type"],
                 extracted_value=clause["extracted_value"],
                 playbook_standard=standard,
                 deviation=deviation,
                 risk_level=risk_level,  # type: ignore[arg-type]
-                recommendation=f"Summary: {summary_text}. Cite chunks: {citation_ids}.",
+                recommendation=f"{llm_response} (Refs: {citation_ids})",
                 source_text=clause["source_text"],
                 retrieved_chunks=retrieved_chunks,
             )
-            # Estimate token usage for telemetry parity
-            total_usage.input_tokens += len(prompt_text) // 4
-            total_usage.output_tokens += len(finding.recommendation) // 4
         elif analysis.analysis_type == "obligations":
-            obligation_text = f"Ensure compliance with {_friendly_clause_label(clause['clause_type']).lower()} ({clause['extracted_value']})."
+            playbook_ctx = " ".join(chunk.content for chunk in retrieved_chunks)
+            obligation_prompt = (
+                f"List the specific contractual obligations this clause creates for the contractor.\n"
+                f"Clause type: {clause['clause_type']}. Extracted: {clause['extracted_value']}.\n"
+                f"Playbook standard: {standard}. Be concrete and action-oriented."
+            )
+            llm_response, usage = await llm_client.complete(
+                obligation_prompt, max_tokens=192, playbook_context=playbook_ctx
+            )
+            total_usage.input_tokens += usage.input_tokens
+            total_usage.output_tokens += usage.output_tokens
             finding = Finding(
                 clause_type=clause["clause_type"],
                 extracted_value=clause["extracted_value"],
                 playbook_standard=standard,
                 deviation=deviation,
                 risk_level=risk_level,  # type: ignore[arg-type]
-                recommendation=f"Action: {obligation_text} Cite chunks: {citation_ids} for playbook guidance.",
+                recommendation=f"{llm_response} (Refs: {citation_ids})",
                 source_text=clause["source_text"],
                 retrieved_chunks=retrieved_chunks,
             )
-            total_usage.input_tokens += len(prompt_text) // 4
-            total_usage.output_tokens += len(finding.recommendation) // 4
         else:
             playbook_ctx = " ".join(chunk.content for chunk in retrieved_chunks)
             prompt = (
