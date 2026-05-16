@@ -390,6 +390,99 @@ def _merge_findings(findings: list[Finding]) -> list[Finding]:
     return list(merged.values())
 
 
+_LLM_CONCURRENCY = 5
+
+
+async def _call_llm_for_clause(
+    clause: dict[str, str],
+    retrieved_chunks: list[RetrievedChunk],
+    standard: str,
+    deviation: str,
+    risk_level: str,
+    analysis_type: str,
+    llm_client: AnthropicClient,
+    semaphore: asyncio.Semaphore,
+) -> tuple[Finding, LLMUsage]:
+    """Run LLM enrichment for one clause, gated by semaphore."""
+    async with semaphore:
+        citation_ids = _format_citation_ids(retrieved_chunks)
+        playbook_ctx = " ".join(chunk.content for chunk in retrieved_chunks)
+
+        if analysis_type == "summary":
+            prompt = (
+                f"Clause type: {_friendly_clause_label(clause['clause_type'])}.\n"
+                f"Extracted value: {clause['extracted_value']}.\n"
+                f"Playbook standard: {standard}.\n"
+                f"Detected deviation: {deviation}.\n"
+                f"Source text: {clause['source_text'][:400]}\n\n"
+                f"Summarize this clause for a project manager — plain language, no jargon."
+            )
+            out, usage = await llm_client.summarize_clause(prompt, max_tokens=256, playbook_context=playbook_ctx)
+            risk_flag_level = "medium" if out.risk_flag else risk_level
+            key_terms_str = "; ".join(out.key_terms) if out.key_terms else clause["extracted_value"]
+            finding = Finding(
+                clause_type=clause["clause_type"],
+                extracted_value=key_terms_str,
+                playbook_standard=standard,
+                deviation=deviation,
+                risk_level=risk_flag_level,  # type: ignore[arg-type]
+                recommendation=out.plain_language or f"See playbook reference {citation_ids}",
+                source_text=clause["source_text"],
+                retrieved_chunks=retrieved_chunks,
+                section=clause.get("section") or None,
+            )
+
+        elif analysis_type == "obligations":
+            prompt = (
+                f"Clause type: {_friendly_clause_label(clause['clause_type'])}.\n"
+                f"Extracted value: {clause['extracted_value']}.\n"
+                f"Playbook standard: {standard}.\n"
+                f"Source text: {clause['source_text'][:400]}\n\n"
+                f"Extract every concrete obligation this clause creates. Be specific and action-oriented."
+            )
+            out, usage = await llm_client.extract_obligations(prompt, max_tokens=384, playbook_context=playbook_ctx)
+            obligations_text = "; ".join(out.obligations) if out.obligations else deviation
+            deadline_note = f" Deadline: {out.deadline}." if out.deadline else ""
+            consequence_note = f" Consequence: {out.consequence}." if out.consequence else ""
+            finding = Finding(
+                clause_type=clause["clause_type"],
+                extracted_value=clause["extracted_value"],
+                playbook_standard=standard,
+                deviation=f"Party: {out.party}.{deadline_note}{consequence_note}",
+                risk_level=risk_level,  # type: ignore[arg-type]
+                recommendation=f"{obligations_text} (Refs: {citation_ids})",
+                source_text=clause["source_text"],
+                retrieved_chunks=retrieved_chunks,
+                section=clause.get("section") or None,
+            )
+
+        else:
+            prompt = (
+                f"Clause type: {_friendly_clause_label(clause['clause_type'])}.\n"
+                f"Extracted value: {clause['extracted_value']}.\n"
+                f"Playbook standard: {standard}.\n"
+                f"Heuristic deviation: {deviation}.\n"
+                f"Heuristic risk level: {risk_level}.\n"
+                f"Source text: {clause['source_text'][:400]}"
+            )
+            out, usage = await llm_client.analyze_risk(prompt, max_tokens=512, playbook_context=playbook_ctx)
+            final_risk = out.risk_level if out.risk_level != "unknown" else risk_level
+            finding = Finding(
+                clause_type=clause["clause_type"],
+                extracted_value=clause["extracted_value"],
+                playbook_standard=standard,
+                deviation=out.deviation_summary or deviation,
+                risk_level=final_risk,  # type: ignore[arg-type]
+                recommendation=f"{out.recommendation} (Playbook refs: {citation_ids})",
+                source_text=clause["source_text"],
+                retrieved_chunks=retrieved_chunks,
+                confidence=out.confidence,
+                section=clause.get("section") or None,
+            )
+
+        return finding, usage
+
+
 async def run_analysis_pipeline(
     session: AsyncSession | None,
     analysis: Analysis,
@@ -504,95 +597,16 @@ async def run_analysis_pipeline(
         findings.append(finding)
         await _emit("partial_finding", {"analysis_id": analysis.id, "finding": finding.dict()})
 
-    # Pass 2 — LLM enrichment for top _MAX_LLM_FINDINGS clauses (serial; concurrency added next)
-    for clause, retrieved_chunks, standard, deviation, risk_level in llm_batch:
-        citation_ids = _format_citation_ids(retrieved_chunks)
-        playbook_ctx = " ".join(chunk.content for chunk in retrieved_chunks)
-
-        if analysis.analysis_type == "summary":
-            summary_prompt = (
-                f"Clause type: {_friendly_clause_label(clause['clause_type'])}.\n"
-                f"Extracted value: {clause['extracted_value']}.\n"
-                f"Playbook standard: {standard}.\n"
-                f"Detected deviation: {deviation}.\n"
-                f"Source text: {clause['source_text'][:400]}\n\n"
-                f"Summarize this clause for a project manager — plain language, no jargon."
-            )
-            summary_out, usage = await llm_client.summarize_clause(
-                summary_prompt, max_tokens=256, playbook_context=playbook_ctx
-            )
-            total_usage.input_tokens += usage.input_tokens
-            total_usage.output_tokens += usage.output_tokens
-            risk_flag_level = "medium" if summary_out.risk_flag else risk_level
-            key_terms_str = "; ".join(summary_out.key_terms) if summary_out.key_terms else clause["extracted_value"]
-            finding = Finding(
-                clause_type=clause["clause_type"],
-                extracted_value=key_terms_str,
-                playbook_standard=standard,
-                deviation=deviation,
-                risk_level=risk_flag_level,  # type: ignore[arg-type]
-                recommendation=summary_out.plain_language or f"See playbook reference {citation_ids}",
-                source_text=clause["source_text"],
-                retrieved_chunks=retrieved_chunks,
-                section=clause.get("section") or None,
-            )
-
-        elif analysis.analysis_type == "obligations":
-            obligation_prompt = (
-                f"Clause type: {_friendly_clause_label(clause['clause_type'])}.\n"
-                f"Extracted value: {clause['extracted_value']}.\n"
-                f"Playbook standard: {standard}.\n"
-                f"Source text: {clause['source_text'][:400]}\n\n"
-                f"Extract every concrete obligation this clause creates. Be specific and action-oriented."
-            )
-            oblig_out, usage = await llm_client.extract_obligations(
-                obligation_prompt, max_tokens=384, playbook_context=playbook_ctx
-            )
-            total_usage.input_tokens += usage.input_tokens
-            total_usage.output_tokens += usage.output_tokens
-            obligations_text = "; ".join(oblig_out.obligations) if oblig_out.obligations else deviation
-            deadline_note = f" Deadline: {oblig_out.deadline}." if oblig_out.deadline else ""
-            consequence_note = f" Consequence: {oblig_out.consequence}." if oblig_out.consequence else ""
-            finding = Finding(
-                clause_type=clause["clause_type"],
-                extracted_value=clause["extracted_value"],
-                playbook_standard=standard,
-                deviation=f"Party: {oblig_out.party}.{deadline_note}{consequence_note}",
-                risk_level=risk_level,  # type: ignore[arg-type]
-                recommendation=f"{obligations_text} (Refs: {citation_ids})",
-                source_text=clause["source_text"],
-                retrieved_chunks=retrieved_chunks,
-                section=clause.get("section") or None,
-            )
-
-        else:
-            risk_prompt = (
-                f"Clause type: {_friendly_clause_label(clause['clause_type'])}.\n"
-                f"Extracted value: {clause['extracted_value']}.\n"
-                f"Playbook standard: {standard}.\n"
-                f"Heuristic deviation: {deviation}.\n"
-                f"Heuristic risk level: {risk_level}.\n"
-                f"Source text: {clause['source_text'][:400]}"
-            )
-            structured_out, usage = await llm_client.analyze_risk(
-                risk_prompt, max_tokens=512, playbook_context=playbook_ctx
-            )
-            total_usage.input_tokens += usage.input_tokens
-            total_usage.output_tokens += usage.output_tokens
-            final_risk = structured_out.risk_level if structured_out.risk_level != "unknown" else risk_level
-            final_deviation = structured_out.deviation_summary or deviation
-            finding = Finding(
-                clause_type=clause["clause_type"],
-                extracted_value=clause["extracted_value"],
-                playbook_standard=standard,
-                deviation=final_deviation,
-                risk_level=final_risk,  # type: ignore[arg-type]
-                recommendation=f"{structured_out.recommendation} (Playbook refs: {citation_ids})",
-                source_text=clause["source_text"],
-                retrieved_chunks=retrieved_chunks,
-                confidence=structured_out.confidence,
-                section=clause.get("section") or None,
-            )
+    # Pass 2 — concurrent LLM enrichment for top _MAX_LLM_FINDINGS clauses
+    semaphore = asyncio.Semaphore(_LLM_CONCURRENCY)
+    llm_tasks = [
+        _call_llm_for_clause(clause, chunks, std, dev, risk, analysis.analysis_type, llm_client, semaphore)
+        for clause, chunks, std, dev, risk in llm_batch
+    ]
+    for coro in asyncio.as_completed(llm_tasks):
+        finding, usage = await coro
+        total_usage.input_tokens += usage.input_tokens
+        total_usage.output_tokens += usage.output_tokens
         findings.append(finding)
         await _emit("partial_finding", {"analysis_id": analysis.id, "finding": finding.dict()})
 
