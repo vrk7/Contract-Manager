@@ -525,6 +525,8 @@ async def run_analysis_pipeline(
                 recommendation=f"{structured_out.recommendation} (Playbook refs: {citation_ids})",
                 source_text=clause["source_text"],
                 retrieved_chunks=retrieved_chunks,
+                confidence=structured_out.confidence,
+                section=clause.get("section") or None,
             )
         findings.append(finding)
         await _emit(
