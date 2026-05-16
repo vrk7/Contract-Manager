@@ -129,3 +129,33 @@ def test_retrieved_chunk_has_required_fields(loaded_rag):
     assert chunk.content
     assert chunk.source == "playbook"
     assert chunk.playbook_version_id == VERSION_ID
+
+
+def test_bm25_query_returns_results_when_available(loaded_rag):
+    try:
+        import rank_bm25  # noqa: F401
+        bm25_available = True
+    except ImportError:
+        bm25_available = False
+
+    results = loaded_rag.bm25_query(VERSION_ID, "payment invoice 30 days")
+    if bm25_available:
+        assert len(results) > 0
+    else:
+        assert results == []
+
+
+def test_bm25_query_empty_collection_returns_empty(rag):
+    results = rag.bm25_query(VERSION_ID, "payment terms")
+    assert results == []
+
+
+def test_hybrid_query_returns_at_most_k_results(loaded_rag):
+    results = loaded_rag.hybrid_query(VERSION_ID, "payment retainage notice", k=2)
+    assert len(results) <= 2
+
+
+def test_hybrid_query_no_duplicate_chunk_ids(loaded_rag):
+    results = loaded_rag.hybrid_query(VERSION_ID, "payment retainage notice", k=5)
+    ids = [r.chunk_id for r in results]
+    assert len(ids) == len(set(ids))
