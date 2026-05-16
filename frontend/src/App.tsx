@@ -163,8 +163,15 @@ function App() {
             <textarea
               value={contractText}
               onChange={(e) => setContractText(e.target.value)}
-              placeholder="Paste contract text here"
+              onKeyDown={handleKeyDown}
+              placeholder="Paste contract text here (Ctrl+Enter to analyze)"
             />
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: '#888', margin: '0.25rem 0' }}>
+              <span>{contractText.length.toLocaleString()} characters</span>
+              <button onClick={handleCopyText} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.75rem', color: '#888' }}>
+                Copy
+              </button>
+            </div>
             <div style={{ margin: '0.5rem 0' }}>
               <label className="input-label" htmlFor="analysisType">
                 Analysis type
