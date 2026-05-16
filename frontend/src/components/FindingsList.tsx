@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 
 interface RetrievedChunk {
   chunk_id: string;
@@ -26,7 +26,20 @@ interface ParsedRecommendation {
   citations: string[];
 }
 
+const RISK_COLORS: Record<string, string> = {
+  critical: '#e53e3e',
+  high: '#dd6b20',
+  medium: '#d69e2e',
+  low: '#38a169',
+  acceptable: '#319795',
+  unknown: '#718096',
+};
+
 const riskColor = (risk: string): string => `badge ${risk}`;
+
+const riskBorderStyle = (risk: string): React.CSSProperties => ({
+  borderLeft: `4px solid ${RISK_COLORS[risk] ?? RISK_COLORS.unknown}`,
+});
 
 const parseRecommendation = (text: string = ''): ParsedRecommendation => {
   const [main, citations] = text.split(/Cite chunks:/i);
@@ -42,24 +55,40 @@ const parseRecommendation = (text: string = ''): ParsedRecommendation => {
 };
 
 export default function FindingsList({ findings }: FindingsListProps) {
+  const [expandedIdx, setExpandedIdx] = useState<number | null>(null);
+
   if (!findings.length) {
     return <p>No findings yet.</p>;
   }
 
+  const sorted = [...findings].sort((a, b) => {
+    const order = ['critical', 'high', 'medium', 'low', 'acceptable', 'unknown'];
+    return order.indexOf(a.risk_level) - order.indexOf(b.risk_level);
+  });
+
   return (
     <div className="grid findings-grid">
-      {findings.map((f, idx) => {
+      {sorted.map((f, idx) => {
         const recommendation = parseRecommendation(f.recommendation);
+        const isExpanded = expandedIdx === idx;
         return (
-          <div key={idx} className="card finding-card">
-            <div className="finding-header">
+          <div key={idx} className="card finding-card" style={riskBorderStyle(f.risk_level)}>
+            <div
+              className="finding-header"
+              onClick={() => setExpandedIdx(isExpanded ? null : idx)}
+              style={{ cursor: 'pointer', userSelect: 'none' }}
+              title={isExpanded ? 'Click to collapse' : 'Click to expand'}
+            >
               <div>
                 <p className="eyebrow">Clause</p>
-                <strong>{f.clause_type}</strong>
+                <strong>{f.clause_type.replace(/_/g, ' ')}</strong>
               </div>
-              <span className={riskColor(f.risk_level)}>{f.risk_level}</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <span className={riskColor(f.risk_level)}>{f.risk_level}</span>
+                <span style={{ fontSize: '0.75rem', color: '#888' }}>{isExpanded ? '▲' : '▼'}</span>
+              </div>
             </div>
-            <div className="finding-body">
+            {isExpanded && <div className="finding-body">
               <div className="finding-facts">
                 <div className="fact">
                   <p className="label">Extracted</p>
@@ -114,7 +143,7 @@ export default function FindingsList({ findings }: FindingsListProps) {
                   </ul>
                 </div>
               )}
-            </div>
+            </div>}
           </div>
         );
       })}
