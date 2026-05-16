@@ -9,6 +9,7 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
 
     steps:
       - uses: actions/checkout@v4
@@ -29,4 +30,5 @@ jobs:
             sh -c "uvicorn backend.app.main:app --host 0.0.0.0 --port 8000"
           sleep 5
           curl --fail http://localhost:8000/health
+          curl --fail http://localhost:8000/health/deep
           docker stop backend-ci
