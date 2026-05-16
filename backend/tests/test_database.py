@@ -53,3 +53,55 @@ def test_base_metadata_registers_expected_tables():
     assert "analyses" in table_names
     assert "playbook_versions" in table_names
     assert "playbook_chunks" in table_names
+    assert "audit_log" in table_names
+
+
+async def test_write_audit_log_creates_entry(test_engine, monkeypatch):
+    from sqlalchemy import select
+    from backend.app import database as db_mod
+    from backend.app.models import AuditLog, write_audit_log
+
+    factory = async_sessionmaker(test_engine, expire_on_commit=False, autoflush=False, autocommit=False)
+    monkeypatch.setattr(db_mod, "AsyncSessionLocal", factory)
+
+    async with factory() as session:
+        await write_audit_log(session, "analyses", "test-id", "create", changed_by="user1")
+        await session.flush()
+        result = await session.execute(select(AuditLog).where(AuditLog.row_id == "test-id"))
+        entry = result.scalars().first()
+        assert entry is not None
+        assert entry.table_name == "analyses"
+        assert entry.action == "create"
+        assert entry.changed_by == "user1"
+
+
+async def test_analysis_model_set_result(test_engine):
+    from backend.app.models import Analysis
+    import json
+
+    analysis = Analysis(
+        id="test-1",
+        analysis_type="risks",
+        contract_text="Pay within 30 days.",
+        status="queued",
+    )
+    analysis.set_result({"overall_risk_score": "high", "findings": []})
+    data = json.loads(analysis.result_json)
+    assert data["overall_risk_score"] == "high"
+
+
+async def test_analysis_soft_delete_field_defaults_none():
+    from backend.app.models import Analysis
+    analysis = Analysis(
+        id="test-2",
+        analysis_type="summary",
+        contract_text="Payment 30 days.",
+        status="queued",
+    )
+    assert analysis.deleted_at is None
+
+
+async def test_playbook_version_deleted_at_defaults_none():
+    from backend.app.models import PlaybookVersion
+    version = PlaybookVersion(content="test content")
+    assert version.deleted_at is None
