@@ -26,6 +26,7 @@ from slowapi.util import get_remote_address
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from .cache import AnalysisCache, analysis_cache
 from .config import get_settings
 from .database import get_session
 from .events import event_bus
@@ -236,6 +237,16 @@ async def analyze(request: Request, payload: AnalysisCreateRequest, background_t
     user_ip = request.client.host if request.client else "unknown"
     request_id = getattr(request.state, "request_id", "unknown")
     logger.info("analyze_request", user_ip=user_ip, request_id=request_id, analysis_type=payload.analysis_type)
+
+    cache_key = AnalysisCache.make_key(
+        payload.contract_text,
+        payload.playbook_version_id or "latest",
+        payload.analysis_type,
+    )
+    cached = analysis_cache.get(cache_key)
+    if cached:
+        logger.info("cache_hit", cache_key=cache_key[:16])
+        return AnalysisStatusResponse(analysis_id=cached["analysis_id"], status="completed")
 
     if idempotency_key and session and not settings.in_memory_mode:
         existing = await session.execute(
