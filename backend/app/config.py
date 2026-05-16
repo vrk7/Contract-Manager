@@ -34,6 +34,7 @@ class Settings:
     inline_analysis: bool = os.getenv("INLINE_ANALYSIS", "false").lower() == "true"
     in_memory_mode: bool = os.getenv("BYPASS_DB_FOR_TESTS", "false").lower() == "true"
     chroma_telemetry: bool = os.getenv("CHROMA_TELEMETRY", "false").lower() == "true"
+    data_retention_days: int = int(os.getenv("DATA_RETENTION_DAYS", "90"))
 
     def resolve_playbook_path(self) -> Path:
         """
