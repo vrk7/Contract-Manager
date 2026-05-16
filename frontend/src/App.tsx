@@ -262,7 +262,7 @@ function App() {
                 </div>
               </div>
             )}
-            <FindingsList findings={result?.findings || []} />
+            <FindingsList findings={result?.findings || []} onClear={() => { setResult(null); setWarnings([]); setUsage(null); setStatus(null); }} />
           </div>
         </div>
       )}
