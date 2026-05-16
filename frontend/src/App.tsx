@@ -106,6 +106,28 @@ function App() {
 
   const riskBadgeClass = (risk: string): string => `badge ${risk}`;
 
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter' && contractText) {
+      e.preventDefault();
+      handleAnalyze();
+    }
+  };
+
+  const handleExportJson = () => {
+    if (!result) return;
+    const blob = new Blob([JSON.stringify(result, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `analysis-${analysisId || 'result'}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleCopyText = () => {
+    navigator.clipboard.writeText(contractText);
+  };
+
   return (
     <div className="container">
       <header className="page-header">
