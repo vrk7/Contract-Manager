@@ -12,7 +12,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from .guards import ensure_retrieval_guardrails, filter_malicious_segments
 from .llm import AnthropicClient, LLMUsage
 from .models import Analysis, PlaybookVersion
-from .rag import PlaybookRAG, chunk_playbook
+from .rag import PlaybookRAG, chunk_playbook_with_headings as chunk_playbook
 from .risk_config import DEFAULT_RISK_CONFIG, score_numeric
 from .schemas import AnalysisResult, Finding, GuardrailWarning, RetrievedChunk, Usage
 from .utils import extract_first_number
