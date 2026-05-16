@@ -304,6 +304,36 @@ def _format_citation_ids(retrieved_chunks: list[RetrievedChunk]) -> str:
     return "; ".join(ids)
 
 
+_AMPLIFICATION_PAIRS: list[tuple[str, str]] = [
+    ("payment_terms", "retainage"),
+    ("liquidated_damages", "delay_damages"),
+    ("indemnification", "limitation_of_liability"),
+]
+_RISK_UPGRADE: dict[str, str] = {
+    "low": "medium",
+    "medium": "high",
+    "high": "critical",
+    "critical": "critical",
+}
+
+
+def amplify_inter_clause_risks(findings: list[Finding]) -> list[Finding]:
+    """
+    Upgrade risk level for findings where two related high-risk clauses are both present.
+    e.g. long payment_terms + high retainage compound cash-flow risk.
+    """
+    risk_map: dict[str, Finding] = {f.clause_type: f for f in findings}
+    for ct_a, ct_b in _AMPLIFICATION_PAIRS:
+        a = risk_map.get(ct_a)
+        b = risk_map.get(ct_b)
+        if not a or not b:
+            continue
+        if _risk_index(a.risk_level) >= _risk_index("high") and _risk_index(b.risk_level) >= _risk_index("high"):
+            a.risk_level = _RISK_UPGRADE.get(a.risk_level, a.risk_level)  # type: ignore[assignment]
+            b.risk_level = _RISK_UPGRADE.get(b.risk_level, b.risk_level)  # type: ignore[assignment]
+    return findings
+
+
 def _merge_findings(findings: list[Finding]) -> list[Finding]:
     merged: dict[str, Finding] = {}
     for finding in findings:
@@ -477,7 +507,7 @@ async def run_analysis_pipeline(
         )
 
     # Drop invalid findings (missing source or retrieval)
-    merged_findings = _merge_findings(findings)
+    merged_findings = amplify_inter_clause_risks(_merge_findings(findings))
     guardrails.extend(ensure_retrieval_guardrails([f.dict() for f in merged_findings]))
     merged_findings = [
         f
