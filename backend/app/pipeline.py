@@ -40,6 +40,12 @@ _PATTERNS: list[tuple[str, str, str]] = [
     ("delay_damages",          r"delay\w*\s+damages.*?\$([\d,]+)|liquidated.*?delay.*?\$([\d,]+)",           "USD"),
     ("governing_law",          r"governed\s+by\s+(?:the\s+)?laws?\s+of\s+(?:the\s+)?([A-Za-z ]+)",         "jurisdiction"),
     ("limitation_of_liability", r"liabilit\w+\s+(?:shall\s+)?not\s+exceed\s+\$?([\d,]+)",                  "USD"),
+    ("non_compete",            r"non[- ]?compete|not\s+(?:to\s+)?compete|competing\s+business",            ""),
+    ("ip_assignment",          r"intellectual\s+property.*?assign|work\s+made\s+for\s+hire",               ""),
+    ("data_privacy",           r"personal\s+data|data\s+protection|GDPR|privacy\s+policy|data\s+breach",   ""),
+    ("exclusivity",            r"exclusive\w*\s+(?:right|supplier|vendor|provider)",                       ""),
+    ("cure_period",            r"cure\s+period\s+of\s+(\d+)\s+days|(\d+)\s+days?\s+to\s+cure",            "days"),
+    ("assignment_rights",      r"assign\w*\s+this\s+agreement|assignment\s+of\s+(?:this\s+)?contract",     ""),
 ]
 
 
