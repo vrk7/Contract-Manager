@@ -27,6 +27,9 @@ _LARGE_CONTRACT_THRESHOLD = 30_000  # ~6 pages
 # Context characters captured around each regex match.
 _CONTEXT_WINDOW = 300
 
+# Maximum number of clauses sent to the LLM; lower-risk ones get heuristic-only findings.
+_MAX_LLM_FINDINGS = 30
+
 _PATTERNS: list[tuple[str, str, str]] = [
     ("payment_terms",          r"within\s+(\d+)\s+days",                                                    "days"),
     ("retainage",              r"retain(?:age)?\s+(\d+)%",                                                  "%"),
@@ -456,13 +459,53 @@ async def run_analysis_pipeline(
     llm_client = AnthropicClient()
     total_usage = LLMUsage(0, 0)
 
+    # Pass 1 — heuristic-score every extracted clause (no LLM, fast)
+    _ScoredClause = tuple  # (clause, retrieved_chunks, standard, deviation, risk_level)
+    scored: list[tuple[dict[str, str], list[RetrievedChunk], str, str, str]] = []
     for clause in extracted_clauses:
-        retrieved_chunks: list[RetrievedChunk] = []
-        if version_id:
-            retrieved_chunks = rag.hybrid_query(version_id, clause["source_text"])
-        if not retrieved_chunks:
+        retrieved: list[RetrievedChunk] = rag.hybrid_query(version_id, clause["source_text"]) if version_id else []
+        if not retrieved:
             continue
-        standard, deviation, risk_level = _compare_with_playbook(clause, retrieved_chunks)
+        standard, deviation, risk_level = _compare_with_playbook(clause, retrieved)
+        scored.append((clause, retrieved, standard, deviation, risk_level))
+
+    # Sort highest-risk first; only top _MAX_LLM_FINDINGS go to the LLM
+    scored.sort(key=lambda x: _risk_index(x[4]), reverse=True)
+    llm_batch = scored[:_MAX_LLM_FINDINGS]
+    heuristic_only = scored[_MAX_LLM_FINDINGS:]
+
+    await _emit(
+        "status",
+        {
+            "analysis_id": analysis.id,
+            "status": "analyzing",
+            "message": (
+                f"LLM analysis for {len(llm_batch)} clause(s)"
+                + (f"; {len(heuristic_only)} assessed heuristically" if heuristic_only else "")
+            ),
+        },
+    )
+
+    # Emit heuristic-only findings immediately (no LLM cost)
+    for clause, retrieved_chunks, standard, deviation, risk_level in heuristic_only:
+        citation_ids = _format_citation_ids(retrieved_chunks)
+        finding = Finding(
+            clause_type=clause["clause_type"],
+            extracted_value=clause["extracted_value"],
+            playbook_standard=standard,
+            deviation=deviation,
+            risk_level=risk_level,  # type: ignore[arg-type]
+            recommendation=f"Heuristic assessment (low priority — see playbook refs {citation_ids})",
+            source_text=clause["source_text"],
+            retrieved_chunks=retrieved_chunks,
+            confidence=0.3,
+            section=clause.get("section") or None,
+        )
+        findings.append(finding)
+        await _emit("partial_finding", {"analysis_id": analysis.id, "finding": finding.dict()})
+
+    # Pass 2 — LLM enrichment for top _MAX_LLM_FINDINGS clauses (serial; concurrency added next)
+    for clause, retrieved_chunks, standard, deviation, risk_level in llm_batch:
         citation_ids = _format_citation_ids(retrieved_chunks)
         playbook_ctx = " ".join(chunk.content for chunk in retrieved_chunks)
 
@@ -551,10 +594,7 @@ async def run_analysis_pipeline(
                 section=clause.get("section") or None,
             )
         findings.append(finding)
-        await _emit(
-            "partial_finding",
-            {"analysis_id": analysis.id, "finding": finding.dict()},
-        )
+        await _emit("partial_finding", {"analysis_id": analysis.id, "finding": finding.dict()})
 
     # Drop invalid findings (missing source or retrieval)
     merged_findings = amplify_inter_clause_risks(_merge_findings(findings))
