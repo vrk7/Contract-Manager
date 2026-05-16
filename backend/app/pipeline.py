@@ -37,9 +37,9 @@ _PATTERNS: list[tuple[str, str, str]] = [
     ("force_majeure",          r"force\s+majeure|act\s+of\s+(?:God|nature)|unforeseeable\s+(?:event|circumstance)", ""),
     ("warranty",               r"warrant\w*\s+(?:period\s+of\s+)?(\d+)\s+(?:year|month)",                   "period"),
     ("insurance",              r"insur\w+\s+(?:coverage|requirement)\w*.*?\$([\d,]+(?:\.\d+)?)",             "USD"),
-    ("change_order",           r"change\s+order\s+(?:markup|fee|overhead)\s+of\s+(\d+)",                    "%"),
+    ("change_order",           r"change\s+orders?\s+.*?(?:markup|fee|overhead)\s+of\s+(\d+(?:\.\d+)?(?:\s*percent|%)?)",  "%"),
     ("substantial_completion", r"substantial\s+complet\w+.*?(\d+\s+days|[A-Z][a-z]+\s+\d+,?\s*\d{4})",     ""),
-    ("delay_damages",          r"delay\w*\s+damages.*?\$([\d,]+)|liquidated.*?delay.*?\$([\d,]+)",           "USD"),
+    ("delay_damages",          r"(?:delay\w*\s+damages|liquidated\s+damages\s+for\s+delay).*?\$([\d,]+)",   "USD"),
     ("governing_law",          r"governed\s+by\s+(?:the\s+)?laws?\s+of\s+(?:the\s+)?([A-Za-z ]+)",         "jurisdiction"),
     ("limitation_of_liability", r"liabilit\w+\s+(?:shall\s+)?not\s+exceed\s+\$?([\d,]+)",                  "USD"),
     ("non_compete",            r"non[- ]?compete|not\s+(?:to\s+)?compete|competing\s+business",            ""),
@@ -92,14 +92,14 @@ def _split_into_sections(text: str, max_size: int = 10_000) -> list[str]:
             end = splits[i + 1] if i + 1 < len(splits) else len(text)
             chunk = text[start:end]
             if len(chunk) > max_size:
-                step = max_size - overlap
+                step = max(1, max_size - overlap)
                 for j in range(0, len(chunk), step):
                     sections.append(chunk[j : j + max_size])
             else:
                 sections.append(chunk)
     else:
         # No clear headings — sliding window
-        step = max_size - overlap
+        step = max(1, max_size - overlap)
         for i in range(0, len(text), step):
             sections.append(text[i : i + max_size])
 
@@ -124,7 +124,8 @@ def _extract_clauses(contract_text: str) -> list[dict[str, str]]:
     for section in sections:
         for clause_type, pattern, unit in _PATTERNS:
             for match in re.finditer(pattern, section, flags=re.IGNORECASE):
-                value = match.group(1) if match.groups() else match.group(0)
+                value = next((g for g in match.groups() if g is not None), None) if match.groups() else None
+                value = value or match.group(0)
                 dedup_key = f"{clause_type}:{value.strip().lower()}"
                 if dedup_key in seen:
                     continue

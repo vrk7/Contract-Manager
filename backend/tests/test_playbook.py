@@ -83,9 +83,10 @@ async def test_seed_playbook_is_idempotent_on_second_call(session, playbook_file
     assert len(versions) == 1
 
 
-async def test_seed_playbook_returns_none_for_missing_file(session):
-    result = await seed_playbook(session, "/nonexistent/path/playbook.md")
-    assert result is None
+async def test_seed_playbook_raises_for_missing_file(session):
+    import pytest
+    with pytest.raises(FileNotFoundError):
+        await seed_playbook(session, "/nonexistent/path/playbook.md")
 
 
 async def test_list_playbook_versions_empty_without_seed(session):
