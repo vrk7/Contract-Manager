@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import time
 from dataclasses import dataclass
 from typing import Any, Optional
@@ -8,6 +9,7 @@ import anthropic
 import structlog
 
 from .config import get_settings
+from .schemas import LLMFindingOutput
 
 logger = structlog.get_logger(__name__)
 settings = get_settings()
@@ -15,8 +17,16 @@ settings = get_settings()
 SYSTEM_PROMPT = (
     "You are a construction contract risk advisor. "
     "Analyze contract clauses against playbook standards and identify risks. "
-    "Always cite the specific playbook standard you are comparing against."
+    "Always cite the specific playbook standard you are comparing against. "
+    "When asked for structured output, respond ONLY with valid JSON matching the requested schema."
 )
+
+STRUCTURED_OUTPUT_SCHEMA = """{
+  "risk_level": "<critical|high|medium|low|acceptable|unknown>",
+  "deviation_summary": "<one sentence describing the deviation>",
+  "recommendation": "<2-3 sentence concrete negotiation recommendation>",
+  "confidence": <0.0-1.0>
+}"""
 
 COT_INSTRUCTIONS = (
     "\n\nThink step-by-step:\n"
@@ -115,3 +125,33 @@ class AnthropicClient:
             cost_usd=round(usage.estimated_cost, 6),
         )
         return output_text, usage
+
+    async def complete_structured(
+        self,
+        prompt: str,
+        max_tokens: int = 512,
+        playbook_context: str | None = None,
+    ) -> tuple[LLMFindingOutput, LLMUsage]:
+        """
+        Run a Claude completion and parse the response as LLMFindingOutput JSON.
+        Falls back to a default LLMFindingOutput on parse failure.
+        """
+        structured_prompt = (
+            f"{prompt}\n\n"
+            f"Respond ONLY with JSON matching this schema:\n{STRUCTURED_OUTPUT_SCHEMA}"
+        )
+        raw, usage = await self.complete(structured_prompt, max_tokens=max_tokens, playbook_context=playbook_context)
+        return _parse_llm_output(raw), usage
+
+
+def _parse_llm_output(raw: str) -> LLMFindingOutput:
+    """Parse raw LLM text as LLMFindingOutput, with graceful fallback."""
+    try:
+        start = raw.find("{")
+        end = raw.rfind("}") + 1
+        if start >= 0 and end > start:
+            data = json.loads(raw[start:end])
+            return LLMFindingOutput(**data)
+    except Exception:
+        pass
+    return LLMFindingOutput(recommendation=raw.strip())
