@@ -84,6 +84,20 @@ class PlaybookReindexRequest(BaseModel):
     version_id: Optional[str] = None
 
 
+class AnalysisListItem(BaseModel):
+    analysis_id: str
+    status: str
+    analysis_type: str
+    created_at: datetime
+    overall_risk_score: Optional[str] = None
+
+
+class AnalysisListResponse(BaseModel):
+    items: list[AnalysisListItem]
+    next_cursor: Optional[str] = None
+    total: int
+
+
 class LLMFindingOutput(BaseModel):
     """Structured output schema expected from Claude when analysis_type=risks."""
 
