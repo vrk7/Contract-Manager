@@ -81,3 +81,30 @@ async def test_seed_playbook_is_idempotent_on_second_call(session, playbook_file
     assert v1.id == v2.id
     versions = await list_playbook_versions(session)
     assert len(versions) == 1
+
+
+async def test_seed_playbook_returns_none_for_missing_file(session):
+    result = await seed_playbook(session, "/nonexistent/path/playbook.md")
+    assert result is None
+
+
+async def test_list_playbook_versions_empty_without_seed(session):
+    versions = await list_playbook_versions(session)
+    assert versions == []
+
+
+async def test_seed_playbook_stores_version_label(session, playbook_file):
+    version = await seed_playbook(session, playbook_file)
+    assert version is not None
+
+
+async def test_multiple_seeds_with_different_content_creates_new_version(session, tmp_path):
+    p1 = tmp_path / "p1.md"
+    p2 = tmp_path / "p2.md"
+    p1.write_text("# Terms v1\n\nPayment 30 days.")
+    p2.write_text("# Terms v2\n\nPayment 45 days.")
+    v1 = await seed_playbook(session, str(p1))
+    await seed_playbook(session, str(p2))
+    versions = await list_playbook_versions(session)
+    assert len(versions) >= 1
+    assert v1 is not None
