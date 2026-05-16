@@ -28,6 +28,25 @@ DEFAULT_RISK_CONFIG: dict[str, ClauseRiskThresholds] = {
 }
 
 
+JURISDICTION_OVERRIDES: dict[str, dict[str, ClauseRiskThresholds]] = {
+    "DE": {
+        "payment_terms": ClauseRiskThresholds(low_max=30, medium_max=45, high_max=60, unit="days"),
+        "retainage": ClauseRiskThresholds(low_max=3, medium_max=5, high_max=10, unit="%"),
+    },
+    "CA": {
+        "payment_terms": ClauseRiskThresholds(low_max=45, medium_max=60, high_max=90, unit="days"),
+    },
+}
+
+
+def get_config_for_jurisdiction(jurisdiction: str | None = None) -> dict[str, ClauseRiskThresholds]:
+    """Return risk config merged with jurisdiction-specific overrides."""
+    base = dict(DEFAULT_RISK_CONFIG)
+    if jurisdiction and jurisdiction.upper() in JURISDICTION_OVERRIDES:
+        base.update(JURISDICTION_OVERRIDES[jurisdiction.upper()])
+    return base
+
+
 def score_numeric(clause_type: str, value: float, config: dict[str, ClauseRiskThresholds] | None = None) -> str:
     """
     Score a numeric clause value against the risk config.
