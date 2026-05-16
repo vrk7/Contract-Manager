@@ -126,8 +126,37 @@ async def session_dependency():
 
 
 @app.get("/health")
-async def health() -> dict[str, str]:
+async def health() -> dict[str, Any]:
     return {"status": "ok"}
+
+
+@app.get("/health/deep")
+async def health_deep() -> dict[str, Any]:
+    """Deep health check — verifies DB connectivity and Chroma availability."""
+    checks: dict[str, str] = {}
+
+    if not settings.in_memory_mode:
+        try:
+            async with get_session() as session:
+                await session.execute(select(Analysis).limit(1))
+            checks["database"] = "ok"
+        except Exception as exc:
+            checks["database"] = f"error: {exc}"
+    else:
+        checks["database"] = "in-memory"
+
+    try:
+        from .rag import get_chroma_client
+        client = get_chroma_client()
+        client.list_collections()
+        checks["chroma"] = "ok"
+    except Exception as exc:
+        checks["chroma"] = f"error: {exc}"
+
+    checks["llm_key"] = "configured" if settings.anthropic_api_key else "missing"
+
+    overall = "ok" if all(v in ("ok", "in-memory", "configured") for v in checks.values()) else "degraded"
+    return {"status": overall, "checks": checks}
 
 
 async def _process_analysis(analysis_id: str) -> None:
