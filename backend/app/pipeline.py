@@ -228,6 +228,12 @@ def _friendly_clause_label(clause_type: str) -> str:
         "delay_damages": "Delay damages",
         "governing_law": "Governing law",
         "limitation_of_liability": "Limitation of liability",
+        "non_compete": "Non-compete",
+        "ip_assignment": "IP assignment",
+        "data_privacy": "Data privacy",
+        "exclusivity": "Exclusivity",
+        "cure_period": "Cure period",
+        "assignment_rights": "Assignment rights",
     }
     return labels.get(clause_type, clause_type.replace("_", " ").title())
 
