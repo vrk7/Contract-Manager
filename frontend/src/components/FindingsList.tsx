@@ -54,23 +54,57 @@ const parseRecommendation = (text: string = ''): ParsedRecommendation => {
   };
 };
 
-export default function FindingsList({ findings }: FindingsListProps) {
+interface FindingsListProps {
+  findings: Finding[];
+  onClear?: () => void;
+}
+
+export default function FindingsList({ findings, onClear }: FindingsListProps) {
   const [expandedIdx, setExpandedIdx] = useState<number | null>(null);
+  const [allExpanded, setAllExpanded] = useState(false);
 
   if (!findings.length) {
-    return <p>No findings yet.</p>;
+    return <p style={{ color: '#475569' }}>No findings yet. Paste a contract and click Start analysis.</p>;
   }
 
-  const sorted = [...findings].sort((a, b) => {
-    const order = ['critical', 'high', 'medium', 'low', 'acceptable', 'unknown'];
-    return order.indexOf(a.risk_level) - order.indexOf(b.risk_level);
-  });
+  const RISK_ORDER = ['critical', 'high', 'medium', 'low', 'acceptable', 'unknown'];
+  const sorted = [...findings].sort(
+    (a, b) => RISK_ORDER.indexOf(a.risk_level) - RISK_ORDER.indexOf(b.risk_level)
+  );
+
+  const counts = RISK_ORDER.reduce<Record<string, number>>((acc, r) => {
+    acc[r] = findings.filter((f) => f.risk_level === r).length;
+    return acc;
+  }, {});
+
+  const handleToggleAll = () => {
+    setAllExpanded((prev) => !prev);
+    setExpandedIdx(null);
+  };
 
   return (
+    <>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+        <div className="chips">
+          {RISK_ORDER.filter((r) => counts[r] > 0).map((r) => (
+            <span key={r} className={`badge ${r}`}>{counts[r]} {r}</span>
+          ))}
+        </div>
+        <div style={{ display: 'flex', gap: '0.5rem' }}>
+          <button onClick={handleToggleAll} className="ghost" style={{ fontSize: '0.75rem', padding: '0.25rem 0.6rem', boxShadow: 'none' }}>
+            {allExpanded ? 'Collapse all' : 'Expand all'}
+          </button>
+          {onClear && (
+            <button onClick={onClear} className="ghost" style={{ fontSize: '0.75rem', padding: '0.25rem 0.6rem', boxShadow: 'none' }}>
+              Clear
+            </button>
+          )}
+        </div>
+      </div>
     <div className="grid findings-grid">
       {sorted.map((f, idx) => {
         const recommendation = parseRecommendation(f.recommendation);
-        const isExpanded = expandedIdx === idx;
+        const isExpanded = allExpanded || expandedIdx === idx;
         return (
           <div key={idx} className="card finding-card" style={riskBorderStyle(f.risk_level)}>
             <div
@@ -148,5 +182,6 @@ export default function FindingsList({ findings }: FindingsListProps) {
         );
       })}
     </div>
+    </>
   );
 }
