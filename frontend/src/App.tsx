@@ -60,15 +60,18 @@ function App() {
   const [warnings, setWarnings] = useState<GuardrailWarning[]>([]);
   const [usage, setUsage] = useState<Usage | null>(null);
   const eventSourceRef = useRef<EventSource | null>(null);
+  const reconnectAttemptsRef = useRef(0);
   const [activeTab, setActiveTab] = useState<'analyzer' | 'playbook'>('analyzer');
   const [playbookVersion, setPlaybookVersion] = useState<string | null>(null);
 
-  const startStream = (id: string) => {
+  const startStream = (id: string, attempt = 0) => {
     if (eventSourceRef.current) {
       eventSourceRef.current.close();
     }
     const stream = new EventSource(streamUrl(`/analysis/${id}/stream`));
     eventSourceRef.current = stream;
+    reconnectAttemptsRef.current = attempt;
+
     stream.addEventListener('status', (e: MessageEvent) => {
       const payload = JSON.parse(e.data) as StatusEvent;
       setStatus(payload.message || payload.status || null);
@@ -86,9 +89,20 @@ function App() {
       setResult(payload.result);
       setWarnings(payload.result.guardrail_warnings || []);
       setUsage(payload.result.usage || null);
+      reconnectAttemptsRef.current = 0;
       stream.close();
     });
-    stream.addEventListener('error', () => stream.close());
+    stream.addEventListener('error', () => {
+      stream.close();
+      const maxRetries = 3;
+      if (attempt < maxRetries) {
+        const delay = Math.min(1000 * 2 ** attempt, 8000);
+        setStatus(`Connection lost — retrying in ${delay / 1000}s (${attempt + 1}/${maxRetries})`);
+        setTimeout(() => startStream(id, attempt + 1), delay);
+      } else {
+        setStatus('Stream disconnected. Please refresh and try again.');
+      }
+    });
   };
 
   const handleAnalyze = async () => {
