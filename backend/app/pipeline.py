@@ -15,6 +15,7 @@ from .models import Analysis, PlaybookVersion
 from .rag import PlaybookRAG, chunk_playbook
 from .risk_config import DEFAULT_RISK_CONFIG, score_numeric
 from .schemas import AnalysisResult, Finding, GuardrailWarning, RetrievedChunk, Usage
+from .utils import extract_first_number
 
 logger = structlog.get_logger(__name__)
 
@@ -154,10 +155,7 @@ def _compare_with_playbook(
     risk_level = "medium"
     text = " ".join(chunk.content for chunk in retrieved)
     try:
-        value_num = None
-        digits = re.findall(r"(\d+)", clause["extracted_value"])
-        if digits:
-            value_num = float(digits[0])
+        value_num = extract_first_number(clause["extracted_value"])
 
         if value_num is not None and clause["clause_type"] in DEFAULT_RISK_CONFIG:
             risk_level = score_numeric(clause["clause_type"], value_num)
