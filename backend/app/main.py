@@ -188,6 +188,7 @@ _UPLOAD_MAX_BYTES = 20 * 1024 * 1024  # 20 MB
 
 def _extract_pdf_text(data: bytes) -> str:
     import io
+
     import pdfplumber
     with pdfplumber.open(io.BytesIO(data)) as pdf:
         return "\n\n".join(page.extract_text() or "" for page in pdf.pages)
@@ -195,6 +196,7 @@ def _extract_pdf_text(data: bytes) -> str:
 
 def _extract_docx_text(data: bytes) -> str:
     import io
+
     from docx import Document
     doc = Document(io.BytesIO(data))
     return "\n\n".join(p.text for p in doc.paragraphs if p.text.strip())
