@@ -49,6 +49,24 @@ _PATTERNS: list[tuple[str, str, str]] = [
 ]
 
 
+_SECTION_LABEL_RE = re.compile(
+    r"(?m)^(?:"
+    r"(?:ARTICLE|SECTION|CLAUSE)\s+(\d+[.\d]*)|"
+    r"(\d+\.\d+)\s+[A-Z]|"
+    r"(#+ .+)"
+    r")"
+)
+
+
+def _section_label_at(text: str, pos: int) -> str:
+    """Return the nearest section label before pos, or empty string."""
+    candidates = list(_SECTION_LABEL_RE.finditer(text[:pos]))
+    if not candidates:
+        return ""
+    m = candidates[-1]
+    return next((g for g in m.groups() if g), "").strip()
+
+
 def _split_into_sections(text: str, max_size: int = 10_000) -> list[str]:
     """
     Split a large contract into sections for clause extraction.
@@ -110,11 +128,13 @@ def _extract_clauses(contract_text: str) -> list[dict[str, str]]:
                     continue
                 seen.add(dedup_key)
                 span_text = section[max(0, match.start() - _CONTEXT_WINDOW) : match.end() + _CONTEXT_WINDOW]
+                section_label = _section_label_at(section, match.start())
                 findings.append(
                     {
                         "clause_type": clause_type,
                         "extracted_value": f"{value} {unit}".strip(),
                         "source_text": span_text.strip(),
+                        "section": section_label,
                     }
                 )
 
