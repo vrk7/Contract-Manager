@@ -1,4 +1,5 @@
 import os
+import secrets
 from functools import lru_cache
 from pathlib import Path
 
@@ -39,6 +40,11 @@ class Settings:
     llm_max_retries: int = int(os.getenv("LLM_MAX_RETRIES", "2"))
     log_level: str = os.getenv("LOG_LEVEL", "INFO")
     log_format: str = os.getenv("LOG_FORMAT", "json")
+
+    # JWT — set JWT_SECRET_KEY in production; dev uses a random ephemeral key
+    jwt_secret_key: str = os.getenv("JWT_SECRET_KEY", secrets.token_hex(32))
+    jwt_algorithm: str = "HS256"
+    jwt_expire_minutes: int = int(os.getenv("JWT_EXPIRE_MINUTES", "1440"))  # 24 h
 
     def resolve_playbook_path(self) -> Path:
         """
