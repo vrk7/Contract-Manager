@@ -235,6 +235,14 @@ function App() {
               </div>
             </div>
             {result?.overall_risk_score && (
+              <div className="risk-meter">
+                <div className="risk-meter-bar">
+                  <div className={`risk-meter-fill ${result.overall_risk_score}`} />
+                </div>
+                <span className={riskBadgeClass(result.overall_risk_score)}>{result.overall_risk_score}</span>
+              </div>
+            )}
+            {result?.overall_risk_score && (
               <p className="muted">Risk posture calculated from detected clauses and deviations.</p>
             )}
             {warnings.map((w, idx) => (
