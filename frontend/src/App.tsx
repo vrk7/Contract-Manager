@@ -3,7 +3,7 @@ import ErrorBoundary from './components/ErrorBoundary';
 import FindingsList from './components/FindingsList';
 import PlaybookManager from './components/PlaybookManager';
 import AuthPage from './components/AuthPage';
-import { api, streamUrl, getToken, clearToken } from './api';
+import { api, analyzeUpload, streamUrl, getToken, clearToken } from './api';
 
 type AnalysisType = 'risks' | 'summary' | 'obligations';
 
@@ -57,6 +57,9 @@ function App() {
   const [contractText, setContractText] = useState<string>(() => {
     try { return localStorage.getItem('contract_draft') ?? ''; } catch { return ''; }
   });
+  const [uploadedFile, setUploadedFile] = useState<File | null>(null);
+  const [dragOver, setDragOver] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [analysisType, setAnalysisType] = useState<AnalysisType>('risks');
   const [analysisId, setAnalysisId] = useState<string | null>(null);
   const [status, setStatus] = useState<string | null>(null);
@@ -67,6 +70,20 @@ function App() {
   const reconnectAttemptsRef = useRef(0);
   const [activeTab, setActiveTab] = useState<'analyzer' | 'playbook'>('analyzer');
   const [playbookVersion, setPlaybookVersion] = useState<string | null>(null);
+
+  const acceptFile = (file: File) => {
+    const ok = /\.(pdf|docx|txt|md)$/i.test(file.name);
+    if (!ok) { alert('Only PDF, DOCX, or TXT files are supported.'); return; }
+    setUploadedFile(file);
+    setContractText('');
+  };
+
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setDragOver(false);
+    const file = e.dataTransfer.files[0];
+    if (file) acceptFile(file);
+  };
 
   const startStream = (id: string, attempt = 0) => {
     if (eventSourceRef.current) eventSourceRef.current.close();
@@ -113,14 +130,21 @@ function App() {
     setResult(null);
     setWarnings([]);
     setUsage(null);
-    const resp = await api.post<{ analysis_id: string }>('/analyze', {
-      contract_text: contractText,
-      analysis_type: analysisType,
-      playbook_version_id: playbookVersion || null,
-    });
-    setAnalysisId(resp.data.analysis_id);
+    let analysisId: string;
+    if (uploadedFile) {
+      const data = await analyzeUpload(uploadedFile, analysisType, playbookVersion);
+      analysisId = data.analysis_id;
+    } else {
+      const resp = await api.post<{ analysis_id: string }>('/analyze', {
+        contract_text: contractText,
+        analysis_type: analysisType,
+        playbook_version_id: playbookVersion || null,
+      });
+      analysisId = resp.data.analysis_id;
+    }
+    setAnalysisId(analysisId);
     setStatus('queued');
-    startStream(resp.data.analysis_id);
+    startStream(analysisId);
   };
 
   const riskBadgeClass = (risk: string) => `badge ${risk}`;
@@ -208,20 +232,76 @@ function App() {
                   </span>
                 </div>
 
-                <textarea
-                  value={contractText}
-                  onChange={(e) => {
-                    setContractText(e.target.value);
-                    try { localStorage.setItem('contract_draft', e.target.value); } catch { /* quota */ }
+                {/* ── File drop zone ── */}
+                <div
+                  onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+                  onDragLeave={() => setDragOver(false)}
+                  onDrop={handleDrop}
+                  style={{
+                    border: `2px dashed ${dragOver ? 'var(--accent)' : 'var(--border)'}`,
+                    borderRadius: '8px',
+                    padding: '0.6rem 0.9rem',
+                    marginBottom: '0.5rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.6rem',
+                    background: dragOver ? 'var(--surface-hover, rgba(99,102,241,0.07))' : 'transparent',
+                    transition: 'border-color 0.15s, background 0.15s',
                   }}
-                  onKeyDown={handleKeyDown}
-                  placeholder="Paste contract text here — Ctrl+Enter to analyze"
-                />
-
-                <div className="char-row">
-                  <span>{contractText.length.toLocaleString()} characters</span>
-                  <button onClick={() => navigator.clipboard.writeText(contractText)}>Copy</button>
+                >
+                  {uploadedFile ? (
+                    <>
+                      <span style={{ fontSize: '0.82rem', color: 'var(--t2)', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {uploadedFile.name} ({(uploadedFile.size / 1024).toFixed(0)} KB)
+                      </span>
+                      <button
+                        className="ghost"
+                        style={{ fontSize: '11px', padding: '0.2rem 0.55rem' }}
+                        onClick={() => setUploadedFile(null)}
+                      >
+                        Remove
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <span style={{ fontSize: '0.82rem', color: 'var(--t3)', flex: 1 }}>
+                        Drop a PDF, DOCX, or TXT file here
+                      </span>
+                      <button
+                        className="ghost"
+                        style={{ fontSize: '11px', padding: '0.2rem 0.55rem' }}
+                        onClick={() => fileInputRef.current?.click()}
+                      >
+                        Browse
+                      </button>
+                    </>
+                  )}
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept=".pdf,.docx,.txt,.md"
+                    style={{ display: 'none' }}
+                    onChange={(e) => { const f = e.target.files?.[0]; if (f) acceptFile(f); e.target.value = ''; }}
+                  />
                 </div>
+
+                {!uploadedFile && (
+                  <>
+                    <textarea
+                      value={contractText}
+                      onChange={(e) => {
+                        setContractText(e.target.value);
+                        try { localStorage.setItem('contract_draft', e.target.value); } catch { /* quota */ }
+                      }}
+                      onKeyDown={handleKeyDown}
+                      placeholder="Or paste contract text here — Ctrl+Enter to analyze"
+                    />
+                    <div className="char-row">
+                      <span>{contractText.length.toLocaleString()} characters</span>
+                      <button onClick={() => navigator.clipboard.writeText(contractText)}>Copy</button>
+                    </div>
+                  </>
+                )}
 
                 <div style={{ margin: '0.75rem 0' }}>
                   <label className="input-label" htmlFor="analysisType">
@@ -238,7 +318,7 @@ function App() {
                   </label>
                 </div>
 
-                <button onClick={handleAnalyze} disabled={!contractText} style={{ width: '100%' }}>
+                <button onClick={handleAnalyze} disabled={!contractText && !uploadedFile} style={{ width: '100%' }}>
                   Start analysis
                 </button>
 

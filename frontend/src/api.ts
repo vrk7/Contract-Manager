@@ -24,6 +24,20 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
+/** POST a file to /v1/analyze/upload via multipart form. */
+export async function analyzeUpload(
+  file: File,
+  analysisType: string,
+  playbookVersionId?: string | null,
+): Promise<{ analysis_id: string }> {
+  const form = new FormData();
+  form.append('file', file);
+  form.append('analysis_type', analysisType);
+  if (playbookVersionId) form.append('playbook_version_id', playbookVersionId);
+  const resp = await api.post<{ analysis_id: string }>('/analyze/upload', form);
+  return resp.data;
+}
+
 /** Build a stream URL, appending ?token= for EventSource (can't send headers). */
 export function streamUrl(path: string): string {
   const token = getToken();
