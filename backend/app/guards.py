@@ -69,6 +69,20 @@ def filter_malicious_segments(text: str) -> tuple[str, list[GuardrailWarning]]:
     return sanitized, warnings
 
 
+def score_text_complexity(text: str) -> dict:
+    """Return basic readability metrics for a contract text segment."""
+    words = text.split()
+    sentences = max(len(re.findall(r"[.!?]+", text)), 1)
+    avg_words_per_sentence = len(words) / sentences if sentences else 0
+    long_words = sum(1 for w in words if len(w) > 8)
+    return {
+        "word_count": len(words),
+        "sentence_count": sentences,
+        "avg_words_per_sentence": round(avg_words_per_sentence, 1),
+        "long_word_ratio": round(long_words / max(len(words), 1), 3),
+    }
+
+
 def ensure_retrieval_guardrails(findings: Iterable[dict]) -> list[GuardrailWarning]:
     warnings: list[GuardrailWarning] = []
     for finding in findings:
