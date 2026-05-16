@@ -24,7 +24,7 @@ from fastapi.security import APIKeyHeader
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from slowapi.util import get_remote_address
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from .cache import AnalysisCache, analysis_cache
@@ -89,12 +89,11 @@ app.add_middleware(RequestTimingMiddleware)
 app.add_middleware(GZipMiddleware, minimum_size=1024)
 _cors_origins = (
     [o.strip() for o in os.environ.get("CORS_ORIGINS", "").split(",") if o.strip()]
-    if settings.production_mode
-    else ["*"]
+    or ([] if settings.production_mode else ["http://localhost:5173", "http://localhost:3000"])
 )
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=_cors_origins,
+    allow_origins=_cors_origins if _cors_origins else ["http://localhost:5173"],
     allow_credentials=not settings.production_mode,
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["Content-Type", "X-API-Key", "X-Request-ID", "Idempotency-Key"],
@@ -366,13 +365,13 @@ async def list_analyses(
             overall_risk_score=overall,
         ))
 
-    count_query = select(Analysis).where(Analysis.deleted_at.is_(None))
+    count_query = select(func.count()).select_from(Analysis).where(Analysis.deleted_at.is_(None))
     if status:
         count_query = count_query.where(Analysis.status == status)
     if analysis_type:
         count_query = count_query.where(Analysis.analysis_type == analysis_type)
     count_result = await session.execute(count_query)
-    total = len(count_result.scalars().all())
+    total = count_result.scalar_one()
 
     return AnalysisListResponse(items=items, next_cursor=next_cursor, total=total)
 
