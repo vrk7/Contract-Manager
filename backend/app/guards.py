@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import re
+import unicodedata
 from typing import Iterable
 
 import structlog
@@ -15,14 +16,47 @@ INJECTION_PATTERNS: list[re.Pattern] = [
     re.compile(r"pretend to be", re.IGNORECASE),
     re.compile(r"exfiltrate", re.IGNORECASE),
     re.compile(r"unrelated task", re.IGNORECASE),
+    re.compile(r"jailbreak", re.IGNORECASE),
+    re.compile(r"DAN mode", re.IGNORECASE),
+    re.compile(r"act as (an? )?(unrestricted|unfiltered|evil|malicious)", re.IGNORECASE),
+    re.compile(r"disregard (all )?(previous|prior|above)", re.IGNORECASE),
+    re.compile(r"override (your )?(safety|guidelines|instructions)", re.IGNORECASE),
 ]
+
+_ZERO_WIDTH_RE = re.compile(r"[​-‏‪-‮⁠-⁯﻿]")
+
+MAX_INPUT_CHARS = 5_000_000
 
 
 def filter_malicious_segments(text: str) -> tuple[str, list[GuardrailWarning]]:
     warnings: list[GuardrailWarning] = []
     sanitized = text
+
+    if len(sanitized) > MAX_INPUT_CHARS:
+        warnings.append(
+            GuardrailWarning(
+                type="input_too_large",
+                message=f"Input truncated from {len(sanitized)} to {MAX_INPUT_CHARS} characters.",
+                triggered_by="size_limit",
+            )
+        )
+        sanitized = sanitized[:MAX_INPUT_CHARS]
+
+    if _ZERO_WIDTH_RE.search(sanitized):
+        logger.warning("zero_width_chars_detected")
+        warnings.append(
+            GuardrailWarning(
+                type="content_filter",
+                message="Zero-width or invisible characters detected and removed.",
+                triggered_by="zero_width_chars",
+            )
+        )
+        sanitized = _ZERO_WIDTH_RE.sub("", sanitized)
+
+    sanitized = unicodedata.normalize("NFKC", sanitized)
+
     for pattern in INJECTION_PATTERNS:
-        if pattern.search(text):
+        if pattern.search(sanitized):
             logger.warning("injection_pattern_detected", pattern=pattern.pattern)
             warnings.append(
                 GuardrailWarning(
