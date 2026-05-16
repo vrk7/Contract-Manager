@@ -12,10 +12,12 @@ except ImportError:
     _BM25 = None  # type: ignore[assignment,misc]
     _BM25_AVAILABLE = False
 
+from typing import List
+
 import chromadb
 import structlog
 from chromadb import Settings as ChromaSettings
-from chromadb.utils.embedding_functions import FastEmbedEmbeddingFunction
+from chromadb.utils.embedding_functions import EmbeddingFunction, Embeddings
 
 from .config import get_settings
 from .schemas import RetrievedChunk
@@ -23,11 +25,23 @@ from .schemas import RetrievedChunk
 logger = structlog.get_logger(__name__)
 settings = get_settings()
 
-# BGE-small is 384-dim like MiniLM but significantly better on legal/domain text.
-# Changing this tag forces Chroma to use new collection names, triggering a fresh
-# embed of all chunks on next startup (seed_playbook detects empty collections).
+# BGE-small is 384-dim and significantly better than all-MiniLM on legal text.
+# Changing _EMBED_TAG forces new Chroma collection names, triggering a re-embed
+# on next startup via the empty-collection check in seed_playbook.
 _EMBED_MODEL = "BAAI/bge-small-en-v1.5"
-_EMBED_TAG = "bge_small_v1"  # bump this string whenever the model changes
+_EMBED_TAG = "bge_small_v1"  # bump when model changes
+
+
+class _FastEmbedFn(EmbeddingFunction):
+    """Thin wrapper around fastembed so chromadb 0.5.x can use BGE models."""
+
+    def __init__(self, model_name: str) -> None:
+        from fastembed import TextEmbedding
+        self._model = TextEmbedding(model_name=model_name)
+
+    def __call__(self, input: List[str]) -> Embeddings:  # noqa: A002
+        # chromadb requires plain Python floats, not numpy float32
+        return [[float(v) for v in vec] for vec in self._model.embed(input)]
 
 
 _SECTION_HEADING_RE = __import__("re").compile(
@@ -112,7 +126,7 @@ class PlaybookRAG:
     def __init__(self, collection_name: str = "playbook") -> None:
         self.client = get_chroma_client()
         self.collection_name = collection_name
-        self.embed_fn = FastEmbedEmbeddingFunction(model_name=_EMBED_MODEL)
+        self.embed_fn = _FastEmbedFn(model_name=_EMBED_MODEL)
         self._lock = threading.Lock()
 
     def _collection(self, version_id: str):
