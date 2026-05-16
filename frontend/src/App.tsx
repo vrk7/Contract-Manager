@@ -52,7 +52,9 @@ interface FinalEvent {
 }
 
 function App() {
-  const [contractText, setContractText] = useState<string>('');
+  const [contractText, setContractText] = useState<string>(() => {
+    try { return localStorage.getItem('contract_draft') ?? ''; } catch { return ''; }
+  });
   const [analysisType, setAnalysisType] = useState<AnalysisType>('risks');
   const [analysisId, setAnalysisId] = useState<string | null>(null);
   const [status, setStatus] = useState<string | null>(null);
@@ -178,7 +180,7 @@ function App() {
             </div>
             <textarea
               value={contractText}
-              onChange={(e) => setContractText(e.target.value)}
+              onChange={(e) => { setContractText(e.target.value); try { localStorage.setItem('contract_draft', e.target.value); } catch {} }}
               onKeyDown={handleKeyDown}
               placeholder="Paste contract text here (Ctrl+Enter to analyze)"
             />
