@@ -82,3 +82,12 @@ class PlaybookVersionList(BaseModel):
 
 class PlaybookReindexRequest(BaseModel):
     version_id: Optional[str] = None
+
+
+class LLMFindingOutput(BaseModel):
+    """Structured output schema expected from Claude when analysis_type=risks."""
+
+    risk_level: Literal["critical", "high", "medium", "low", "acceptable", "unknown"] = "medium"
+    deviation_summary: str = ""
+    recommendation: str = ""
+    confidence: float = Field(default=0.5, ge=0.0, le=1.0)
