@@ -109,3 +109,107 @@ def test_rate_limit_trigger():
     if third.status_code == 200:
         # allow CI instability; ensure limiter configured
         assert app.state.limiter is not None
+
+
+def test_health_returns_ok_status():
+    resp = client.get("/health")
+    assert resp.json() == {"status": "ok"}
+
+
+def test_root_endpoint_returns_status_ok():
+    resp = client.get("/")
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["status"] == "ok"
+
+
+def test_analyze_summary_type():
+    payload = {
+        "contract_text": "Owner shall pay within 45 days of invoice.",
+        "analysis_type": "summary",
+    }
+    resp = client.post("/v1/analyze", json=payload)
+    assert resp.status_code == 200
+    analysis_id = resp.json()["analysis_id"]
+    result = wait_for_completion(analysis_id)
+    assert result is not None
+    assert "findings" in result
+
+
+def test_analyze_obligations_type():
+    payload = {
+        "contract_text": "Contractor shall provide warranty period of 2 years for all work.",
+        "analysis_type": "obligations",
+    }
+    resp = client.post("/v1/analyze", json=payload)
+    assert resp.status_code == 200
+    result = wait_for_completion(resp.json()["analysis_id"])
+    assert result is not None
+
+
+def test_analyze_rejects_too_short_contract():
+    resp = client.post("/v1/analyze", json={"contract_text": "hi", "analysis_type": "risks"})
+    assert resp.status_code == 422
+
+
+def test_analyze_rejects_invalid_analysis_type():
+    resp = client.post("/v1/analyze", json={
+        "contract_text": "Payment within 30 days of invoice.",
+        "analysis_type": "unknown_type",
+    })
+    assert resp.status_code == 422
+
+
+def test_get_nonexistent_analysis_returns_404():
+    resp = client.get("/v1/analysis/does-not-exist-00000000")
+    assert resp.status_code == 404
+
+
+def test_delete_nonexistent_analysis_returns_404():
+    resp = client.delete("/v1/analysis/nonexistent-id-12345678")
+    assert resp.status_code == 404
+
+
+def test_analyses_list_endpoint_returns_list():
+    resp = client.get("/v1/analyses")
+    assert resp.status_code == 200
+    data = resp.json()
+    assert "items" in data
+    assert "total" in data
+
+
+def test_analyses_list_with_status_filter():
+    resp = client.get("/v1/analyses?status=completed")
+    assert resp.status_code == 200
+
+
+def test_analyses_list_with_type_filter():
+    resp = client.get("/v1/analyses?analysis_type=risks")
+    assert resp.status_code == 200
+
+
+def test_missing_clause_warning_in_result():
+    payload = {
+        "contract_text": "Owner shall pay within 30 days of invoice receipt.",
+        "analysis_type": "risks",
+    }
+    resp = client.post("/v1/analyze", json=payload)
+    result = wait_for_completion(resp.json()["analysis_id"])
+    assert result is not None
+    warnings = result.get("guardrail_warnings", [])
+    missing_types = {w["triggered_by"] for w in warnings if w.get("type") == "missing_clause"}
+    assert len(missing_types) > 0
+
+
+def test_playbook_endpoint_returns_content():
+    resp = client.get("/v1/playbook")
+    assert resp.status_code == 200
+    data = resp.json()
+    assert "content" in data
+    assert len(data["content"]) > 0
+
+
+def test_playbook_versions_endpoint():
+    resp = client.get("/v1/playbook/versions")
+    assert resp.status_code == 200
+    assert isinstance(resp.json(), list)
