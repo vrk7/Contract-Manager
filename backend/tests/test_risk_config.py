@@ -7,7 +7,6 @@ import sys
 os.environ.setdefault("BYPASS_DB_FOR_TESTS", "true")
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../.."))
 
-import pytest
 from backend.app.risk_config import (  # noqa: E402
     DEFAULT_RISK_CONFIG,
     get_config_for_jurisdiction,

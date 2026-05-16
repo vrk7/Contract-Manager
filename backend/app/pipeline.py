@@ -449,11 +449,6 @@ async def run_analysis_pipeline(
             continue
         standard, deviation, risk_level = _compare_with_playbook(clause, retrieved_chunks)
         citation_ids = _format_citation_ids(retrieved_chunks)
-        prompt_text = (
-            f"Clause type: {clause['clause_type']}. "
-            f"Extracted: {clause['extracted_value']}. "
-            f"Playbook excerpts: {' '.join(chunk.content for chunk in retrieved_chunks)}"
-        )
         if analysis.analysis_type == "summary":
             playbook_ctx = " ".join(chunk.content for chunk in retrieved_chunks)
             summary_prompt = (
