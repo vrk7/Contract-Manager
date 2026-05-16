@@ -47,6 +47,11 @@ def get_config_for_jurisdiction(jurisdiction: str | None = None) -> dict[str, Cl
     return base
 
 
+def list_supported_clause_types() -> list[str]:
+    """Return all clause types with explicit risk thresholds."""
+    return sorted(DEFAULT_RISK_CONFIG.keys())
+
+
 def score_numeric(clause_type: str, value: float, config: dict[str, ClauseRiskThresholds] | None = None) -> str:
     """
     Score a numeric clause value against the risk config.
