@@ -17,6 +17,21 @@ logger = structlog.get_logger(__name__)
 settings = get_settings()
 
 
+_SECTION_HEADING_RE = __import__("re").compile(
+    r"^#+\s+(.+)|^([A-Z][A-Z0-9 \-]{4,})\s*$",
+    __import__("re").MULTILINE,
+)
+
+
+def _extract_heading(text_before: str) -> str:
+    """Return the last section heading found before this chunk, if any."""
+    matches = list(_SECTION_HEADING_RE.finditer(text_before))
+    if not matches:
+        return ""
+    m = matches[-1]
+    return (m.group(1) or m.group(2) or "").strip()
+
+
 def chunk_playbook(content: str, max_chars: int = 800, overlap_sentences: int = 2) -> list[str]:
     """Split playbook content into sentence-aware chunks with sentence-level overlap.
 
@@ -46,6 +61,24 @@ def chunk_playbook(content: str, max_chars: int = 800, overlap_sentences: int = 
     if current:
         chunks.append(" ".join(current))
     return chunks
+
+
+def chunk_playbook_with_headings(content: str, max_chars: int = 800, overlap_sentences: int = 2) -> list[str]:
+    """
+    Like chunk_playbook but prepends the nearest section heading to each chunk so
+    embedding context is not lost when a chunk starts mid-section.
+    """
+    raw_chunks = chunk_playbook(content, max_chars=max_chars, overlap_sentences=overlap_sentences)
+    result: list[str] = []
+    pos = 0
+    for chunk in raw_chunks:
+        heading = _extract_heading(content[:pos])
+        if heading:
+            result.append(f"[Section: {heading}] {chunk}")
+        else:
+            result.append(chunk)
+        pos += len(chunk)
+    return result
 
 
 def get_chroma_client() -> chromadb.ClientAPI:
