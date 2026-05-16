@@ -131,6 +131,13 @@ async def root() -> dict[str, str]:
     }
 
 
+@app.on_event("shutdown")
+async def shutdown_event() -> None:
+    logger.info("shutdown_started", message="Draining in-flight requests before exit")
+    await asyncio.sleep(0.5)
+    logger.info("shutdown_complete")
+
+
 @app.on_event("startup")
 async def startup_event() -> None:
     if settings.in_memory_mode:
