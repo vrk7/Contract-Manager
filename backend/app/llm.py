@@ -108,6 +108,10 @@ class AnthropicClient:
                 ],
                 messages=[{"role": "user", "content": user_blocks}],
             )
+        except anthropic.AuthenticationError as exc:
+            logger.error("anthropic_auth_error", model=self.model, message=str(exc))
+            faux = "Heuristic analysis: LLM unavailable (auth error), using playbook comparison only."
+            return faux, LLMUsage(len(prompt) // 4, len(faux) // 4)
         except anthropic.APIStatusError as exc:
             logger.error("anthropic_api_error", status_code=exc.status_code, model=self.model, message=exc.message)
             raise
