@@ -21,6 +21,7 @@ interface Finding {
 
 interface FindingsListProps {
   findings: Finding[];
+  onClear?: () => void;
 }
 
 interface ParsedRecommendation {
@@ -29,47 +30,51 @@ interface ParsedRecommendation {
 }
 
 const RISK_COLORS: Record<string, string> = {
-  critical: '#e53e3e',
-  high: '#dd6b20',
-  medium: '#d69e2e',
-  low: '#38a169',
-  acceptable: '#319795',
-  unknown: '#718096',
+  critical:   '#ef4444',
+  high:       '#f97316',
+  medium:     '#eab308',
+  low:        '#22c55e',
+  acceptable: '#06b6d4',
+  unknown:    '#64748b',
 };
 
-const riskColor = (risk: string): string => `badge ${risk}`;
+const RISK_ORDER = ['critical', 'high', 'medium', 'low', 'acceptable', 'unknown'];
 
 const riskBorderStyle = (risk: string): React.CSSProperties => ({
-  borderLeft: `4px solid ${RISK_COLORS[risk] ?? RISK_COLORS.unknown}`,
+  borderLeft: `3px solid ${RISK_COLORS[risk] ?? RISK_COLORS.unknown}`,
 });
 
-const parseRecommendation = (text: string = ''): ParsedRecommendation => {
+const parseRecommendation = (text = ''): ParsedRecommendation => {
   const [main, citations] = text.split(/Cite chunks:/i);
-  const cleanedMain = main.replace(/^(Summary:|Action:)/i, '').trim();
-  const cleanedCitations = (citations || '').replace(/\.$/, '').trim();
-  const citationList = cleanedCitations
-    ? cleanedCitations.split(/[,;]\s*/).filter(Boolean)
-    : [];
   return {
-    main: cleanedMain,
-    citations: citationList,
+    main: main.replace(/^(Summary:|Action:)/i, '').trim(),
+    citations: (citations || '')
+      .replace(/\.$/, '')
+      .trim()
+      .split(/[,;]\s*/)
+      .filter(Boolean),
   };
 };
-
-interface FindingsListProps {
-  findings: Finding[];
-  onClear?: () => void;
-}
 
 export default function FindingsList({ findings, onClear }: FindingsListProps) {
   const [expandedIdx, setExpandedIdx] = useState<number | null>(null);
   const [allExpanded, setAllExpanded] = useState(false);
 
   if (!findings.length) {
-    return <p style={{ color: '#475569' }}>No findings yet. Paste a contract and click Start analysis.</p>;
+    return (
+      <div className="empty-state">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+          <polyline points="14 2 14 8 20 8"/>
+          <line x1="16" y1="13" x2="8" y2="13"/>
+          <line x1="16" y1="17" x2="8" y2="17"/>
+          <polyline points="10 9 9 9 8 9"/>
+        </svg>
+        <p>Paste a contract and click Start analysis — findings will appear here as they stream in.</p>
+      </div>
+    );
   }
 
-  const RISK_ORDER = ['critical', 'high', 'medium', 'low', 'acceptable', 'unknown'];
   const sorted = [...findings].sort(
     (a, b) => RISK_ORDER.indexOf(a.risk_level) - RISK_ORDER.indexOf(b.risk_level)
   );
@@ -86,116 +91,125 @@ export default function FindingsList({ findings, onClear }: FindingsListProps) {
 
   return (
     <>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem', flexWrap: 'wrap', gap: '0.5rem' }}>
         <div className="chips">
           {RISK_ORDER.filter((r) => counts[r] > 0).map((r) => (
             <span key={r} className={`badge ${r}`}>{counts[r]} {r}</span>
           ))}
         </div>
-        <div style={{ display: 'flex', gap: '0.5rem' }}>
-          <button onClick={handleToggleAll} className="ghost" style={{ fontSize: '0.75rem', padding: '0.25rem 0.6rem', boxShadow: 'none' }}>
+        <div style={{ display: 'flex', gap: '0.4rem' }}>
+          <button onClick={handleToggleAll} className="ghost" style={{ fontSize: '12px', padding: '0.25rem 0.65rem' }}>
             {allExpanded ? 'Collapse all' : 'Expand all'}
           </button>
           {onClear && (
-            <button onClick={onClear} className="ghost" style={{ fontSize: '0.75rem', padding: '0.25rem 0.6rem', boxShadow: 'none' }}>
+            <button onClick={onClear} className="ghost" style={{ fontSize: '12px', padding: '0.25rem 0.65rem' }}>
               Clear
             </button>
           )}
         </div>
       </div>
-    <div className="grid findings-grid">
-      {sorted.map((f, idx) => {
-        const recommendation = parseRecommendation(f.recommendation);
-        const isExpanded = allExpanded || expandedIdx === idx;
-        return (
-          <div key={idx} className="card finding-card" style={riskBorderStyle(f.risk_level)}>
-            <div
-              className="finding-header"
-              onClick={() => setExpandedIdx(isExpanded ? null : idx)}
-              style={{ cursor: 'pointer', userSelect: 'none' }}
-              title={isExpanded ? 'Click to collapse' : 'Click to expand'}
-            >
-              <div>
-                <p className="eyebrow">Clause</p>
-                <strong>{f.clause_type.replace(/_/g, ' ')}</strong>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <span className={riskColor(f.risk_level)}>{f.risk_level}</span>
-                <span style={{ fontSize: '0.75rem', color: '#888' }}>{isExpanded ? '▲' : '▼'}</span>
-              </div>
-            </div>
-            {isExpanded && <div className="finding-body">
-              <div className="finding-facts">
-                <div className="fact">
-                  <p className="label">Extracted</p>
-                  <p className="fact-value">{f.extracted_value || '—'}</p>
+
+      <div className="grid findings-grid">
+        {sorted.map((f, idx) => {
+          const rec = parseRecommendation(f.recommendation);
+          const isExpanded = allExpanded || expandedIdx === idx;
+
+          return (
+            <div key={idx} className="card finding-card" style={riskBorderStyle(f.risk_level)}>
+              <div
+                className="finding-header"
+                onClick={() => setExpandedIdx(isExpanded ? null : idx)}
+                style={{ cursor: 'pointer', userSelect: 'none' }}
+                title={isExpanded ? 'Collapse' : 'Expand'}
+              >
+                <div>
+                  <p className="eyebrow">Clause</p>
+                  <strong style={{ fontSize: '14px' }}>{f.clause_type.replace(/_/g, ' ')}</strong>
                 </div>
-                <div className="fact">
-                  <p className="label">Deviation</p>
-                  <p className="fact-value">{f.deviation || '—'}</p>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <span className={`badge ${f.risk_level}`}>{f.risk_level}</span>
+                  <svg
+                    width="14" height="14" viewBox="0 0 24 24" fill="none"
+                    stroke="var(--t3)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
+                    style={{ transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 200ms ease', flexShrink: 0 }}
+                  >
+                    <polyline points="6 9 12 15 18 9" />
+                  </svg>
                 </div>
-                <div className="fact">
-                  <p className="label">Playbook standard</p>
-                  <p className="fact-value">{f.playbook_standard || '—'}</p>
-                </div>
-                {f.section && (
-                  <div className="fact">
-                    <p className="label">Section</p>
-                    <p className="fact-value">{f.section}</p>
-                  </div>
-                )}
-                {f.confidence !== undefined && (
-                  <div className="fact">
-                    <p className="label">Confidence</p>
-                    <p className="fact-value">{Math.round(f.confidence * 100)}%</p>
-                  </div>
-                )}
               </div>
 
-              <div className="recommendation-block">
-                <p className="label">Recommendation</p>
-                <p className="recommendation-text">
-                  {recommendation.main || f.recommendation || 'No recommendation provided.'}
-                </p>
-                {recommendation.citations.length > 0 && (
-                  <div className="chips">
-                    {recommendation.citations.map((id) => (
-                      <span key={id} className="chip">
-                        {id}
-                      </span>
-                    ))}
+              {isExpanded && (
+                <div className="finding-body">
+                  <div className="finding-facts">
+                    <div>
+                      <span className="label">Extracted</span>
+                      <p className="fact-value">{f.extracted_value || '—'}</p>
+                    </div>
+                    <div>
+                      <span className="label">Deviation</span>
+                      <p className="fact-value">{f.deviation || '—'}</p>
+                    </div>
+                    <div>
+                      <span className="label">Playbook standard</span>
+                      <p className="fact-value">{f.playbook_standard || '—'}</p>
+                    </div>
+                    {f.section && (
+                      <div>
+                        <span className="label">Section</span>
+                        <p className="fact-value">{f.section}</p>
+                      </div>
+                    )}
+                    {f.confidence !== undefined && (
+                      <div>
+                        <span className="label">Confidence</span>
+                        <p className="fact-value">{Math.round(f.confidence * 100)}%</p>
+                      </div>
+                    )}
                   </div>
-                )}
-              </div>
 
-              <div className="source-section">
-                <p className="label">Source text</p>
-                <pre className="source-text">{f.source_text || 'Not provided.'}</pre>
-              </div>
+                  <div className="recommendation-block">
+                    <span className="label">Recommendation</span>
+                    <p className="recommendation-text">
+                      {rec.main || f.recommendation || 'No recommendation provided.'}
+                    </p>
+                    {rec.citations.length > 0 && (
+                      <div className="chips">
+                        {rec.citations.map((id) => (
+                          <span key={id} className="chip">{id}</span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
 
-              {(f.retrieved_chunks || []).length > 0 && (
-                <div className="retrieved-section">
-                  <p className="label">Retrieved evidence</p>
-                  <ul className="chunk-list">
-                    {f.retrieved_chunks!.map((c) => (
-                      <li key={c.chunk_id} className="chunk-item">
-                        <div className="chunk-meta">
-                          <span className="chip ghost">Chunk {c.chunk_id}</span>
-                          <small className="chunk-source">{c.source}</small>
-                        </div>
-                        <p className="chunk-content">
-                          {c.content.length > 220 ? `${c.content.slice(0, 220)}…` : c.content}
-                        </p>
-                      </li>
-                    ))}
-                  </ul>
+                  <div className="source-section">
+                    <span className="label">Source text</span>
+                    <pre className="source-text">{f.source_text || 'Not provided.'}</pre>
+                  </div>
+
+                  {(f.retrieved_chunks || []).length > 0 && (
+                    <div className="retrieved-section">
+                      <span className="label">Retrieved evidence</span>
+                      <ul className="chunk-list">
+                        {f.retrieved_chunks!.map((c) => (
+                          <li key={c.chunk_id} className="chunk-item">
+                            <div className="chunk-meta">
+                              <span className="chip ghost">Chunk {c.chunk_id}</span>
+                              <small className="chunk-source">{c.source}</small>
+                            </div>
+                            <p className="chunk-content">
+                              {c.content.length > 220 ? `${c.content.slice(0, 220)}…` : c.content}
+                            </p>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
                 </div>
               )}
-            </div>}
-          </div>
-        );
-      })}
-    </div>
+            </div>
+          );
+        })}
+      </div>
     </>
   );
 }

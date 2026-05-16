@@ -67,9 +67,7 @@ function App() {
   const [playbookVersion, setPlaybookVersion] = useState<string | null>(null);
 
   const startStream = (id: string, attempt = 0) => {
-    if (eventSourceRef.current) {
-      eventSourceRef.current.close();
-    }
+    if (eventSourceRef.current) eventSourceRef.current.close();
     const stream = new EventSource(streamUrl(`/analysis/${id}/stream`));
     eventSourceRef.current = stream;
     reconnectAttemptsRef.current = attempt;
@@ -123,7 +121,7 @@ function App() {
     startStream(resp.data.analysis_id);
   };
 
-  const riskBadgeClass = (risk: string): string => `badge ${risk}`;
+  const riskBadgeClass = (risk: string) => `badge ${risk}`;
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if ((e.ctrlKey || e.metaKey) && e.key === 'Enter' && contractText) {
@@ -143,147 +141,214 @@ function App() {
     URL.revokeObjectURL(url);
   };
 
-  const handleCopyText = () => {
-    navigator.clipboard.writeText(contractText);
-  };
-
   return (
     <ErrorBoundary>
-    <div className="container">
-      <header className="page-header">
-        <div>
-          <p className="eyebrow">AI-powered contract review</p>
-          <h1>Contract Clause Analyzer</h1>
-          <p className="lede">Surface risks, summarize obligations, and keep your playbook aligned in one elegant workspace.</p>
+      {/* ── Sticky nav ── */}
+      <nav className="nav">
+        <div className="nav-brand">
+          <div className="nav-logo">CA</div>
+          <span className="nav-wordmark">Clause Analyzer</span>
         </div>
-        <div className="pill-group">
-          <span className="pill subtle">Secure by design</span>
-          <span className="pill subtle">Real-time analysis</span>
+        <div className="nav-tabs">
+          <button
+            className={`nav-tab${activeTab === 'analyzer' ? ' active' : ''}`}
+            onClick={() => setActiveTab('analyzer')}
+          >
+            Analyzer
+          </button>
+          <button
+            className={`nav-tab${activeTab === 'playbook' ? ' active' : ''}`}
+            onClick={() => setActiveTab('playbook')}
+          >
+            Playbook
+          </button>
         </div>
-      </header>
-      <div className="tab-buttons">
-        <button className={activeTab === 'analyzer' ? 'active' : ''} onClick={() => setActiveTab('analyzer')}>
-          Analyzer
-        </button>
-        <button className={activeTab === 'playbook' ? 'active' : ''} onClick={() => setActiveTab('playbook')}>
-          Playbook
-        </button>
-      </div>
+        <div className="nav-end">
+          <span className="pill subtle">Secure</span>
+          <span className="pill subtle">Real-time</span>
+        </div>
+      </nav>
 
-      {activeTab === 'analyzer' && (
-        <div className="grid two-column">
-          <div className="card">
-            <div className="card-header">
+      <div className="container">
+        {activeTab === 'analyzer' && (
+          <>
+            <header className="page-header">
               <div>
-                <p className="eyebrow">Step 1</p>
-                <h3>Contract Input</h3>
+                <p className="eyebrow">AI-powered contract review</p>
+                <h1>Contract Clause Analyzer</h1>
+                <p className="lede">
+                  Surface risks, summarize obligations, and keep your playbook aligned — in one elegant workspace.
+                </p>
               </div>
-              <span className="pill">{analysisType === 'risks' ? 'Risk scan' : analysisType === 'summary' ? 'Summary' : 'Obligations'}</span>
-            </div>
-            <textarea
-              value={contractText}
-              onChange={(e) => { setContractText(e.target.value); try { localStorage.setItem('contract_draft', e.target.value); } catch (_) { /* quota exceeded or private browsing */ } }}
-              onKeyDown={handleKeyDown}
-              placeholder="Paste contract text here (Ctrl+Enter to analyze)"
-            />
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: '#888', margin: '0.25rem 0' }}>
-              <span>{contractText.length.toLocaleString()} characters</span>
-              <button onClick={handleCopyText} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.75rem', color: '#888' }}>
-                Copy
-              </button>
-            </div>
-            <div style={{ margin: '0.5rem 0' }}>
-              <label className="input-label" htmlFor="analysisType">
-                Analysis type
-                <select id="analysisType" value={analysisType} onChange={(e) => setAnalysisType(e.target.value as AnalysisType)}>
-                  <option value="risks" title="Identify deviations from your playbook and score their risk level">Risks — identify deviations and score risk</option>
-                  <option value="summary" title="Plain-language summary of each clause for non-legal stakeholders">Summary — plain-language clause overview</option>
-                  <option value="obligations" title="Extract concrete actions each party is obligated to perform">Obligations — extract required actions</option>
-                </select>
-              </label>
-            </div>
-            <button onClick={handleAnalyze} disabled={!contractText}>
-              Start analysis
-            </button>
-            {(analysisId || status) && (
-              <div className="meta-row">
-                {analysisId && (
-                  <span className="pill subtle">
-                    <strong>ID:</strong> {analysisId}
-                  </span>
-                )}
-                {status && (
-                  <span className="pill success">
-                    <strong>Status:</strong> {status}
-                  </span>
-                )}
-              </div>
-            )}
-          </div>
+            </header>
 
-          <div className="card">
-            <div className="card-header">
-              <div>
-                <p className="eyebrow">Step 2</p>
-                <h3>Results {result && <span style={{ fontWeight: 400, fontSize: '0.85rem', color: '#888' }}>({result.findings.length} finding{result.findings.length !== 1 ? 's' : ''})</span>}</h3>
+            <div className="grid two-column">
+              {/* ── Input card ── */}
+              <div className="card">
+                <div className="card-header">
+                  <div>
+                    <p className="eyebrow">Step 1</p>
+                    <h3>Contract Input</h3>
+                  </div>
+                  <span className="pill">
+                    {analysisType === 'risks' ? 'Risk scan' : analysisType === 'summary' ? 'Summary' : 'Obligations'}
+                  </span>
+                </div>
+
+                <textarea
+                  value={contractText}
+                  onChange={(e) => {
+                    setContractText(e.target.value);
+                    try { localStorage.setItem('contract_draft', e.target.value); } catch { /* quota */ }
+                  }}
+                  onKeyDown={handleKeyDown}
+                  placeholder="Paste contract text here — Ctrl+Enter to analyze"
+                />
+
+                <div className="char-row">
+                  <span>{contractText.length.toLocaleString()} characters</span>
+                  <button onClick={() => navigator.clipboard.writeText(contractText)}>Copy</button>
+                </div>
+
+                <div style={{ margin: '0.75rem 0' }}>
+                  <label className="input-label" htmlFor="analysisType">
+                    Analysis type
+                    <select
+                      id="analysisType"
+                      value={analysisType}
+                      onChange={(e) => setAnalysisType(e.target.value as AnalysisType)}
+                    >
+                      <option value="risks">Risks — identify deviations and score risk</option>
+                      <option value="summary">Summary — plain-language clause overview</option>
+                      <option value="obligations">Obligations — extract required actions</option>
+                    </select>
+                  </label>
+                </div>
+
+                <button onClick={handleAnalyze} disabled={!contractText} style={{ width: '100%' }}>
+                  Start analysis
+                </button>
+
+                {(analysisId || status) && (
+                  <div className="meta-row">
+                    {analysisId && (
+                      <span className="pill subtle">
+                        <strong>ID:</strong> {analysisId}
+                      </span>
+                    )}
+                    {status && (
+                      <span className="pill success">
+                        <strong>Status:</strong> {status}
+                      </span>
+                    )}
+                  </div>
+                )}
               </div>
-              <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+
+              {/* ── Results card ── */}
+              <div className="card">
+                <div className="card-header">
+                  <div>
+                    <p className="eyebrow">Step 2</p>
+                    <h3>
+                      Results{' '}
+                      {result && (
+                        <span style={{ fontWeight: 400, fontSize: '0.82rem', color: 'var(--t3)' }}>
+                          ({result.findings.length} finding{result.findings.length !== 1 ? 's' : ''})
+                        </span>
+                      )}
+                    </h3>
+                  </div>
+                  <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                    {result?.overall_risk_score && (
+                      <span className={riskBadgeClass(result.overall_risk_score)}>
+                        Overall: {result.overall_risk_score}
+                      </span>
+                    )}
+                    {result && (
+                      <button
+                        onClick={handleExportJson}
+                        className="ghost"
+                        style={{ fontSize: '12px', padding: '0.28rem 0.7rem' }}
+                      >
+                        Export JSON
+                      </button>
+                    )}
+                  </div>
+                </div>
+
                 {result?.overall_risk_score && (
-                  <span className={riskBadgeClass(result.overall_risk_score)}>Overall: {result.overall_risk_score}</span>
+                  <>
+                    <div className="risk-meter">
+                      <div className="risk-meter-bar">
+                        <div className={`risk-meter-fill ${result.overall_risk_score}`} />
+                      </div>
+                      <span className={riskBadgeClass(result.overall_risk_score)}>
+                        {result.overall_risk_score}
+                      </span>
+                    </div>
+                    <p className="muted" style={{ marginBottom: '1rem' }}>
+                      Risk posture calculated from detected clauses and deviations.
+                    </p>
+                  </>
                 )}
-                {result && (
-                  <button onClick={handleExportJson} style={{ fontSize: '0.75rem', padding: '0.25rem 0.6rem' }}>
-                    Export JSON
-                  </button>
+
+                {warnings.map((w, idx) => (
+                  <div className="warning" key={idx}>
+                    <strong>{w.type}</strong>: {w.message}
+                  </div>
+                ))}
+
+                {usage && (
+                  <div className="usage">
+                    <div>
+                      <p className="eyebrow">Tokens</p>
+                      <p className="metric">{usage.total_tokens.toLocaleString()}</p>
+                    </div>
+                    <div>
+                      <p className="eyebrow">Est. cost</p>
+                      <p className="metric">${usage.estimated_cost_usd}</p>
+                    </div>
+                  </div>
                 )}
+
+                {isLoading && !result?.findings?.length && (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginTop: '0.5rem' }}>
+                    {[1, 2, 3].map((i) => (
+                      <div key={i} className="skeleton" />
+                    ))}
+                  </div>
+                )}
+
+                <FindingsList
+                  findings={result?.findings || []}
+                  onClear={() => {
+                    setResult(null);
+                    setWarnings([]);
+                    setUsage(null);
+                    setStatus(null);
+                  }}
+                />
               </div>
             </div>
-            {result?.overall_risk_score && (
-              <div className="risk-meter">
-                <div className="risk-meter-bar">
-                  <div className={`risk-meter-fill ${result.overall_risk_score}`} />
-                </div>
-                <span className={riskBadgeClass(result.overall_risk_score)}>{result.overall_risk_score}</span>
-              </div>
-            )}
-            {result?.overall_risk_score && (
-              <p className="muted">Risk posture calculated from detected clauses and deviations.</p>
-            )}
-            {warnings.map((w, idx) => (
-              <div className="warning" key={idx}>
-                <strong>{w.type}</strong>: {w.message}
-              </div>
-            ))}
-            {usage && (
-              <div className="usage">
-                <div>
-                  <p className="eyebrow">Tokens</p>
-                  <p className="metric">{usage.total_tokens}</p>
-                </div>
-                <div>
-                  <p className="eyebrow">Estimated cost</p>
-                  <p className="metric">${usage.estimated_cost_usd}</p>
-                </div>
-              </div>
-            )}
-            {isLoading && !result?.findings?.length && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginTop: '0.5rem' }}>
-                {[1, 2, 3].map((i) => (
-                  <div key={i} style={{ height: '72px', borderRadius: '10px', background: 'linear-gradient(90deg, #e2e8f0 25%, #f1f5f9 50%, #e2e8f0 75%)', backgroundSize: '200% 100%', animation: 'shimmer 1.4s infinite' }} />
-                ))}
-              </div>
-            )}
-            <FindingsList findings={result?.findings || []} onClear={() => { setResult(null); setWarnings([]); setUsage(null); setStatus(null); }} />
-          </div>
-        </div>
-      )}
+          </>
+        )}
 
-      {activeTab === 'playbook' && (
-        <div className="card">
-          <PlaybookManager onVersionChange={setPlaybookVersion} />
-        </div>
-      )}
-    </div>
+        {activeTab === 'playbook' && (
+          <>
+            <header className="page-header">
+              <div>
+                <p className="eyebrow">Governance</p>
+                <h1>Playbook</h1>
+                <p className="lede">Edit, version, and reindex your contract playbook standards.</p>
+              </div>
+            </header>
+            <div className="card">
+              <PlaybookManager onVersionChange={setPlaybookVersion} />
+            </div>
+          </>
+        )}
+      </div>
     </ErrorBoundary>
   );
 }

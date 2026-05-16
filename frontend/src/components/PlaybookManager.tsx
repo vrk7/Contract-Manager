@@ -82,16 +82,16 @@ export default function PlaybookManager({ onVersionChange }: PlaybookManagerProp
     <div>
       <div className="card-header">
         <div>
-          <p className="eyebrow">Governance</p>
-          <h3>Playbook</h3>
-          <p className="muted">Edit, version, and reindex your contract playbook.</p>
+          <p className="eyebrow">Current version</p>
+          <h3>Editor</h3>
+          <p className="muted">Edit and save to create a new immutable version.</p>
         </div>
         {current?.id && <span className="pill">Active #{current.id}</span>}
       </div>
-      <textarea value={editorContent} onChange={(e) => setEditorContent(e.target.value)} />
+      <textarea value={editorContent} onChange={(e) => setEditorContent(e.target.value)} style={{ minHeight: '320px' }} />
       <div className="meta-row">
         <input
-          placeholder="Change note"
+          placeholder="Change note (optional)"
           value={changeNote}
           onChange={(e) => setChangeNote(e.target.value)}
           className="input text"
@@ -100,16 +100,22 @@ export default function PlaybookManager({ onVersionChange }: PlaybookManagerProp
           {saving ? 'Saving…' : 'Save new version'}
         </button>
       </div>
-      <h4>Versions</h4>
+      <h4>Version history</h4>
       <ul className="version-list">
         {versions.map((v) => (
           <li key={v.id} className="version-row">
             <div>
-              <strong>#{v.id}</strong> <span className="muted">({v.version_label})</span>
+              <strong style={{ color: 'var(--t1)', fontSize: '14px' }}>#{v.id}</strong>{' '}
+              <span className="muted">{v.version_label}</span>
+              {v.change_note && (
+                <p className="muted" style={{ marginTop: '0.15rem' }}>{v.change_note}</p>
+              )}
             </div>
             <div className="pill-group">
-              <button onClick={() => handleUseForAnalysis(v.id)}>Use for analysis</button>
-              <button onClick={() => reindex(v.id)} className="ghost">
+              <button onClick={() => handleUseForAnalysis(v.id)} style={{ fontSize: '12px', padding: '0.35rem 0.875rem' }}>
+                Use
+              </button>
+              <button onClick={() => reindex(v.id)} className="ghost" style={{ fontSize: '12px', padding: '0.35rem 0.875rem' }}>
                 Reindex
               </button>
             </div>
