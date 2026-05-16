@@ -31,6 +31,18 @@ class AnalysisCache:
                 self._order.append(key)
             self._store[key] = value
 
+    def delete(self, key: str) -> bool:
+        with self._lock:
+            if key in self._store:
+                self._store.pop(key)
+                self._order.remove(key)
+                return True
+            return False
+
+    def size(self) -> int:
+        with self._lock:
+            return len(self._store)
+
     def clear(self) -> None:
         with self._lock:
             self._store.clear()
