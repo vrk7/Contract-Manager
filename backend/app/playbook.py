@@ -42,14 +42,14 @@ async def seed_playbook(session: AsyncSession, seed_path: str) -> PlaybookVersio
     if existing_version:
         # Ensure embeddings exist even if Chroma storage was lost between deployments.
         rag = PlaybookRAG()
-        collection_count = rag.collection_count(existing_version.id)
+        collection_count = await rag.collection_count(existing_version.id)
         chunk_result = await session.execute(
             select(PlaybookChunk).where(PlaybookChunk.version_id == existing_version.id)
         )
         chunks = chunk_result.scalars().all()
         if collection_count == 0:
             if chunks:
-                rag.reset_version(existing_version.id, [(c.id, c.content) for c in chunks])
+                await rag.reset_version(existing_version.id, [(c.id, c.content) for c in chunks])
             else:
                 await persist_chunks(session, existing_version.id, existing_version.content)
             logger.info("playbook_embeddings_rebuilt", version_id=existing_version.id)
@@ -91,7 +91,7 @@ async def persist_chunks(session: AsyncSession, version_id: str, content: str) -
         )
     session.add_all(chunk_records)
     await session.flush()
-    rag.reset_version(version_id, [(c.id, c.content) for c in chunk_records])
+    await rag.reset_version(version_id, [(c.id, c.content) for c in chunk_records])
 
 
 async def list_playbook_versions(session: AsyncSession) -> list[PlaybookResponse]:

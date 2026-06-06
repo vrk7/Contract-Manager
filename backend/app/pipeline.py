@@ -574,7 +574,7 @@ async def run_analysis_pipeline(
     if playbook_content_override:
         chunks = chunk_playbook(playbook_content_override)
         vid: str = version_id or "in-memory"
-        rag.reset_version(vid, [(f"{vid}-{idx}", text) for idx, text in enumerate(chunks)])
+        await rag.reset_version(vid, [(f"{vid}-{idx}", text) for idx, text in enumerate(chunks)])
     findings: list[Finding] = []
     llm_client = AnthropicClient()
     total_usage = LLMUsage(0, 0)
@@ -583,7 +583,7 @@ async def run_analysis_pipeline(
     _ScoredClause = tuple  # (clause, retrieved_chunks, standard, deviation, risk_level)
     scored: list[tuple[dict[str, str], list[RetrievedChunk], str, str, str]] = []
     for clause in extracted_clauses:
-        retrieved: list[RetrievedChunk] = rag.hybrid_query(version_id, clause["source_text"]) if version_id else []
+        retrieved: list[RetrievedChunk] = await rag.hybrid_query(version_id, clause["source_text"]) if version_id else []
         if not retrieved:
             continue
         standard, deviation, risk_level = _compare_with_playbook(clause, retrieved)
