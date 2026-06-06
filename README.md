@@ -6,7 +6,7 @@ FastAPI + React implementation of the multi-step, guardrailed Contract Clause An
 
 **Presentation:** https://docs.google.com/presentation/d/1syagMfZAZk1vYFDzh7qJbBLv2VNcMMkSyXZ231POVH4/edit?usp=sharing
 
-The solution reads the playbook and example contracts in `sample_contracts/` and builds a deterministic pipeline: extract clauses → retrieve playbook chunks (Chroma RAG) → compare deviations → score risk → recommend negotiation positions → validate output schema and guardrails.
+The solution reads the playbook and example contracts in `sample_contracts/` and builds a deterministic pipeline: extract clauses → retrieve playbook chunks (Chroma or pgvector RAG, switchable via `VECTOR_BACKEND`) → compare deviations → score risk → recommend negotiation positions → validate output schema and guardrails.
 
 ---
 
@@ -70,6 +70,7 @@ JWT_EXPIRE_MINUTES=1440                  # 24 hours
 
 # Persistence + embeddings
 DATABASE_URL=sqlite+aiosqlite:///./data/app.db   # or postgres+asyncpg://analyzer:analyzer@db:5432/analyzer
+VECTOR_BACKEND=chroma           # or pgvector (requires Postgres DATABASE_URL)
 CHROMA_DIR=./data/chroma
 PLAYBOOK_SEED_PATH=./standard_terms_playbook.md
 
@@ -85,7 +86,8 @@ VITE_API_BASE=http://localhost:8000
 - `ANTHROPIC_API_KEY` / `ANTHROPIC_MODEL` – Claude via official SDK; used for all 3 analysis types via tool_use. Offline heuristic fallback is used when unset (tests).
 - `JWT_SECRET_KEY` – signs user tokens. Auto-generated on startup if not set, but tokens then invalidate on every restart. Set a fixed value in any persistent deployment.
 - `DATABASE_URL` – defaults to Postgres (`postgres+asyncpg://...`) targeting the `db` service in `docker-compose`; outside Docker the app falls back to SQLite unless you set `DATABASE_URL` yourself.
-- `CHROMA_DIR` – persistent embedding store.
+- `VECTOR_BACKEND` – `chroma` (default, works with SQLite or Postgres) or `pgvector` (requires Postgres; run `alembic upgrade head` to create the embeddings table first).
+- `CHROMA_DIR` – persistent embedding store (used only when `VECTOR_BACKEND=chroma`).
 - `RATE_LIMIT_PER_MINUTE` / `RATE_LIMIT_STREAM_PER_MINUTE` – slowapi per-IP throttles.
 
 ### Frontend
@@ -119,12 +121,12 @@ Response schema includes `playbook_version_id`, `guardrail_warnings`, `retrieved
 
 ## Agent Architecture & Guardrails
 
-- **Multi-step pipeline:** sanitize → clause extraction with per-section SSE progress → RAG retrieval (hybrid Chroma + BM25) → heuristic scoring of all clauses (Pass 1) → concurrent LLM enrichment of top-30 by risk via `asyncio.as_completed` + `Semaphore(5)` (Pass 2) → Pydantic validation → guardrail pruning of ungrounded findings. Per-clause 45s timeout falls back to heuristic; global 10-min pipeline cap marks analysis failed.
+- **Multi-step pipeline:** sanitize → clause extraction with per-section SSE progress → RAG retrieval (hybrid semantic + BM25; backend is Chroma or pgvector, set via `VECTOR_BACKEND`) → heuristic scoring of all clauses (Pass 1) → concurrent LLM enrichment of top-30 by risk via `asyncio.as_completed` + `Semaphore(5)` (Pass 2) → Pydantic validation → guardrail pruning of ungrounded findings. Per-clause 45s timeout falls back to heuristic; global 10-min pipeline cap marks analysis failed.
 - **Playbook grounding:** playbook ingested from file/DB, chunked, and embedded; retrieval attaches chunk metadata to every finding.
 - **Guardrails:** content filtering for prompt injection, strict Pydantic schema validation, per-IP rate limiting (slowapi), and grounding checks (drop findings missing source_text or retrieved_chunks, emit warnings).
 - **Streaming:** SSE emits structured JSON-only events.
 - **Cost tracking:** token estimates recorded per analysis and surfaced in API/UI.
-- **Storage:** analyses, guardrail warnings, and usage stored in SQLite/Postgres; embeddings persisted in Chroma dir.
+- **Storage:** analyses, guardrail warnings, and usage stored in SQLite/Postgres; embeddings persisted in Chroma (default) or PostgreSQL via pgvector (`VECTOR_BACKEND=pgvector`).
 
 ---
 
@@ -244,7 +246,7 @@ The app should be reachable via HTTP or HTTPS depending on configuration.
 
 ## How the Playbook is Used
 
-- On startup the backend seeds the latest playbook version from `standard_terms_playbook.md`, chunks it, stores versions/chunks in the DB, and embeds chunks into Chroma.
+- On startup the backend seeds the latest playbook version from `standard_terms_playbook.md`, chunks it, stores versions/chunks in the DB, and embeds chunks into the configured vector backend (Chroma by default; pgvector when `VECTOR_BACKEND=pgvector`).
 - Each analysis retrieves relevant chunks per clause and includes them in `retrieved_chunks`. If grounding is missing, the finding is dropped and a guardrail warning is emitted.
 - Playbook updates create immutable versions; analyses record the version used.
 
