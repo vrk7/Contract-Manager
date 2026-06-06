@@ -116,6 +116,45 @@ class PgvectorRAG(BaseRAG):
             )
         logger.debug("pgvector_embeddings_upserted", version_id=version_id, count=len(new_chunks))
 
+    async def query(self, version_id: str, text: str, k: int = 3) -> list[RetrievedChunk]:
+        count = await self.collection_count(version_id)
+        if count == 0:
+            return []
+
+        vec = (await asyncio.to_thread(_embed, [text]))[0]
+        pool = await _get_pool()
+        rows = await pool.fetch(
+            """
+            SELECT chunk_id, content,
+                   (embedding <=> $1::vector) AS distance
+            FROM playbook_embeddings
+            WHERE version_id = $2
+            ORDER BY embedding <=> $1::vector
+            LIMIT $3
+            """,
+            str(vec),
+            version_id,
+            k,
+        )
+        retrieved: list[RetrievedChunk] = []
+        for row in rows:
+            if row["distance"] > _DISTANCE_THRESHOLD:
+                logger.debug(
+                    "pgvector_chunk_below_threshold",
+                    chunk_id=row["chunk_id"],
+                    distance=row["distance"],
+                )
+                continue
+            retrieved.append(
+                RetrievedChunk(
+                    chunk_id=row["chunk_id"],
+                    content=row["content"],
+                    source="playbook",
+                    playbook_version_id=version_id,
+                )
+            )
+        return retrieved
+
     async def collection_count(self, version_id: str) -> int:
         pool = await _get_pool()
         try:
