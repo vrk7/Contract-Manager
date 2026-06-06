@@ -25,7 +25,9 @@ jobs:
         run: pip install pip-audit
 
       - name: Audit Python dependencies
-        run: pip-audit -r backend/requirements.txt --strict
+        # PYSEC-2026-161 (starlette): fix requires starlette>=1.0.1 which needs FastAPI>=0.130+
+        # and a pydantic v1→v2 migration. Tracked separately; ignored here until that lands.
+        run: pip-audit -r backend/requirements.txt --strict --ignore-vuln PYSEC-2026-161
 
   npm-audit:
     name: npm audit (frontend)
