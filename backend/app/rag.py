@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import hashlib
 import threading
 from pathlib import Path
@@ -20,6 +21,7 @@ from chromadb import Settings as ChromaSettings
 from chromadb.utils.embedding_functions import EmbeddingFunction, Embeddings
 
 from .config import get_settings
+from .rag_base import BaseRAG
 from .schemas import RetrievedChunk
 
 logger = structlog.get_logger(__name__)
@@ -122,7 +124,7 @@ def get_chroma_client() -> chromadb.ClientAPI:
     )
 
 
-class PlaybookRAG:
+class ChromaRAG(BaseRAG):
     def __init__(self, collection_name: str = "playbook") -> None:
         self.client = get_chroma_client()
         self.collection_name = collection_name
@@ -137,14 +139,7 @@ class PlaybookRAG:
             embedding_function=self.embed_fn,  # type: ignore[arg-type]
         )
 
-    def collection_count(self, version_id: str) -> int:
-        """
-        Return the number of stored chunks for a playbook version.
-
-        If the underlying collection cannot be read (for example after a fresh
-        container start with a missing Chroma volume), fall back to zero so
-        callers can decide to rebuild embeddings.
-        """
+    def _collection_count_impl(self, version_id: str) -> int:
         with self._lock:
             try:
                 return self._collection(version_id).count()
@@ -156,13 +151,12 @@ class PlaybookRAG:
     def _content_hash(text: str) -> str:
         return hashlib.md5(text.encode(), usedforsecurity=False).hexdigest()[:12]  # nosec B324
 
-    def reset_version(self, version_id: str, chunks: Iterable[tuple[str, str]]) -> None:
+    def _reset_version_impl(self, version_id: str, chunks: Iterable[tuple[str, str]]) -> None:
         """Upsert chunks into Chroma, skipping any whose content hash is unchanged."""
         chunks_list = list(chunks)
         with self._lock:
             collection = self._collection(version_id)
 
-            # Build a map of existing chunk_id → stored content hash (encoded in metadata).
             existing_hashes: dict[str, str] = {}
             try:
                 existing = collection.get(include=["metadatas"])
@@ -171,14 +165,12 @@ class PlaybookRAG:
             except Exception:
                 pass
 
-            # Determine which chunk IDs are no longer present and should be removed.
             current_ids = {cid for cid, _ in chunks_list}
             stale_ids = [eid for eid in existing_hashes if eid not in current_ids]
             if stale_ids:
                 collection.delete(ids=stale_ids)
                 logger.debug("embeddings_pruned", version_id=version_id, count=len(stale_ids))
 
-            # Only embed chunks whose content has changed.
             new_ids, new_docs, new_metas = [], [], []
             for chunk_id, text in chunks_list:
                 h = self._content_hash(text)
@@ -198,12 +190,7 @@ class PlaybookRAG:
     # For unit-normalised embeddings, cosine_sim ≈ 0.35 ↔ L2 ≈ 1.14.
     _DISTANCE_THRESHOLD: float = 1.2
 
-    def bm25_query(self, version_id: str, text: str, k: int = 3) -> list[RetrievedChunk]:
-        """
-        BM25 keyword search over stored chunks for a given playbook version.
-        Returns up to k results sorted by BM25 score descending.
-        Falls back to empty list if rank_bm25 is not installed.
-        """
+    def _bm25_query_impl(self, version_id: str, text: str, k: int = 3) -> list[RetrievedChunk]:
         if not _BM25_AVAILABLE:
             return []
         with self._lock:
@@ -231,22 +218,7 @@ class PlaybookRAG:
             if scores[i] > 0
         ]
 
-    def hybrid_query(self, version_id: str, text: str, k: int = 3) -> list[RetrievedChunk]:
-        """
-        Union semantic (Chroma) and BM25 results, deduplicated by chunk_id.
-        Semantic results take priority; BM25 fills remaining slots.
-        """
-        semantic = self.query(version_id, text, k=k)
-        bm25 = self.bm25_query(version_id, text, k=k)
-        seen: set[str] = {r.chunk_id for r in semantic}
-        combined = list(semantic)
-        for chunk in bm25:
-            if chunk.chunk_id not in seen:
-                combined.append(chunk)
-                seen.add(chunk.chunk_id)
-        return combined[:k]
-
-    def query(self, version_id: str, text: str, k: int = 3) -> list[RetrievedChunk]:
+    def _query_impl(self, version_id: str, text: str, k: int = 3) -> list[RetrievedChunk]:
         with self._lock:
             collection = self._collection(version_id)
             if collection.count() == 0:
@@ -274,3 +246,35 @@ class PlaybookRAG:
                 )
             )
         return retrieved
+
+    def _hybrid_query_impl(self, version_id: str, text: str, k: int = 3) -> list[RetrievedChunk]:
+        semantic = self._query_impl(version_id, text, k=k)
+        bm25 = self._bm25_query_impl(version_id, text, k=k)
+        seen: set[str] = {r.chunk_id for r in semantic}
+        combined = list(semantic)
+        for chunk in bm25:
+            if chunk.chunk_id not in seen:
+                combined.append(chunk)
+                seen.add(chunk.chunk_id)
+        return combined[:k]
+
+    # ── async public interface ────────────────────────────────────────────────
+
+    async def collection_count(self, version_id: str) -> int:
+        return await asyncio.to_thread(self._collection_count_impl, version_id)
+
+    async def reset_version(self, version_id: str, chunks: Iterable[tuple[str, str]]) -> None:
+        await asyncio.to_thread(self._reset_version_impl, version_id, chunks)
+
+    async def query(self, version_id: str, text: str, k: int = 3) -> list[RetrievedChunk]:
+        return await asyncio.to_thread(self._query_impl, version_id, text, k)
+
+    async def bm25_query(self, version_id: str, text: str, k: int = 3) -> list[RetrievedChunk]:
+        return await asyncio.to_thread(self._bm25_query_impl, version_id, text, k)
+
+    async def hybrid_query(self, version_id: str, text: str, k: int = 3) -> list[RetrievedChunk]:
+        return await asyncio.to_thread(self._hybrid_query_impl, version_id, text, k)
+
+
+# Resolved to a concrete backend by get_rag_backend(); updated in commit that adds factory.
+PlaybookRAG = ChromaRAG
