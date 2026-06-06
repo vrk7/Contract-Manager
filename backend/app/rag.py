@@ -276,5 +276,26 @@ class ChromaRAG(BaseRAG):
         return await asyncio.to_thread(self._hybrid_query_impl, version_id, text, k)
 
 
-# Resolved to a concrete backend by get_rag_backend(); updated in commit that adds factory.
-PlaybookRAG = ChromaRAG
+def get_rag_backend() -> BaseRAG:
+    """Return the configured RAG backend singleton.
+
+    pgvector is silently skipped in favour of Chroma when DATABASE_URL points
+    at SQLite — the pgvector extension requires PostgreSQL.
+    """
+    backend = settings.vector_backend.lower()
+    if backend == "pgvector":
+        if settings.database_url.startswith("sqlite"):
+            logger.warning(
+                "pgvector_requires_postgres",
+                fallback="chroma",
+                database_url=settings.database_url,
+            )
+        else:
+            from .rag_pgvector import PgvectorRAG
+            return PgvectorRAG()
+    return ChromaRAG()
+
+
+# Convenience alias — callers use PlaybookRAG() and get the configured backend.
+def PlaybookRAG() -> BaseRAG:  # type: ignore[misc]
+    return get_rag_backend()
