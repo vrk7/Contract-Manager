@@ -155,6 +155,50 @@ class PgvectorRAG(BaseRAG):
             )
         return retrieved
 
+    async def bm25_query(self, version_id: str, text: str, k: int = 3) -> list[RetrievedChunk]:
+        try:
+            from rank_bm25 import BM25Okapi as _BM25
+        except ImportError:
+            return []
+
+        pool = await _get_pool()
+        rows = await pool.fetch(
+            "SELECT chunk_id, content FROM playbook_embeddings WHERE version_id = $1",
+            version_id,
+        )
+        if not rows:
+            return []
+
+        ids = [r["chunk_id"] for r in rows]
+        docs = [r["content"] for r in rows]
+        tokenized = [doc.lower().split() for doc in docs]
+        bm25 = _BM25(tokenized)
+        scores = bm25.get_scores(text.lower().split())
+        top = sorted(range(len(scores)), key=lambda i: scores[i], reverse=True)[:k]
+        return [
+            RetrievedChunk(
+                chunk_id=ids[i],
+                content=docs[i],
+                source="playbook",
+                playbook_version_id=version_id,
+            )
+            for i in top
+            if scores[i] > 0
+        ]
+
+    async def hybrid_query(self, version_id: str, text: str, k: int = 3) -> list[RetrievedChunk]:
+        semantic, bm25 = await asyncio.gather(
+            self.query(version_id, text, k=k),
+            self.bm25_query(version_id, text, k=k),
+        )
+        seen: set[str] = {r.chunk_id for r in semantic}
+        combined = list(semantic)
+        for chunk in bm25:
+            if chunk.chunk_id not in seen:
+                combined.append(chunk)
+                seen.add(chunk.chunk_id)
+        return combined[:k]
+
     async def collection_count(self, version_id: str) -> int:
         pool = await _get_pool()
         try:
