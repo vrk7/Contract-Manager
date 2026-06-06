@@ -59,6 +59,63 @@ def _content_hash(text: str) -> str:
 
 
 class PgvectorRAG(BaseRAG):
+    async def reset_version(self, version_id: str, chunks: Iterable[tuple[str, str]]) -> None:
+        chunks_list = list(chunks)
+        if not chunks_list:
+            return
+
+        pool = await _get_pool()
+
+        # Fetch existing content hashes to skip unchanged chunks.
+        existing: dict[str, str] = {}
+        rows = await pool.fetch(
+            "SELECT chunk_id, content_hash FROM playbook_embeddings WHERE version_id = $1",
+            version_id,
+        )
+        for row in rows:
+            existing[row["chunk_id"]] = row["content_hash"]
+
+        # Prune stale chunk IDs.
+        current_ids = {cid for cid, _ in chunks_list}
+        stale = [eid for eid in existing if eid not in current_ids]
+        if stale:
+            await pool.execute(
+                "DELETE FROM playbook_embeddings WHERE version_id = $1 AND chunk_id = ANY($2::text[])",
+                version_id,
+                stale,
+            )
+            logger.debug("pgvector_embeddings_pruned", version_id=version_id, count=len(stale))
+
+        # Only embed chunks whose content changed.
+        new_chunks = [
+            (cid, text)
+            for cid, text in chunks_list
+            if existing.get(cid) != _content_hash(text)
+        ]
+        if not new_chunks:
+            logger.debug("pgvector_embeddings_unchanged", version_id=version_id)
+            return
+
+        texts = [text for _, text in new_chunks]
+        vectors = await asyncio.to_thread(_embed, texts)
+
+        async with pool.acquire() as conn:
+            await conn.executemany(
+                """
+                INSERT INTO playbook_embeddings (chunk_id, version_id, content, content_hash, embedding)
+                VALUES ($1, $2, $3, $4, $5::vector)
+                ON CONFLICT (chunk_id, version_id) DO UPDATE
+                  SET content = EXCLUDED.content,
+                      content_hash = EXCLUDED.content_hash,
+                      embedding = EXCLUDED.embedding
+                """,
+                [
+                    (cid, version_id, text, _content_hash(text), str(vec))
+                    for (cid, text), vec in zip(new_chunks, vectors)
+                ],
+            )
+        logger.debug("pgvector_embeddings_upserted", version_id=version_id, count=len(new_chunks))
+
     async def collection_count(self, version_id: str) -> int:
         pool = await _get_pool()
         try:
