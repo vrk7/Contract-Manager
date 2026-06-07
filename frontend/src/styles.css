@@ -738,6 +738,245 @@ button:not(:disabled):active {
   box-shadow: none;
 }
 
+/* ─── Findings toolbar (shared) ─────────────────────────── */
+.findings-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+/* ─── Summary view ───────────────────────────────────────── */
+.summary-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.summary-card {
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 1.1rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  transition: border-color 200ms ease;
+}
+
+.summary-card:hover { border-color: var(--border-md); }
+
+.summary-card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.summary-clause-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.summary-clause-icon {
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  background: var(--accent-soft);
+  border: 1px solid rgba(124, 58, 237, 0.22);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 800;
+  color: #a78bfa;
+  flex-shrink: 0;
+}
+
+.summary-clause-name {
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--t1);
+}
+
+.summary-prose {
+  font-size: 13.5px;
+  line-height: 1.7;
+  color: var(--t1);
+  margin: 0;
+  font-weight: 400;
+}
+
+.summary-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--border);
+}
+
+.summary-meta-item {
+  font-size: 12px;
+  color: var(--t2);
+}
+
+/* ─── Obligations view ───────────────────────────────────── */
+.oblig-progress {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.oblig-progress-bar {
+  flex: 1;
+  height: 5px;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.06);
+  overflow: hidden;
+  max-width: 200px;
+}
+
+.oblig-progress-fill {
+  height: 100%;
+  border-radius: 3px;
+  background: var(--grad);
+  transition: width 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.oblig-progress-label {
+  font-size: 12px;
+  color: var(--t3);
+  white-space: nowrap;
+}
+
+.oblig-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.oblig-group {
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  overflow: hidden;
+  transition: border-color 200ms ease;
+}
+
+.oblig-group:hover { border-color: var(--border-md); }
+
+.oblig-group-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  padding: 0.85rem 1.1rem;
+  border-bottom: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.025);
+}
+
+.oblig-clause-name {
+  font-weight: 700;
+  font-size: 13.5px;
+  color: var(--t1);
+}
+
+.oblig-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.18rem 0.6rem;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.oblig-badge.party {
+  background: rgba(99, 102, 241, 0.12);
+  color: #818cf8;
+  border: 1px solid rgba(99, 102, 241, 0.22);
+}
+
+.oblig-badge.deadline {
+  background: rgba(234, 179, 8, 0.10);
+  color: #facc15;
+  border: 1px solid rgba(234, 179, 8, 0.20);
+}
+
+.oblig-badge.section {
+  background: var(--surface-2);
+  color: var(--t3);
+  border: 1px solid var(--border);
+}
+
+.oblig-items {
+  list-style: none;
+  padding: 0.5rem 0;
+  margin: 0;
+}
+
+.oblig-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.55rem 1.1rem;
+  cursor: pointer;
+  transition: background 150ms ease;
+}
+
+.oblig-item:hover { background: rgba(255, 255, 255, 0.03); }
+
+.oblig-item.done .oblig-item-text {
+  text-decoration: line-through;
+  color: var(--t3);
+}
+
+.oblig-checkbox {
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+  border: 1.5px solid var(--border-md);
+  background: transparent;
+  flex-shrink: 0;
+  margin-top: 1px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 150ms ease, border-color 150ms ease;
+}
+
+.oblig-checkbox.checked {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.oblig-item-text {
+  font-size: 13.5px;
+  color: var(--t1);
+  line-height: 1.55;
+  transition: color 150ms ease;
+}
+
+.oblig-consequence {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  padding: 0.65rem 1.1rem;
+  border-top: 1px solid var(--border);
+  background: rgba(234, 179, 8, 0.05);
+  font-size: 12.5px;
+  color: #fde68a;
+  line-height: 1.5;
+}
+
+.oblig-consequence-icon { flex-shrink: 0; }
+
 /* ─── Auth page ──────────────────────────────────────── */
 .auth-page {
   min-height: 100vh;

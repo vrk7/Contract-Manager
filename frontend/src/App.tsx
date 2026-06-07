@@ -415,6 +415,7 @@ function App() {
 
                 <FindingsList
                   findings={result?.findings || []}
+                  analysisType={analysisType}
                   onClear={() => {
                     setResult(null);
                     setWarnings([]);
