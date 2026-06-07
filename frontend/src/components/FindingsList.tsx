@@ -103,7 +103,7 @@ function RisksView({ findings, onClear }: { findings: Finding[]; onClear?: () =>
           const isExpanded = allExpanded || expandedIdx === idx;
           return (
             <div key={idx} className="card finding-card" style={riskBorderStyle(f.risk_level)}>
-              <div className="finding-header" onClick={() => setExpandedIdx(isExpanded ? null : idx)} style={{ cursor: 'pointer', userSelect: 'none' }}>
+              <div className="finding-header" title={isExpanded ? 'Collapse' : 'Expand'} onClick={() => setExpandedIdx(isExpanded ? null : idx)} style={{ cursor: 'pointer', userSelect: 'none' }}>
                 <div>
                   <p className="eyebrow">Clause</p>
                   <strong style={{ fontSize: '14px' }}>{friendlyLabel(f.clause_type)}</strong>

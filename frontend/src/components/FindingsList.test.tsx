@@ -25,7 +25,7 @@ const makeFinding = (override: Partial<{
 describe('FindingsList', () => {
   it('renders empty state message when list is empty', () => {
     render(<FindingsList findings={[]} />);
-    expect(screen.getByText(/findings will appear here/i)).toBeTruthy();
+    expect(screen.getByText(/findings will stream in/i)).toBeTruthy();
   });
 
   it('renders clause type label for each finding', () => {
@@ -77,8 +77,8 @@ describe('FindingsList', () => {
     ];
     const { container } = render(<FindingsList findings={findings} />);
     const cards = container.querySelectorAll('.finding-card strong');
-    expect(cards[0].textContent).toBe('indemnification');
-    expect(cards[1].textContent).toBe('warranty');
+    expect(cards[0].textContent).toBe('Indemnification');
+    expect(cards[1].textContent).toBe('Warranty');
   });
 
   it('expand all button label toggles after click', () => {
@@ -95,9 +95,9 @@ describe('FindingsList', () => {
       makeFinding({ clause_type: 'force_majeure', risk_level: 'low' }),
     ];
     render(<FindingsList findings={findings} />);
-    expect(screen.getByText('payment terms')).toBeTruthy();
-    expect(screen.getByText('retainage')).toBeTruthy();
-    expect(screen.getByText('force majeure')).toBeTruthy();
+    expect(screen.getByText('Payment Terms')).toBeTruthy();
+    expect(screen.getByText('Retainage')).toBeTruthy();
+    expect(screen.getByText('Force Majeure')).toBeTruthy();
   });
 
   it('shows severity count chips when findings present', () => {
