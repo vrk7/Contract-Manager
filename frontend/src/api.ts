@@ -42,7 +42,7 @@ export async function analyzeUpload(
 export function streamUrl(path: string): string {
   const token = getToken();
   if (!token) return `${API_BASE}/v1${path}`;
-  const url = new URL(`${API_BASE}/v1${path}`);
+  const url = new URL(`${API_BASE}/v1${path}`, window.location.href);
   url.searchParams.set('token', token);
   return url.toString();
 }

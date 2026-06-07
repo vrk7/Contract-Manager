@@ -5,6 +5,8 @@ ENV PYTHONUNBUFFERED=1 \
 
 WORKDIR /app
 
+RUN apt-get update && apt-get install -y --no-install-recommends curl && rm -rf /var/lib/apt/lists/*
+
 # Install Python dependencies first to leverage Docker layer caching.
 COPY backend/requirements.txt /app/requirements.txt
 RUN pip install --no-cache-dir -r /app/requirements.txt
@@ -19,8 +21,12 @@ ENV PLAYBOOK_SEED_PATH=/app/standard_terms_playbook.md
 COPY alembic.ini /app/alembic.ini
 COPY migrations /app/migrations
 
+ENV FASTEMBED_CACHE_PATH=/app/models
+
+RUN python3 -c "from fastembed import TextEmbedding; TextEmbedding('BAAI/bge-small-en-v1.5')"
+
 RUN addgroup --system appgroup && adduser --system --ingroup appgroup appuser && \
-    mkdir -p /app/data && chown -R appuser:appgroup /app
+    mkdir -p /app/data/chroma && chown -R appuser:appgroup /app
 
 USER appuser
 
