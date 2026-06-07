@@ -118,7 +118,7 @@ The analysis flow is a deterministic pipeline in `pipeline.py`:
 
 ### Frontend (`frontend/src/`)
 
-Vite + React + TypeScript. Uses `axios` for API calls and native `EventSource` for SSE. No UI component library — dark glassmorphism design in `styles.css`. Key components: `AuthPage.tsx` (login/register gate), `FindingsList.tsx` (renders risk findings), `PlaybookManager.tsx` (playbook CRUD). JWT token stored in `localStorage`; axios interceptor attaches `Authorization: Bearer` on every request. Tests use Vitest + `@testing-library/react`.
+Vite + React + TypeScript. Uses `axios` for API calls and native `EventSource` for SSE. No UI component library — dark glassmorphism design in `styles.css`. Key components: `AuthPage.tsx` (login/register gate), `FindingsList.tsx` (renders results for all three analysis types — `RisksView` accordion sorted by severity, `SummaryView` prose cards, `ObligationsView` checklist; dispatched via `analysisType` prop), `PlaybookManager.tsx` (playbook CRUD). JWT token stored in `localStorage`; axios interceptor attaches `Authorization: Bearer` on every request. Tests use Vitest + `@testing-library/react`.
 
 File upload: `App.tsx` includes a drag-and-drop zone + Browse button (accepts `.pdf`, `.docx`, `.txt`). When a file is selected it calls `analyzeUpload()` in `api.ts` which POSTs multipart to `/v1/analyze/upload`; otherwise the textarea path posts JSON to `/v1/analyze`.
 
