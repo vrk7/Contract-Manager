@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import ErrorBoundary from './components/ErrorBoundary';
 import FindingsList from './components/FindingsList';
 import PlaybookManager from './components/PlaybookManager';
@@ -70,6 +70,27 @@ function App() {
   const reconnectAttemptsRef = useRef(0);
   const [activeTab, setActiveTab] = useState<'analyzer' | 'playbook'>('analyzer');
   const [playbookVersion, setPlaybookVersion] = useState<string | null>(null);
+
+  // Eject stale tokens: catch any 401 and force back to sign-in
+  useEffect(() => {
+    const id = api.interceptors.response.use(
+      (r) => r,
+      (err) => {
+        if (err.response?.status === 401) {
+          clearToken();
+          setAuthed(false);
+        }
+        return Promise.reject(err);
+      }
+    );
+    return () => api.interceptors.response.eject(id);
+  }, []);
+
+  // Validate token on mount — catches stale tokens before the user does anything
+  useEffect(() => {
+    if (!getToken()) return;
+    api.get('/playbook/versions').catch(() => {});
+  }, []);
 
   const acceptFile = (file: File) => {
     const ok = /\.(pdf|docx|txt|md)$/i.test(file.name);
